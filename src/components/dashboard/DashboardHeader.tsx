@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom';
-import { BarChart3, ShoppingCart } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, BarChart3, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logoLindezas from '@/assets/logo-lindezas.png';
 
-export function Header() {
+interface DashboardHeaderProps {
+  activeTab?: 'dashboard' | 'pos';
+}
+
+export function DashboardHeader({ activeTab = 'dashboard' }: DashboardHeaderProps) {
   return (
     <header className="bg-primary text-primary-foreground px-6 py-3">
       <div className="flex items-center justify-between">
@@ -17,14 +21,24 @@ export function Header() {
           <nav className="flex items-center gap-1">
             <Link
               to="/dashboard"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                activeTab === 'dashboard' 
+                  ? 'bg-white/15 text-white' 
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              )}
             >
               <BarChart3 className="h-4 w-4" />
               Dashboard
             </Link>
             <Link
               to="/"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white/15 text-white transition-colors"
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                activeTab === 'pos' 
+                  ? 'bg-white/15 text-white' 
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              )}
             >
               <ShoppingCart className="h-4 w-4" />
               PDV
