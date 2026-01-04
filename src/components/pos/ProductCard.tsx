@@ -1,6 +1,7 @@
 import { Plus, Coffee, Sandwich, GlassWater, Flower2 } from 'lucide-react';
 import { Product } from '@/types';
 import { cn } from '@/lib/utils';
+import { getProductImage } from '@/lib/productImages';
 
 interface ProductCardProps {
   product: Product;
@@ -36,6 +37,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
   const Icon = getProductIcon(product);
   const iconColor = getIconColor(product);
   const badgeStyle = getCategoryBadgeStyle(product.category?.type);
+  const productImage = getProductImage(product.name);
   
   const formattedPrice = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -48,12 +50,20 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
       className="product-card group text-left w-full"
     >
       {/* Image/Icon Area */}
-      <div className="relative h-32 bg-gradient-to-br from-secondary/50 to-secondary flex items-center justify-center overflow-hidden">
-        <Icon className={cn('h-12 w-12 transition-transform group-hover:scale-110', iconColor)} />
+      <div className="relative h-36 bg-gradient-to-br from-secondary/30 to-secondary/60 flex items-center justify-center overflow-hidden">
+        {productImage ? (
+          <img 
+            src={productImage} 
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <Icon className={cn('h-12 w-12 transition-transform group-hover:scale-110', iconColor)} />
+        )}
         
         {/* Category Badge */}
         <div className={cn(
-          'absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider border',
+          'absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider border backdrop-blur-sm',
           badgeStyle
         )}>
           {product.category?.name || 'Geral'}
@@ -67,7 +77,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
         )}
 
         {/* Add overlay */}
-        <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors flex items-center justify-center">
+        <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors flex items-center justify-center">
           <div className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-md">
             <Plus className="h-4 w-4" />
           </div>
