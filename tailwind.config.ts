@@ -61,13 +61,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Custom Lindezas colors
+        // Custom Lindezas colors - from logo
         cream: "hsl(var(--cream))",
         forest: "hsl(var(--forest))",
         "forest-light": "hsl(var(--forest-light))",
         gold: "hsl(var(--gold))",
         "gold-light": "hsl(var(--gold-light))",
         "flower-blue": "hsl(var(--flower-blue))",
+        latte: "hsl(var(--latte))",
         "flower-pink": "hsl(var(--flower-pink))",
         espresso: "hsl(var(--espresso))",
       },

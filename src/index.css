@@ -10,104 +10,108 @@
 
 @layer base {
   :root {
-    /* Core Colors - Warm Cream Base */
-    --background: 45 33% 97%;
-    --foreground: 142 35% 15%;
+    /* Core Colors - Exact from Lindezas Logo */
+    /* Background: Cream/Off-white #FAF8F3 */
+    --background: 43 47% 97%;
+    --foreground: 150 33% 26%;
 
     /* Cards with subtle warmth */
-    --card: 45 40% 99%;
-    --card-foreground: 142 35% 15%;
+    --card: 43 50% 99%;
+    --card-foreground: 150 33% 26%;
 
     /* Popover matches card */
-    --popover: 45 40% 99%;
-    --popover-foreground: 142 35% 15%;
+    --popover: 43 50% 99%;
+    --popover-foreground: 150 33% 26%;
 
-    /* Primary - Forest Green */
-    --primary: 142 40% 22%;
-    --primary-foreground: 45 30% 96%;
+    /* Primary - Deep Forest Green from logo #2D5A3D */
+    --primary: 150 33% 26%;
+    --primary-foreground: 43 47% 97%;
 
     /* Secondary - Soft Sage */
-    --secondary: 142 20% 90%;
-    --secondary-foreground: 142 40% 20%;
+    --secondary: 150 18% 92%;
+    --secondary-foreground: 150 33% 26%;
 
-    /* Muted - Warm Gray */
-    --muted: 45 15% 92%;
-    --muted-foreground: 142 15% 45%;
+    /* Muted - Warm Cream Gray */
+    --muted: 43 30% 92%;
+    --muted-foreground: 150 15% 45%;
 
-    /* Accent - Gold/Wheat */
-    --accent: 43 70% 50%;
-    --accent-foreground: 142 40% 15%;
+    /* Accent - Wheat Gold from logo #D4A84B */
+    --accent: 42 62% 56%;
+    --accent-foreground: 150 33% 20%;
 
     /* Destructive - Soft Red */
     --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders - Warm earthy */
-    --border: 45 25% 88%;
-    --input: 45 25% 88%;
-    --ring: 142 40% 30%;
+    --border: 43 30% 88%;
+    --input: 43 30% 88%;
+    --ring: 150 33% 30%;
 
     --radius: 0.75rem;
 
-    /* Custom tokens for Lindezas */
-    --cream: 45 33% 97%;
-    --forest: 142 40% 22%;
-    --forest-light: 142 35% 35%;
-    --gold: 43 70% 50%;
-    --gold-light: 43 60% 75%;
-    --flower-blue: 210 55% 55%;
-    --flower-pink: 340 50% 70%;
-    --espresso: 25 50% 20%;
+    /* Custom tokens for Lindezas - Exact Logo Colors */
+    --cream: 43 47% 97%;
+    --forest: 150 33% 26%;
+    --forest-light: 150 28% 38%;
+    --gold: 42 62% 56%;
+    --gold-light: 42 55% 72%;
+    --flower-blue: 207 55% 62%;
+    --flower-pink: 340 45% 65%;
+    /* Coffee/Espresso brown from logo beans #5C4033 */
+    --espresso: 25 40% 28%;
+    /* Latte cream #C9A86C */
+    --latte: 38 45% 60%;
 
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(var(--forest)) 0%, hsl(var(--forest-light)) 100%);
     --gradient-gold: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(var(--gold-light)) 100%);
-    --gradient-cream: linear-gradient(180deg, hsl(45 33% 97%) 0%, hsl(45 30% 94%) 100%);
+    --gradient-cream: linear-gradient(180deg, hsl(43 47% 97%) 0%, hsl(43 40% 94%) 100%);
 
-    /* Shadows */
-    --shadow-soft: 0 2px 8px -2px hsl(var(--forest) / 0.08);
-    --shadow-card: 0 4px 20px -4px hsl(var(--forest) / 0.12);
-    --shadow-elevated: 0 8px 30px -8px hsl(var(--forest) / 0.18);
+    /* Shadows - warmer tones */
+    --shadow-soft: 0 2px 8px -2px hsl(var(--espresso) / 0.06);
+    --shadow-card: 0 4px 20px -4px hsl(var(--espresso) / 0.10);
+    --shadow-elevated: 0 8px 30px -8px hsl(var(--espresso) / 0.15);
 
-    /* Sidebar */
-    --sidebar-background: 142 40% 22%;
-    --sidebar-foreground: 45 30% 96%;
-    --sidebar-primary: 43 70% 50%;
-    --sidebar-primary-foreground: 142 40% 15%;
-    --sidebar-accent: 142 35% 30%;
-    --sidebar-accent-foreground: 45 30% 96%;
-    --sidebar-border: 142 30% 28%;
-    --sidebar-ring: 43 70% 50%;
+    /* Sidebar - Forest Green */
+    --sidebar-background: 150 33% 26%;
+    --sidebar-foreground: 43 47% 97%;
+    --sidebar-primary: 42 62% 56%;
+    --sidebar-primary-foreground: 150 33% 20%;
+    --sidebar-accent: 150 28% 35%;
+    --sidebar-accent-foreground: 43 47% 97%;
+    --sidebar-border: 150 25% 32%;
+    --sidebar-ring: 42 62% 56%;
   }
 
   .dark {
-    --background: 142 40% 8%;
-    --foreground: 45 30% 96%;
-    --card: 142 35% 12%;
-    --card-foreground: 45 30% 96%;
-    --popover: 142 35% 12%;
-    --popover-foreground: 45 30% 96%;
-    --primary: 43 70% 55%;
-    --primary-foreground: 142 40% 10%;
-    --secondary: 142 25% 18%;
-    --secondary-foreground: 45 30% 92%;
-    --muted: 142 25% 18%;
-    --muted-foreground: 45 15% 65%;
-    --accent: 43 60% 45%;
-    --accent-foreground: 45 30% 96%;
+    --background: 150 35% 8%;
+    --foreground: 43 47% 96%;
+    --card: 150 30% 12%;
+    --card-foreground: 43 47% 96%;
+    --popover: 150 30% 12%;
+    --popover-foreground: 43 47% 96%;
+    --primary: 42 62% 56%;
+    --primary-foreground: 150 33% 10%;
+    --secondary: 150 25% 18%;
+    --secondary-foreground: 43 47% 92%;
+    --muted: 150 25% 18%;
+    --muted-foreground: 43 20% 65%;
+    --accent: 42 55% 50%;
+    --accent-foreground: 43 47% 96%;
     --destructive: 0 60% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 142 25% 20%;
-    --input: 142 25% 20%;
-    --ring: 43 70% 55%;
-    --sidebar-background: 142 45% 6%;
-    --sidebar-foreground: 45 30% 96%;
-    --sidebar-primary: 43 70% 55%;
-    --sidebar-primary-foreground: 142 40% 10%;
-    --sidebar-accent: 142 30% 15%;
-    --sidebar-accent-foreground: 45 30% 96%;
-    --sidebar-border: 142 25% 15%;
-    --sidebar-ring: 43 70% 55%;
+    --border: 150 25% 20%;
+    --input: 150 25% 20%;
+    --ring: 42 62% 56%;
+    --sidebar-background: 150 40% 6%;
+    --sidebar-foreground: 43 47% 96%;
+    --sidebar-primary: 42 62% 56%;
+    --sidebar-primary-foreground: 150 33% 10%;
+    --sidebar-accent: 150 28% 15%;
+    --sidebar-accent-foreground: 43 47% 96%;
+    --sidebar-border: 150 25% 15%;
+    --sidebar-ring: 42 62% 56%;
   }
 }
 
