@@ -1,96 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Lindezas Café e Flores - Design System
+   Vibe: Rústico-chique, orgânico, acolhedor, artesanal
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core Colors - Warm Cream Base */
+    --background: 45 33% 97%;
+    --foreground: 142 35% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Cards with subtle warmth */
+    --card: 45 40% 99%;
+    --card-foreground: 142 35% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Popover matches card */
+    --popover: 45 40% 99%;
+    --popover-foreground: 142 35% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Forest Green */
+    --primary: 142 40% 22%;
+    --primary-foreground: 45 30% 96%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Soft Sage */
+    --secondary: 142 20% 90%;
+    --secondary-foreground: 142 40% 20%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted - Warm Gray */
+    --muted: 45 15% 92%;
+    --muted-foreground: 142 15% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Gold/Wheat */
+    --accent: 43 70% 50%;
+    --accent-foreground: 142 40% 15%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive - Soft Red */
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Borders - Warm earthy */
+    --border: 45 25% 88%;
+    --input: 45 25% 88%;
+    --ring: 142 40% 30%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Custom tokens for Lindezas */
+    --cream: 45 33% 97%;
+    --forest: 142 40% 22%;
+    --forest-light: 142 35% 35%;
+    --gold: 43 70% 50%;
+    --gold-light: 43 60% 75%;
+    --flower-blue: 210 55% 55%;
+    --flower-pink: 340 50% 70%;
+    --espresso: 25 50% 20%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--forest)) 0%, hsl(var(--forest-light)) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(var(--gold-light)) 100%);
+    --gradient-cream: linear-gradient(180deg, hsl(45 33% 97%) 0%, hsl(45 30% 94%) 100%);
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(var(--forest) / 0.08);
+    --shadow-card: 0 4px 20px -4px hsl(var(--forest) / 0.12);
+    --shadow-elevated: 0 8px 30px -8px hsl(var(--forest) / 0.18);
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 142 40% 22%;
+    --sidebar-foreground: 45 30% 96%;
+    --sidebar-primary: 43 70% 50%;
+    --sidebar-primary-foreground: 142 40% 15%;
+    --sidebar-accent: 142 35% 30%;
+    --sidebar-accent-foreground: 45 30% 96%;
+    --sidebar-border: 142 30% 28%;
+    --sidebar-ring: 43 70% 50%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 142 40% 8%;
+    --foreground: 45 30% 96%;
+    --card: 142 35% 12%;
+    --card-foreground: 45 30% 96%;
+    --popover: 142 35% 12%;
+    --popover-foreground: 45 30% 96%;
+    --primary: 43 70% 55%;
+    --primary-foreground: 142 40% 10%;
+    --secondary: 142 25% 18%;
+    --secondary-foreground: 45 30% 92%;
+    --muted: 142 25% 18%;
+    --muted-foreground: 45 15% 65%;
+    --accent: 43 60% 45%;
+    --accent-foreground: 45 30% 96%;
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 142 25% 20%;
+    --input: 142 25% 20%;
+    --ring: 43 70% 55%;
+    --sidebar-background: 142 45% 6%;
+    --sidebar-foreground: 45 30% 96%;
+    --sidebar-primary: 43 70% 55%;
+    --sidebar-primary-foreground: 142 40% 10%;
+    --sidebar-accent: 142 30% 15%;
+    --sidebar-accent-foreground: 45 30% 96%;
+    --sidebar-border: 142 25% 15%;
+    --sidebar-ring: 43 70% 55%;
   }
 }
 
@@ -100,6 +117,132 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+}
+
+@layer components {
+  /* Product Card Styles */
+  .product-card {
+    @apply relative overflow-hidden rounded-xl bg-card border border-border/50 transition-all duration-300;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .product-card:hover {
+    box-shadow: var(--shadow-card);
+    @apply border-border;
+    transform: translateY(-2px);
+  }
+
+  /* Mode Toggle */
+  .mode-toggle {
+    @apply relative rounded-full p-1 bg-secondary;
+  }
+
+  .mode-toggle-button {
+    @apply relative z-10 px-6 py-2 rounded-full text-sm font-medium transition-all duration-300;
+  }
+
+  .mode-toggle-button.active {
+    @apply bg-primary text-primary-foreground shadow-md;
+  }
+
+  .mode-toggle-button:not(.active) {
+    @apply text-muted-foreground hover:text-foreground;
+  }
+
+  /* Cart Item */
+  .cart-item {
+    @apply flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/30;
+  }
+
+  /* Category Tab */
+  .category-tab {
+    @apply px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200;
+  }
+
+  .category-tab.active {
+    @apply bg-primary text-primary-foreground shadow-sm;
+  }
+
+  .category-tab:not(.active) {
+    @apply bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground;
+  }
+
+  /* Gold accent styling */
+  .accent-gold {
+    color: hsl(var(--gold));
+  }
+
+  .bg-accent-gold {
+    background: var(--gradient-gold);
+  }
+
+  /* Forest styling */
+  .bg-forest {
+    background: var(--gradient-hero);
+  }
+
+  /* Artisanal paper texture */
+  .paper-texture {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-blend-mode: soft-light;
+    opacity: 0.03;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
