@@ -21,13 +21,13 @@ function getProductIcon(product: Product) {
 
 function getIconColor(product: Product): string {
   const categoryType = product.category?.type;
-  if (categoryType === 'flores') return 'text-flower-pink';
+  if (categoryType === 'flores') return 'text-flower-blue';
   return 'text-forest-light';
 }
 
 function getCategoryBadgeStyle(type: string | undefined) {
   if (type === 'flores') {
-    return 'bg-flower-pink/10 text-flower-pink border-flower-pink/20';
+    return 'bg-flower-blue/15 text-flower-blue border-flower-blue/25';
   }
   return 'bg-forest/10 text-forest border-forest/20';
 }
