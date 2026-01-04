@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { Header } from '@/components/pos/Header';
-import { ModeToggle } from '@/components/pos/ModeToggle';
 import { CategoryTabs } from '@/components/pos/CategoryTabs';
 import { SearchBar } from '@/components/pos/SearchBar';
 import { ProductGrid } from '@/components/pos/ProductGrid';
-import { CartSidebar } from '@/components/pos/CartSidebar';
+import { CartSheet } from '@/components/pos/CartSheet';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
-import { POSMode, CategoryFilter, Product } from '@/types';
+import { CategoryFilter, Product } from '@/types';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
-  const [mode, setMode] = useState<POSMode>('balcao');
-  const [tableNumber, setTableNumber] = useState<number | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -27,75 +25,88 @@ const Index = () => {
     });
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.items.length === 0) return;
-    
-    if (mode === 'mesa' && !tableNumber) {
-      toast.error('Selecione o número da mesa');
-      return;
+
+    try {
+      // Create order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          mode: 'mesa',
+          total: cart.total,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = cart.items.map((item) => ({
+        order_id: order.id,
+        product_id: item.product.id,
+        quantity: item.quantity,
+        unit_price: item.product.price,
+        subtotal: item.product.price * item.quantity,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      toast.success('Pedido enviado para a cozinha!', {
+        description: `Pedido #${order.order_number} - R$ ${cart.total.toFixed(2)}`,
+      });
+
+      cart.clearCart();
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error('Erro ao enviar pedido', {
+        description: 'Tente novamente',
+      });
     }
-
-    const orderInfo = mode === 'mesa' 
-      ? `Mesa ${tableNumber}` 
-      : 'Balcão';
-
-    toast.success('Pedido finalizado!', {
-      description: `${orderInfo} - Total: R$ ${cart.total.toFixed(2)}`,
-    });
-
-    cart.clearCart();
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background pb-20">
       <Header />
       
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Toolbar */}
-          <div className="px-6 py-4 border-b border-border bg-card/50 flex items-center justify-between gap-4 flex-wrap">
-            <ModeToggle
-              mode={mode}
-              onModeChange={setMode}
-              tableNumber={tableNumber}
-              onTableChange={setTableNumber}
-            />
-            <CategoryTabs
-              activeFilter={categoryFilter}
-              onFilterChange={setCategoryFilter}
-            />
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              className="w-64"
-            />
-          </div>
-
-          {/* Products */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <ProductGrid
-              products={products}
-              filter={categoryFilter}
-              searchQuery={searchQuery}
-              onAddToCart={handleAddToCart}
-              isLoading={isLoading}
-            />
-          </div>
-        </main>
-
-        {/* Cart Sidebar */}
-        <CartSidebar
-          items={cart.items}
-          total={cart.total}
-          mode={mode}
-          tableNumber={tableNumber}
-          onUpdateQuantity={cart.updateQuantity}
-          onRemoveItem={cart.removeItem}
-          onClearCart={cart.clearCart}
-          onCheckout={handleCheckout}
+      {/* Toolbar */}
+      <div className="sticky top-0 z-40 px-4 py-3 border-b border-border bg-background/95 backdrop-blur space-y-3">
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          className="w-full"
+        />
+        <CategoryTabs
+          activeFilter={categoryFilter}
+          onFilterChange={setCategoryFilter}
         />
       </div>
+
+      {/* Products */}
+      <main className="flex-1 p-4">
+        <ProductGrid
+          products={products}
+          filter={categoryFilter}
+          searchQuery={searchQuery}
+          onAddToCart={handleAddToCart}
+          isLoading={isLoading}
+        />
+      </main>
+
+      {/* Cart Sheet (Mobile Bottom) */}
+      <CartSheet
+        items={cart.items}
+        total={cart.total}
+        onUpdateQuantity={cart.updateQuantity}
+        onRemoveItem={cart.removeItem}
+        onClearCart={cart.clearCart}
+        onCheckout={handleCheckout}
+      />
     </div>
   );
 };

@@ -41,7 +41,7 @@ export function DashboardHeader({ activeTab = 'dashboard' }: DashboardHeaderProp
               )}
             >
               <ShoppingCart className="h-4 w-4" />
-              PDV
+              Pedidos
             </Link>
           </nav>
         </div>
