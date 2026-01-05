@@ -29,12 +29,12 @@ export function CategoryTabs({ activeFilter, onFilterChange }: CategoryTabsProps
               'flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 border-2',
               isActive 
                 ? 'bg-lindezas-forest text-white border-lindezas-forest shadow-lg scale-105' 
-                : 'bg-white/80 text-lindezas-forest border-lindezas-gold/30 hover:border-lindezas-gold hover:bg-lindezas-gold/10 hover:shadow-md'
+                : 'bg-white text-lindezas-espresso border-lindezas-gold/40 hover:border-lindezas-gold hover:bg-lindezas-cream hover:shadow-md'
             )}
           >
             <Icon className={cn(
               'h-4 w-4 transition-transform duration-300',
-              isActive && 'animate-pulse'
+              isActive ? 'text-white' : 'text-lindezas-forest'
             )} />
             <span>{tab.label}</span>
           </button>
