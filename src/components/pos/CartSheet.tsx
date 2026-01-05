@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Minus, Plus, Trash2, ShoppingBag, Send, Hash, ChevronDown, ChevronUp } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Send, Hash, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -107,13 +107,14 @@ export function CartSheet({
         <div className="px-4 py-2 border-b border-border bg-secondary/30 shrink-0">
           <button
             onClick={() => setShowNotes(!showNotes)}
-            className="w-full flex items-center justify-between text-sm text-muted-foreground py-1"
+            className="w-full flex items-center justify-between text-sm py-1"
           >
-            <span className="flex items-center gap-2">
-              📝 Observações
-              {notes && <span className="text-xs bg-gold/20 text-gold px-1.5 py-0.5 rounded">Preenchido</span>}
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <FileText className="h-4 w-4 text-gold" />
+              Observações
+              {notes && <span className="text-[10px] bg-gold/20 text-gold px-1.5 py-0.5 rounded font-medium">Preenchido</span>}
             </span>
-            {showNotes ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {showNotes ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
           </button>
           
           {showNotes && (
