@@ -92,10 +92,10 @@ export function CartSheet({
             <div className="flex items-center gap-2">
               <Hash className="h-4 w-4 text-gold" />
               <Input
-                placeholder="Mesa"
+                placeholder="Nº"
                 value={tableNumber}
                 onChange={(e) => onTableNumberChange(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                className="w-16 h-9 text-center font-bold text-base border-2 border-gold/30 focus:border-gold bg-background rounded-lg"
+                className="w-14 h-9 text-center font-bold text-base border-2 border-gold/30 focus:border-gold bg-background rounded-lg"
                 maxLength={2}
                 inputMode="numeric"
               />
