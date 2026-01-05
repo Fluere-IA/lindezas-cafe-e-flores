@@ -34,10 +34,12 @@ const Dashboard = () => {
         {/* Charts and Lists Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Sales Chart - Takes 2 columns */}
-          <div className="lg:col-span-2 bg-card rounded-xl border border-border p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="h-5 w-5 text-forest" />
-              <h2 className="font-display text-lg font-semibold text-foreground">
+          <div className="lg:col-span-2 bg-white/90 backdrop-blur-sm rounded-2xl border border-lindezas-gold/30 p-6 shadow-lg">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 rounded-lg bg-lindezas-forest/10">
+                <TrendingUp className="h-5 w-5" style={{ color: '#2D5A27' }} />
+              </div>
+              <h2 className="font-display text-xl font-bold text-lindezas-forest">
                 Faturamento - Últimos 7 dias
               </h2>
             </div>
@@ -45,10 +47,12 @@ const Dashboard = () => {
           </div>
 
           {/* Top Products */}
-          <div className="bg-card rounded-xl border border-border p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy className="h-5 w-5 text-gold" />
-              <h2 className="font-display text-lg font-semibold text-foreground">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-lindezas-gold/30 p-6 shadow-lg">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 rounded-lg bg-lindezas-gold/20">
+                <Trophy className="h-5 w-5" style={{ color: '#D4A84B' }} />
+              </div>
+              <h2 className="font-display text-xl font-bold text-lindezas-forest">
                 Mais Vendidos
               </h2>
             </div>
@@ -57,10 +61,12 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="h-5 w-5 text-flower-blue" />
-            <h2 className="font-display text-lg font-semibold text-foreground">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-lindezas-gold/30 p-6 shadow-lg">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-flower-blue/15">
+              <Clock className="h-5 w-5 text-flower-blue" />
+            </div>
+            <h2 className="font-display text-xl font-bold text-lindezas-forest">
               Pedidos Recentes
             </h2>
           </div>
