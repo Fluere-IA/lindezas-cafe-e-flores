@@ -18,6 +18,8 @@ export interface CurrentStatus {
   pendingOrders: number;
   readyOrders: number;
   totalOpenAmount: number;
+  oldestPendingMinutes: number | null;
+  pendingOrdersList: { orderNumber: number; tableNumber: number | null; minutesWaiting: number }[];
 }
 
 export interface TopProduct {
@@ -118,29 +120,49 @@ export function useCurrentStatus() {
       // Get all open orders (pending or ready)
       const { data: openOrders, error } = await supabase
         .from('orders')
-        .select('table_number, status, total, paid_amount')
-        .in('status', ['pending', 'ready']);
+        .select('order_number, table_number, status, total, paid_amount, created_at')
+        .in('status', ['pending', 'ready'])
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
 
+      const now = new Date();
+      
       const activeTables = [...new Set(
         openOrders
           ?.filter(o => o.table_number !== null)
           .map(o => o.table_number as number)
       )].sort((a, b) => a - b);
 
-      const pendingOrders = openOrders?.filter(o => o.status === 'pending').length || 0;
+      const pendingOrdersData = openOrders?.filter(o => o.status === 'pending') || [];
       const readyOrders = openOrders?.filter(o => o.status === 'ready').length || 0;
       
       const totalOpenAmount = openOrders?.reduce((sum, o) => {
         return sum + (Number(o.total) - Number(o.paid_amount || 0));
       }, 0) || 0;
 
+      // Calculate waiting times for pending orders
+      const pendingOrdersList = pendingOrdersData.map(o => {
+        const createdAt = new Date(o.created_at);
+        const minutesWaiting = Math.floor((now.getTime() - createdAt.getTime()) / 60000);
+        return {
+          orderNumber: o.order_number,
+          tableNumber: o.table_number,
+          minutesWaiting,
+        };
+      }).sort((a, b) => b.minutesWaiting - a.minutesWaiting);
+
+      const oldestPendingMinutes = pendingOrdersList.length > 0 
+        ? pendingOrdersList[0].minutesWaiting 
+        : null;
+
       return {
         activeTables,
-        pendingOrders,
+        pendingOrders: pendingOrdersData.length,
         readyOrders,
         totalOpenAmount,
+        oldestPendingMinutes,
+        pendingOrdersList,
       };
     },
     refetchInterval: 10000,

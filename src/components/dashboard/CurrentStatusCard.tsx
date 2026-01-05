@@ -1,4 +1,4 @@
-import { Users, Clock, CheckCircle2, DollarSign } from 'lucide-react';
+import { Users, Clock, CheckCircle2, DollarSign, AlertTriangle } from 'lucide-react';
 import { CurrentStatus } from '@/hooks/useDashboard';
 
 interface CurrentStatusCardProps {
@@ -8,6 +8,19 @@ interface CurrentStatusCardProps {
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
+// Returns color based on waiting time (0-5 min: green, 5-10: yellow, 10-15: orange, 15+: red)
+function getWaitingColor(minutes: number): { bg: string; text: string; bar: string } {
+  if (minutes < 5) return { bg: 'bg-green-100', text: 'text-green-700', bar: '#16a34a' };
+  if (minutes < 10) return { bg: 'bg-yellow-100', text: 'text-yellow-700', bar: '#eab308' };
+  if (minutes < 15) return { bg: 'bg-orange-100', text: 'text-orange-700', bar: '#f97316' };
+  return { bg: 'bg-red-100', text: 'text-red-700', bar: '#dc2626' };
+}
+
+function getProgressPercentage(minutes: number): number {
+  // Max at 20 minutes = 100%
+  return Math.min((minutes / 20) * 100, 100);
+}
 
 export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps) {
   if (isLoading) {
@@ -23,6 +36,8 @@ export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps)
     );
   }
 
+  const hasPendingOrders = status?.pendingOrdersList && status.pendingOrdersList.length > 0;
+
   return (
     <div className="bg-white rounded-2xl border-2 border-lindezas-gold/30 p-6 shadow-lg">
       <div className="flex items-center gap-3 mb-5">
@@ -37,6 +52,64 @@ export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps)
           <span className="text-xs text-muted-foreground">Ao vivo</span>
         </div>
       </div>
+
+      {/* Waiting Time Progress Bars */}
+      {hasPendingOrders && (
+        <div className="mb-5 space-y-2">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="h-4 w-4" style={{ color: '#D4A84B' }} />
+            <span className="text-sm font-semibold text-lindezas-forest">Tempo de Espera</span>
+          </div>
+          
+          <div className="space-y-2 max-h-36 overflow-y-auto">
+            {status?.pendingOrdersList.slice(0, 5).map((order) => {
+              const colors = getWaitingColor(order.minutesWaiting);
+              const progress = getProgressPercentage(order.minutesWaiting);
+              
+              return (
+                <div 
+                  key={order.orderNumber}
+                  className={`rounded-xl p-3 border ${colors.bg}`}
+                  style={{ borderColor: colors.bar + '40' }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold ${colors.text}`}>
+                        #{order.orderNumber}
+                      </span>
+                      {order.tableNumber && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/60 text-muted-foreground">
+                          Mesa {order.tableNumber}
+                        </span>
+                      )}
+                    </div>
+                    <span className={`text-sm font-bold ${colors.text}`}>
+                      {order.minutesWaiting} min
+                    </span>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="h-2 bg-white/60 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${progress}%`,
+                        backgroundColor: colors.bar,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {status?.pendingOrdersList && status.pendingOrdersList.length > 5 && (
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              +{status.pendingOrdersList.length - 5} pedidos pendentes
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Active Tables */}
