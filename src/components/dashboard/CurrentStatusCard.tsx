@@ -1,226 +1,106 @@
-import { Users, Clock, CheckCircle2, DollarSign, AlertTriangle } from 'lucide-react';
-import { CurrentStatus } from '@/hooks/useDashboard';
-import { useState, useEffect } from 'react';
+import { Users, DollarSign, Wallet, TrendingUp } from 'lucide-react';
+import { CurrentStatus, DashboardStats } from '@/hooks/useDashboard';
 
 interface CurrentStatusCardProps {
   status: CurrentStatus | undefined;
+  stats: DashboardStats | undefined;
   isLoading: boolean;
 }
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-// Returns color based on waiting time in seconds (0-5 min: green, 5-10: yellow, 10-15: orange, 15+: red)
-function getWaitingColor(seconds: number): { bg: string; text: string; bar: string } {
-  const minutes = seconds / 60;
-  if (minutes < 5) return { bg: 'bg-green-100', text: 'text-green-700', bar: '#16a34a' };
-  if (minutes < 10) return { bg: 'bg-yellow-100', text: 'text-yellow-700', bar: '#eab308' };
-  if (minutes < 15) return { bg: 'bg-orange-100', text: 'text-orange-700', bar: '#f97316' };
-  return { bg: 'bg-red-100', text: 'text-red-700', bar: '#dc2626' };
-}
-
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-function getProgressPercentage(seconds: number): number {
-  // Max at 20 minutes (1200 seconds) = 100%
-  return Math.min((seconds / 1200) * 100, 100);
-}
-
-// Hook to track real-time seconds for each order
-function useRealtimeSeconds(pendingOrders: CurrentStatus['pendingOrdersList'] | undefined) {
-  const [secondsMap, setSecondsMap] = useState<Record<number, number>>({});
-
-  useEffect(() => {
-    if (!pendingOrders || pendingOrders.length === 0) {
-      setSecondsMap({});
-      return;
-    }
-
-    // Initialize with current minutes converted to seconds
-    const initial: Record<number, number> = {};
-    pendingOrders.forEach(order => {
-      initial[order.orderNumber] = order.minutesWaiting * 60;
-    });
-    setSecondsMap(initial);
-
-    // Update every second
-    const interval = setInterval(() => {
-      setSecondsMap(prev => {
-        const updated = { ...prev };
-        pendingOrders.forEach(order => {
-          if (updated[order.orderNumber] !== undefined) {
-            updated[order.orderNumber] = updated[order.orderNumber] + 1;
-          }
-        });
-        return updated;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [pendingOrders]);
-
-  return secondsMap;
-}
-
-export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps) {
-  const secondsMap = useRealtimeSeconds(status?.pendingOrdersList);
-
+export function CurrentStatusCard({ status, stats, isLoading }: CurrentStatusCardProps) {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl border-2 border-lindezas-gold/30 p-6 shadow-lg animate-pulse">
-        <div className="h-8 bg-lindezas-cream rounded w-1/3 mb-4" />
-        <div className="grid grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-20 bg-lindezas-cream rounded-xl" />
-          ))}
-        </div>
+      <div className="grid grid-cols-2 gap-3">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-24 bg-white rounded-xl border border-border/50 animate-pulse" />
+        ))}
       </div>
     );
   }
 
-  const hasPendingOrders = status?.pendingOrdersList && status.pendingOrdersList.length > 0;
+  const cards = [
+    {
+      label: 'Mesas Ocupadas',
+      value: status?.activeTables.length || 0,
+      icon: Users,
+      color: '#2D5A27',
+      tables: status?.activeTables || [],
+    },
+    {
+      label: 'Em Aberto',
+      value: formatCurrency(status?.totalOpenAmount || 0),
+      subtext: 'a receber',
+      icon: Wallet,
+      color: '#D4A84B',
+    },
+    {
+      label: 'Vendas Hoje',
+      value: formatCurrency(stats?.todaySales || 0),
+      growth: stats?.salesGrowth,
+      icon: DollarSign,
+      color: '#2D5A27',
+    },
+    {
+      label: 'Ticket Médio',
+      value: formatCurrency(stats?.averageTicket || 0),
+      icon: TrendingUp,
+      color: '#5B8DB8',
+    },
+  ];
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-lindezas-gold/30 p-6 shadow-lg">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(45, 90, 39, 0.1)' }}>
-          <Clock className="h-5 w-5" style={{ color: '#2D5A27' }} />
-        </div>
-        <h2 className="font-display text-xl font-bold text-lindezas-forest">
-          Situação Atual
-        </h2>
-        <div className="ml-auto flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs text-muted-foreground">Ao vivo</span>
-        </div>
-      </div>
-
-      {/* Waiting Time Progress Bars */}
-      {hasPendingOrders && (
-        <div className="mb-5 space-y-2">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-4 w-4" style={{ color: '#D4A84B' }} />
-            <span className="text-sm font-semibold text-lindezas-forest">Tempo de Espera</span>
-          </div>
-          
-          <div className="space-y-2 max-h-36 overflow-y-auto">
-            {status?.pendingOrdersList.slice(0, 5).map((order) => {
-              const seconds = secondsMap[order.orderNumber] ?? order.minutesWaiting * 60;
-              const colors = getWaitingColor(seconds);
-              const progress = getProgressPercentage(seconds);
-              
-              return (
-                <div 
-                  key={order.orderNumber}
-                  className={`rounded-xl p-3 border ${colors.bg}`}
-                  style={{ borderColor: colors.bar + '40' }}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {order.tableNumber && (
-                        <span className={`font-bold ${colors.text}`}>
-                          Mesa {order.tableNumber}
-                        </span>
-                      )}
-                    </div>
-                    <span className={`text-sm font-bold font-mono ${colors.text}`}>
-                      {formatTime(seconds)}
-                    </span>
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="h-2 bg-white/60 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${progress}%`,
-                        backgroundColor: colors.bar,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          
-          {status?.pendingOrdersList && status.pendingOrdersList.length > 5 && (
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              +{status.pendingOrdersList.length - 5} pedidos pendentes
-            </p>
-          )}
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Active Tables */}
-        <div className="bg-lindezas-cream/70 rounded-xl p-4 border border-lindezas-gold/20">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="h-4 w-4" style={{ color: '#2D5A27' }} />
-            <span className="text-xs font-medium text-muted-foreground">Mesas Ocupadas</span>
-          </div>
-          <p className="font-display text-3xl font-bold text-lindezas-forest">
-            {status?.activeTables.length || 0}
-          </p>
-          {status?.activeTables && status.activeTables.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {status.activeTables.slice(0, 6).map(table => (
-                <span 
-                  key={table} 
-                  className="px-2 py-0.5 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}
-                >
-                  {table}
-                </span>
-              ))}
-              {status.activeTables.length > 6 && (
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                  +{status.activeTables.length - 6}
-                </span>
-              )}
+    <div className="grid grid-cols-2 gap-3">
+      {cards.map((card) => {
+        const Icon = card.icon;
+        
+        return (
+          <div
+            key={card.label}
+            className="bg-white rounded-xl border border-border/50 p-4"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-muted-foreground">{card.label}</span>
+              <Icon className="h-4 w-4" style={{ color: card.color }} />
             </div>
-          )}
-        </div>
-
-        {/* Pending Orders */}
-        <div className="bg-lindezas-cream/70 rounded-xl p-4 border border-lindezas-gold/20">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock className="h-4 w-4" style={{ color: '#D4A84B' }} />
-            <span className="text-xs font-medium text-muted-foreground">Pendentes</span>
+            
+            <p className="text-2xl font-semibold text-lindezas-forest">
+              {card.value}
+            </p>
+            
+            {card.subtext && (
+              <p className="text-xs text-muted-foreground mt-0.5">{card.subtext}</p>
+            )}
+            
+            {card.growth !== undefined && card.growth !== 0 && (
+              <p className={`text-xs mt-1 font-medium ${card.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {card.growth >= 0 ? '+' : ''}{card.growth.toFixed(0)}% vs semana passada
+              </p>
+            )}
+            
+            {card.tables && card.tables.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {card.tables.slice(0, 6).map(table => (
+                  <span 
+                    key={table} 
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}
+                  >
+                    {table}
+                  </span>
+                ))}
+                {card.tables.length > 6 && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+                    +{card.tables.length - 6}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
-          <p className="font-display text-3xl font-bold" style={{ color: '#D4A84B' }}>
-            {status?.pendingOrders || 0}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">aguardando preparo</p>
-        </div>
-
-        {/* Ready Orders */}
-        <div className="bg-lindezas-cream/70 rounded-xl p-4 border border-lindezas-gold/20">
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 className="h-4 w-4" style={{ color: '#16a34a' }} />
-            <span className="text-xs font-medium text-muted-foreground">Feitos</span>
-          </div>
-          <p className="font-display text-3xl font-bold" style={{ color: '#16a34a' }}>
-            {status?.readyOrders || 0}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">pedidos finalizados</p>
-        </div>
-
-        {/* Open Amount */}
-        <div className="bg-lindezas-cream/70 rounded-xl p-4 border border-lindezas-gold/20">
-          <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="h-4 w-4" style={{ color: '#2D5A27' }} />
-            <span className="text-xs font-medium text-muted-foreground">Em Aberto</span>
-          </div>
-          <p className="font-display text-2xl font-bold text-lindezas-forest">
-            {formatCurrency(status?.totalOpenAmount || 0)}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">a receber</p>
-        </div>
-      </div>
+        );
+      })}
     </div>
   );
 }
