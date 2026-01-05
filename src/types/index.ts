@@ -50,4 +50,4 @@ export interface OrderItem {
 }
 
 export type POSMode = 'mesa' | 'balcao';
-export type CategoryFilter = 'all' | 'cafeteria' | 'flores';
+export type CategoryFilter = 'all' | 'bebidas' | 'salgados' | 'sobremesas' | 'flores';

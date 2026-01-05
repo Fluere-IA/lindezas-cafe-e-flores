@@ -1,6 +1,7 @@
-import { Coffee, Flower2, LayoutGrid } from 'lucide-react';
-import { CategoryFilter } from '@/types';
+import { Coffee, Flower2, LayoutGrid, Sandwich, Cake, UtensilsCrossed } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+export type CategoryFilter = 'all' | 'bebidas' | 'salgados' | 'sobremesas' | 'flores';
 
 interface CategoryTabsProps {
   activeFilter: CategoryFilter;
@@ -9,13 +10,15 @@ interface CategoryTabsProps {
 
 const tabs = [
   { id: 'all' as const, label: 'Todos', icon: LayoutGrid },
-  { id: 'cafeteria' as const, label: 'Cafeteria', icon: Coffee },
+  { id: 'bebidas' as const, label: 'Bebidas', icon: Coffee },
+  { id: 'salgados' as const, label: 'Salgados', icon: Sandwich },
+  { id: 'sobremesas' as const, label: 'Sobremesas', icon: Cake },
   { id: 'flores' as const, label: 'Flores', icon: Flower2 },
 ];
 
 export function CategoryTabs({ activeFilter, onFilterChange }: CategoryTabsProps) {
   return (
-    <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+    <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide pb-1">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
