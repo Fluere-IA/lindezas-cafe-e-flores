@@ -20,9 +20,9 @@ const Index = () => {
 
   const handleAddToCart = (product: Product) => {
     cart.addItem(product);
-    toast.success(`${product.name} adicionado`, {
-      description: `R$ ${product.price.toFixed(2)}`,
-      duration: 1500,
+    toast.success(`+1 ${product.name}`, {
+      duration: 1000,
+      position: 'top-center',
     });
   };
 
