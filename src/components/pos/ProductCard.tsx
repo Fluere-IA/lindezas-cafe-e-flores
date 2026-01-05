@@ -85,7 +85,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
 
       {/* Content */}
       <div className="p-4 bg-gradient-to-b from-card to-card/80">
-        <h3 className="font-display font-bold text-base text-lindezas-forest line-clamp-1 group-hover:text-lindezas-gold transition-colors tracking-wide">
+        <h3 className="font-sans font-bold text-base text-lindezas-forest line-clamp-1 group-hover:text-lindezas-gold transition-colors tracking-wide">
           {product.name}
         </h3>
         {product.description && (
@@ -93,7 +93,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
             {product.description}
           </p>
         )}
-        <p className="mt-3 font-display text-xl font-bold text-lindezas-gold tracking-wide">
+        <p className="mt-3 font-sans text-xl font-bold text-lindezas-gold">
           {formattedPrice}
         </p>
       </div>
