@@ -25,15 +25,18 @@ export function CategoryTabs({ activeFilter, onFilterChange }: CategoryTabsProps
           <button
             key={tab.id}
             onClick={() => onFilterChange(tab.id)}
-            className={cn(
-              'flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 border-2',
-              isActive 
-                ? 'bg-lindezas-forest border-lindezas-forest shadow-lg scale-105' 
-                : 'bg-white text-lindezas-espresso border-lindezas-gold/40 hover:border-lindezas-gold hover:bg-lindezas-cream hover:shadow-md'
-            )}
+            style={{
+              backgroundColor: isActive ? '#2D5A27' : '#ffffff',
+              color: isActive ? '#ffffff' : '#4A3728',
+              borderColor: isActive ? '#2D5A27' : 'rgba(212, 168, 75, 0.4)',
+            }}
+            className="flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 border-2 hover:shadow-md"
           >
-            <Icon className="h-4 w-4" style={{ color: isActive ? '#ffffff' : '#2D5A27' }} />
-            <span style={{ color: isActive ? '#ffffff' : '#4A3728' }}>{tab.label}</span>
+            <Icon 
+              className="h-4 w-4" 
+              style={{ color: isActive ? '#ffffff' : '#2D5A27' }} 
+            />
+            <span>{tab.label}</span>
           </button>
         );
       })}

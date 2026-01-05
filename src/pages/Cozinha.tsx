@@ -168,24 +168,32 @@ const Cozinha = () => {
           <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 bg-white border border-lindezas-gold/30 shadow-md rounded-xl p-1.5">
             <TabsTrigger 
               value="pending" 
-              className="gap-2 rounded-lg text-lindezas-espresso font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-lindezas-gold data-[state=active]:to-lindezas-gold/80 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+              className="gap-2 rounded-lg font-semibold transition-all shadow-sm"
+              style={{ 
+                backgroundColor: 'transparent',
+                color: '#4A3728'
+              }}
             >
               <Clock className="h-4 w-4" />
-              Pendentes
+              <span>Pendentes</span>
               {pendingOrders.length > 0 && (
-                <Badge className="ml-1 bg-lindezas-forest text-white border-0">
+                <Badge className="ml-1 border-0" style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}>
                   {pendingOrders.length}
                 </Badge>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="ready" 
-              className="gap-2 rounded-lg text-lindezas-espresso font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+              className="gap-2 rounded-lg font-semibold transition-all shadow-sm"
+              style={{ 
+                backgroundColor: 'transparent',
+                color: '#4A3728'
+              }}
             >
               <CheckCircle2 className="h-4 w-4" />
-              Prontos
+              <span>Prontos</span>
               {readyOrders.length > 0 && (
-                <Badge className="ml-1 bg-green-700 text-white border-0">
+                <Badge className="ml-1 border-0" style={{ backgroundColor: '#16a34a', color: '#ffffff' }}>
                   {readyOrders.length}
                 </Badge>
               )}

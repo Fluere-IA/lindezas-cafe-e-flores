@@ -165,17 +165,21 @@
     @apply flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/30;
   }
 
-  /* Category Tab */
+  /* Category Tab - base styles only, active states handled in component */
   .category-tab {
     @apply px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200;
   }
 
-  .category-tab.active {
-    @apply bg-primary text-primary-foreground shadow-sm;
+  /* Tabs active state styling for Cozinha */
+  [data-state="active"].rounded-lg {
+    background: linear-gradient(135deg, #D4A84B 0%, #c49a42 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px -2px rgba(212, 168, 75, 0.4);
   }
-
-  .category-tab:not(.active) {
-    @apply bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground;
+  
+  [data-state="active"].rounded-lg svg,
+  [data-state="active"].rounded-lg span {
+    color: #ffffff !important;
   }
 
   /* Gold accent styling */
