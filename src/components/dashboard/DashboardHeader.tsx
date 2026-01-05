@@ -92,14 +92,14 @@ export function DashboardHeader() {
         
         {/* Date - Hidden on small screens */}
         <div className="hidden sm:flex items-center gap-4">
-          <div className="text-right bg-white/5 rounded-xl px-4 py-2">
-            <p className="text-[10px] uppercase tracking-wider text-gold font-medium">Hoje</p>
-            <p className="text-sm font-display">
+          <div className="text-right bg-white/10 rounded-xl px-5 py-2.5 backdrop-blur-sm border border-white/10">
+            <p className="text-[11px] uppercase tracking-widest text-lindezas-gold font-bold">Hoje</p>
+            <p className="text-sm font-sans font-semibold text-white tracking-wide">
               {new Date().toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'short',
-              })}
+              }).replace('.', '')}
             </p>
           </div>
         </div>
