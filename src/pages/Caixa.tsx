@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,13 +14,10 @@ import {
   CreditCard, 
   Banknote, 
   QrCode,
-  CheckCircle2,
-  ArrowLeft,
   Loader2,
   AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
 
 interface OrderItem {
   id: string;
@@ -150,25 +148,7 @@ const Caixa = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Link to="/">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-2">
-              <Receipt className="h-6 w-6 text-primary" />
-              <h1 className="font-display text-xl font-bold">Caixa</h1>
-            </div>
-          </div>
-          <Link to="/dashboard">
-            <Button variant="outline" size="sm">Dashboard</Button>
-          </Link>
-        </div>
-      </header>
+      <DashboardHeader />
 
       <main className="p-4 max-w-2xl mx-auto space-y-6">
         {/* Search by Table */}
