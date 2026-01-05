@@ -5,7 +5,6 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
@@ -20,7 +19,6 @@ import {
   Users,
   Minus,
   Plus,
-  X,
   DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,9 +29,7 @@ interface OrderItem {
   unit_price: number;
   subtotal: number;
   is_paid: boolean;
-  product: {
-    name: string;
-  };
+  product: { name: string };
 }
 
 interface Order {
@@ -41,6 +37,7 @@ interface Order {
   order_number: number;
   table_number: number;
   total: number;
+  paid_amount: number;
   status: string;
   created_at: string;
   order_items: OrderItem[];
@@ -48,7 +45,6 @@ interface Order {
 
 interface ItemWithOrder extends OrderItem {
   orderNumber: number;
-  orderTime: string;
   orderId: string;
 }
 
@@ -60,7 +56,6 @@ const Caixa = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('full');
   const [numberOfPeople, setNumberOfPeople] = useState(2);
-  const [paidPeople, setPaidPeople] = useState(0);
   const [customValue, setCustomValue] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'dinheiro' | 'cartao' | 'pix' | null>(null);
@@ -88,20 +83,8 @@ const Caixa = () => {
       const { data, error } = await supabase
         .from('orders')
         .select(`
-          id,
-          order_number,
-          table_number,
-          total,
-          status,
-          created_at,
-          order_items (
-            id,
-            quantity,
-            unit_price,
-            subtotal,
-            is_paid,
-            product:products (name)
-          )
+          id, order_number, table_number, total, paid_amount, status, created_at,
+          order_items ( id, quantity, unit_price, subtotal, is_paid, product:products (name) )
         `)
         .eq('table_number', searchedTable)
         .in('status', ['ready', 'pending'])
@@ -126,16 +109,9 @@ const Caixa = () => {
   const resetPaymentState = () => {
     setPaymentMode('full');
     setNumberOfPeople(2);
-    setPaidPeople(0);
     setCustomValue('');
     setSelectedItems(new Set());
     setSelectedPaymentMethod(null);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
   };
 
   const toggleItemSelection = (itemId: string) => {
@@ -153,37 +129,33 @@ const Caixa = () => {
     order.order_items.map(item => ({
       ...item,
       orderNumber: order.order_number,
-      orderTime: order.created_at,
       orderId: order.id,
     }))
   );
 
   const unpaidItems = allItems.filter(item => !item.is_paid);
-  const paidItems = allItems.filter(item => item.is_paid);
-  const totalGeral = unpaidItems.reduce((sum, item) => sum + Number(item.subtotal), 0);
-  const totalPago = paidItems.reduce((sum, item) => sum + Number(item.subtotal), 0);
+  const paidItemsTotal = allItems.filter(item => item.is_paid).reduce((sum, item) => sum + Number(item.subtotal), 0);
+  const partialPayments = orders.reduce((sum, order) => sum + Number(order.paid_amount || 0), 0);
   
-  const selectedTotal = paymentMode === 'by-items' 
-    ? unpaidItems.filter(item => selectedItems.has(item.id)).reduce((sum, item) => sum + Number(item.subtotal), 0)
-    : totalGeral;
-
-  const perPersonAmount = paymentMode === 'by-people' ? totalGeral / numberOfPeople : 0;
-  const remainingAfterPaid = paymentMode === 'by-people' ? totalGeral - (perPersonAmount * paidPeople) : totalGeral;
+  const totalOriginal = allItems.reduce((sum, item) => sum + Number(item.subtotal), 0);
+  const totalPago = paidItemsTotal + partialPayments;
+  const totalRestante = Math.max(0, totalOriginal - totalPago);
+  
+  const selectedTotal = unpaidItems.filter(item => selectedItems.has(item.id)).reduce((sum, item) => sum + Number(item.subtotal), 0);
+  const perPersonAmount = paymentMode === 'by-people' && numberOfPeople > 0 ? totalRestante / numberOfPeople : 0;
   const customAmount = parseInputValue(customValue);
-  const remainingAfterCustom = totalGeral - customAmount;
 
   const getPaymentTotal = () => {
     if (paymentMode === 'by-items') return selectedTotal;
     if (paymentMode === 'by-people') return perPersonAmount;
-    if (paymentMode === 'by-value') return Math.min(customAmount, totalGeral);
-    return totalGeral;
+    if (paymentMode === 'by-value') return Math.min(customAmount, totalRestante);
+    return totalRestante;
   };
 
   const canPay = () => {
-    if (!selectedPaymentMethod) return false;
+    if (!selectedPaymentMethod || totalRestante <= 0) return false;
     if (paymentMode === 'by-items' && selectedItems.size === 0) return false;
-    if (paymentMode === 'by-value' && (customAmount <= 0 || customAmount > totalGeral)) return false;
-    if (paymentMode === 'by-people' && paidPeople >= numberOfPeople) return false;
+    if (paymentMode === 'by-value' && (customAmount <= 0 || customAmount > totalRestante)) return false;
     return true;
   };
 
@@ -196,8 +168,8 @@ const Caixa = () => {
       const paymentTotal = getPaymentTotal();
 
       if (paymentMode === 'by-items') {
+        // Mark selected items as paid
         const selectedItemIds = Array.from(selectedItems);
-        
         await supabase
           .from('order_items')
           .update({ is_paid: true, paid_at: new Date().toISOString(), payment_method: method })
@@ -207,67 +179,88 @@ const Caixa = () => {
           description: `${methodLabels[method]} - ${formatPrice(selectedTotal)}`,
         });
 
-        const remainingUnpaid = unpaidItems.filter(item => !selectedItems.has(item.id));
-        if (remainingUnpaid.length === 0) {
-          await supabase.from('orders').update({ status: 'paid' }).in('id', orders.map(o => o.id));
-          setSearchedTable(null);
-          setTableNumber('');
-        }
-        
-        resetPaymentState();
-        queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+        setSelectedItems(new Set());
 
-      } else if (paymentMode === 'by-people') {
-        const newPaidPeople = paidPeople + 1;
-        setPaidPeople(newPaidPeople);
+      } else if (paymentMode === 'by-people' || paymentMode === 'by-value') {
+        // Add to paid_amount on all orders proportionally
+        const totalOrdersValue = orders.reduce((sum, o) => sum + Number(o.total), 0);
         
-        toast.success(`Pagamento ${newPaidPeople}/${numberOfPeople} registrado!`, {
-          description: `${methodLabels[method]} - ${formatPrice(perPersonAmount)}`,
-        });
-
-        if (newPaidPeople >= numberOfPeople) {
-          // All people paid, close the bill
-          await supabase.from('order_items').update({ is_paid: true, paid_at: new Date().toISOString(), payment_method: method }).in('id', unpaidItems.map(i => i.id));
-          await supabase.from('orders').update({ status: 'paid' }).in('id', orders.map(o => o.id));
+        for (const order of orders) {
+          const proportion = Number(order.total) / totalOrdersValue;
+          const orderPayment = paymentTotal * proportion;
+          const newPaidAmount = Number(order.paid_amount || 0) + orderPayment;
           
-          toast.success('Conta fechada!', { description: `Mesa ${searchedTable} - Total: ${formatPrice(totalGeral)}` });
-          setSearchedTable(null);
-          setTableNumber('');
-          queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+          await supabase
+            .from('orders')
+            .update({ paid_amount: newPaidAmount })
+            .eq('id', order.id);
         }
-        setSelectedPaymentMethod(null);
 
-      } else if (paymentMode === 'by-value') {
-        toast.success(`Pagamento parcial registrado!`, {
-          description: `${methodLabels[method]} - ${formatPrice(customAmount)}`,
-        });
-
-        if (customAmount >= totalGeral) {
-          await supabase.from('order_items').update({ is_paid: true, paid_at: new Date().toISOString(), payment_method: method }).in('id', unpaidItems.map(i => i.id));
-          await supabase.from('orders').update({ status: 'paid' }).in('id', orders.map(o => o.id));
-          setSearchedTable(null);
-          setTableNumber('');
-          queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+        if (paymentMode === 'by-people') {
+          toast.success(`Pagamento registrado!`, {
+            description: `${methodLabels[method]} - ${formatPrice(perPersonAmount)}`,
+          });
+        } else {
+          toast.success(`Pagamento registrado!`, {
+            description: `${methodLabels[method]} - ${formatPrice(customAmount)}`,
+          });
+          setCustomValue('');
         }
-        
-        setCustomValue('');
-        setSelectedPaymentMethod(null);
 
       } else {
-        // Full payment
+        // Full payment - mark all unpaid items as paid
         if (unpaidItems.length > 0) {
-          await supabase.from('order_items').update({ is_paid: true, paid_at: new Date().toISOString(), payment_method: method }).in('id', unpaidItems.map(i => i.id));
+          await supabase
+            .from('order_items')
+            .update({ is_paid: true, paid_at: new Date().toISOString(), payment_method: method })
+            .in('id', unpaidItems.map(i => i.id));
         }
-        await supabase.from('orders').update({ status: 'paid' }).in('id', orders.map(o => o.id));
 
-        toast.success(`Conta fechada!`, {
-          description: `Mesa ${searchedTable} - ${methodLabels[method]} - ${formatPrice(totalGeral)}`,
-        });
-
-        setSearchedTable(null);
-        setTableNumber('');
-        queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+        // Zero out any remaining amount by adding to paid_amount
+        for (const order of orders) {
+          const remaining = Number(order.total) - Number(order.paid_amount || 0);
+          if (remaining > 0) {
+            await supabase
+              .from('orders')
+              .update({ paid_amount: Number(order.total) })
+              .eq('id', order.id);
+          }
+        }
       }
+
+      // Check if fully paid
+      await queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+      
+      // Refetch to check new totals
+      const { data: updatedOrders } = await supabase
+        .from('orders')
+        .select(`id, total, paid_amount, order_items ( subtotal, is_paid )`)
+        .eq('table_number', searchedTable)
+        .in('status', ['ready', 'pending']);
+
+      if (updatedOrders) {
+        const newPaidItems = updatedOrders.flatMap(o => o.order_items).filter((i: any) => i.is_paid);
+        const newPaidItemsTotal = newPaidItems.reduce((sum: number, i: any) => sum + Number(i.subtotal), 0);
+        const newPartialPayments = updatedOrders.reduce((sum, o) => sum + Number(o.paid_amount || 0), 0);
+        const newTotalOriginal = updatedOrders.flatMap(o => o.order_items).reduce((sum: number, i: any) => sum + Number(i.subtotal), 0);
+        const newRemaining = newTotalOriginal - newPaidItemsTotal - newPartialPayments;
+
+        if (newRemaining <= 0.01) {
+          // Fully paid - close orders
+          await supabase
+            .from('orders')
+            .update({ status: 'paid' })
+            .in('id', updatedOrders.map(o => o.id));
+
+          toast.success('Conta fechada!', { description: `Mesa ${searchedTable}` });
+          setSearchedTable(null);
+          setTableNumber('');
+          queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+        }
+      }
+
+      setSelectedPaymentMethod(null);
+
     } catch (error) {
       console.error('Error processing payment:', error);
       toast.error('Erro ao processar pagamento');
@@ -293,7 +286,7 @@ const Caixa = () => {
                   placeholder="Número da mesa"
                   value={tableNumber}
                   onChange={(e) => setTableNumber(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                  onKeyDown={handleKeyPress}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   className="pl-9 h-12 text-lg"
                   maxLength={2}
                 />
@@ -327,15 +320,20 @@ const Caixa = () => {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Mesa {searchedTable}</CardTitle>
-                  <span className="text-2xl font-bold text-primary">{formatPrice(totalGeral)}</span>
+                  <div className="text-right">
+                    {totalPago > 0 && (
+                      <p className="text-xs text-green-600">Pago: {formatPrice(totalPago)}</p>
+                    )}
+                    <span className="text-2xl font-bold text-primary">{formatPrice(totalRestante)}</span>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                {paidItems.length > 0 && (
+                {totalPago > 0 && (
                   <div className="flex items-center justify-between py-2 px-3 bg-green-500/10 rounded-lg text-sm">
                     <span className="text-green-700 flex items-center gap-1">
                       <CheckCircle2 className="h-4 w-4" />
-                      {paidItems.length} pago(s)
+                      Já pago
                     </span>
                     <span className="font-medium text-green-700">{formatPrice(totalPago)}</span>
                   </div>
@@ -362,11 +360,18 @@ const Caixa = () => {
                     </div>
                   ))}
                 </div>
+
+                {totalRestante <= 0 && (
+                  <div className="text-center py-4">
+                    <CheckCircle2 className="h-8 w-8 mx-auto text-green-500 mb-1" />
+                    <p className="font-medium text-green-600">Conta paga!</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Payment */}
-            {unpaidItems.length > 0 && (
+            {totalRestante > 0 && (
               <Card>
                 <CardContent className="pt-4 space-y-4">
                   {/* Payment Mode */}
@@ -384,7 +389,6 @@ const Caixa = () => {
                         onClick={() => { 
                           setPaymentMode(mode); 
                           setSelectedItems(new Set()); 
-                          setPaidPeople(0);
                           setCustomValue('');
                         }}
                         className="h-auto py-2 flex-col gap-0.5"
@@ -409,9 +413,9 @@ const Caixa = () => {
                   )}
 
                   {paymentMode === 'by-people' && (
-                    <div className="bg-primary/10 rounded-lg p-3 space-y-3">
+                    <div className="bg-primary/10 rounded-lg p-3 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Pessoas:</span>
+                        <span className="text-sm">Dividir entre:</span>
                         <div className="flex items-center gap-2">
                           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setNumberOfPeople(Math.max(2, numberOfPeople - 1))} disabled={numberOfPeople <= 2}>
                             <Minus className="h-4 w-4" />
@@ -422,20 +426,10 @@ const Caixa = () => {
                           </Button>
                         </div>
                       </div>
-                      <Separator />
-                      <div className="flex justify-between text-sm">
-                        <span>Cada um paga:</span>
+                      <div className="flex justify-between items-center pt-2 border-t border-primary/20">
+                        <span className="text-sm">Cada pessoa:</span>
                         <span className="font-bold text-primary text-lg">{formatPrice(perPersonAmount)}</span>
                       </div>
-                      {paidPeople > 0 && (
-                        <>
-                          <Separator />
-                          <div className="flex justify-between text-sm">
-                            <span className="text-green-600">{paidPeople} já pagou</span>
-                            <span className="font-medium">Falta: {formatPrice(remainingAfterPaid)}</span>
-                          </div>
-                        </>
-                      )}
                     </div>
                   )}
 
@@ -452,14 +446,14 @@ const Caixa = () => {
                           className="pl-10 h-12 text-xl font-bold text-right"
                         />
                       </div>
-                      {customAmount > 0 && customAmount < totalGeral && (
+                      {customAmount > 0 && customAmount < totalRestante && (
                         <div className="flex justify-between text-sm pt-1">
                           <span className="text-muted-foreground">Restará:</span>
-                          <span className="font-medium text-orange-600">{formatPrice(remainingAfterCustom)}</span>
+                          <span className="font-medium text-orange-600">{formatPrice(totalRestante - customAmount)}</span>
                         </div>
                       )}
-                      {customAmount > totalGeral && (
-                        <p className="text-xs text-destructive">Valor maior que o total</p>
+                      {customAmount > totalRestante && (
+                        <p className="text-xs text-destructive">Valor maior que o restante ({formatPrice(totalRestante)})</p>
                       )}
                     </div>
                   )}
