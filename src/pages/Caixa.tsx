@@ -76,7 +76,7 @@ const Caixa = () => {
           )
         `)
         .eq('table_number', searchedTable)
-        .eq('status', 'pending')
+        .eq('status', 'ready')
         .order('created_at', { ascending: true });
 
       if (error) throw error;
