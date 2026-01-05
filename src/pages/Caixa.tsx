@@ -16,11 +16,11 @@ import {
   QrCode,
   Loader2,
   AlertCircle,
-  Split,
   CheckCircle2,
   Users,
   Minus,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -51,12 +51,13 @@ interface ItemWithOrder extends OrderItem {
   orderId: string;
 }
 
+type PaymentMode = 'full' | 'by-items' | 'by-people';
+
 const Caixa = () => {
   const [tableNumber, setTableNumber] = useState('');
   const [searchedTable, setSearchedTable] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [splitMode, setSplitMode] = useState(false);
-  const [splitByPeople, setSplitByPeople] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('full');
   const [numberOfPeople, setNumberOfPeople] = useState(2);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'dinheiro' | 'cartao' | 'pix' | null>(null);
@@ -110,8 +111,11 @@ const Caixa = () => {
       return;
     }
     setSearchedTable(num);
-    setSplitMode(false);
-    setSplitByPeople(false);
+    resetPaymentState();
+  };
+
+  const resetPaymentState = () => {
+    setPaymentMode('full');
     setNumberOfPeople(2);
     setSelectedItems(new Set());
     setSelectedPaymentMethod(null);
@@ -121,20 +125,6 @@ const Caixa = () => {
     if (e.key === 'Enter') {
       handleSearch();
     }
-  };
-
-  const toggleSplitMode = () => {
-    setSplitMode(!splitMode);
-    setSplitByPeople(false);
-    setSelectedItems(new Set());
-    setSelectedPaymentMethod(null);
-  };
-
-  const toggleSplitByPeople = () => {
-    setSplitByPeople(!splitByPeople);
-    setSplitMode(false);
-    setSelectedItems(new Set());
-    setSelectedPaymentMethod(null);
   };
 
   const toggleItemSelection = (itemId: string) => {
@@ -147,20 +137,10 @@ const Caixa = () => {
     setSelectedItems(newSelected);
   };
 
-  const selectAllItems = () => {
-    const unpaidItems = allItems.filter(item => !item.is_paid);
-    if (selectedItems.size === unpaidItems.length) {
-      setSelectedItems(new Set());
-    } else {
-      setSelectedItems(new Set(unpaidItems.map(item => item.id)));
-    }
-  };
-
   const handlePayment = async (method: 'dinheiro' | 'cartao' | 'pix') => {
     if (orders.length === 0) return;
     
-    // In split mode, require item selection
-    if (splitMode && selectedItems.size === 0) {
+    if (paymentMode === 'by-items' && selectedItems.size === 0) {
       toast.error('Selecione os itens a serem pagos');
       return;
     }
@@ -173,7 +153,7 @@ const Caixa = () => {
         pix: 'PIX'
       };
 
-      if (splitMode) {
+      if (paymentMode === 'by-items') {
         // Partial payment - mark selected items as paid
         const selectedItemIds = Array.from(selectedItems);
         
@@ -188,18 +168,17 @@ const Caixa = () => {
 
         if (itemsError) throw itemsError;
 
-        const selectedTotal = allItems
+        const selectedTotal = unpaidItems
           .filter(item => selectedItems.has(item.id))
           .reduce((sum, item) => sum + Number(item.subtotal), 0);
 
-        toast.success(`Pagamento parcial registrado!`, {
+        toast.success(`Pagamento registrado!`, {
           description: `${selectedItems.size} ${selectedItems.size === 1 ? 'item' : 'itens'} - ${methodLabels[method]} - ${formatPrice(selectedTotal)}`,
         });
 
         // Check if all items are now paid
-        const unpaidItems = allItems.filter(item => !item.is_paid && !selectedItems.has(item.id));
-        if (unpaidItems.length === 0) {
-          // All items paid, mark orders as paid
+        const remainingUnpaid = unpaidItems.filter(item => !selectedItems.has(item.id));
+        if (remainingUnpaid.length === 0) {
           const orderIds = orders.map(o => o.id);
           await supabase
             .from('orders')
@@ -210,33 +189,27 @@ const Caixa = () => {
           setTableNumber('');
         }
         
-        setSplitMode(false);
-        setSelectedItems(new Set());
-        setSelectedPaymentMethod(null);
+        resetPaymentState();
         queryClient.invalidateQueries({ queryKey: ['table-orders'] });
-      } else if (splitByPeople) {
-        // Split by people - mark one person's share as paid
-        // We need to track partial payments on order level
-        toast.success(`Pagamento de 1/${numberOfPeople} registrado!`, {
+      } else if (paymentMode === 'by-people') {
+        toast.success(`Pagamento de 1 pessoa registrado!`, {
           description: `${methodLabels[method]} - ${formatPrice(perPersonAmount)}`,
         });
-        
-        setSplitByPeople(false);
-        setSelectedPaymentMethod(null);
-        // Note: For equal split, we don't mark items as paid individually
-        // This is just for display purposes
+        resetPaymentState();
       } else {
-        // Full payment - mark all items as paid first
-        const allItemIds = allItems.map(item => item.id);
+        // Full payment
+        const allItemIds = unpaidItems.map(item => item.id);
         
-        await supabase
-          .from('order_items')
-          .update({ 
-            is_paid: true, 
-            paid_at: new Date().toISOString(),
-            payment_method: method 
-          })
-          .in('id', allItemIds);
+        if (allItemIds.length > 0) {
+          await supabase
+            .from('order_items')
+            .update({ 
+              is_paid: true, 
+              paid_at: new Date().toISOString(),
+              payment_method: method 
+            })
+            .in('id', allItemIds);
+        }
 
         const orderIds = orders.map(o => o.id);
         
@@ -247,7 +220,7 @@ const Caixa = () => {
 
         if (error) throw error;
 
-        toast.success(`Pagamento registrado!`, {
+        toast.success(`Conta fechada!`, {
           description: `Mesa ${searchedTable} - ${methodLabels[method]} - ${formatPrice(totalGeral)}`,
         });
 
@@ -278,17 +251,23 @@ const Caixa = () => {
   const totalGeral = unpaidItems.reduce((sum, item) => sum + Number(item.subtotal), 0);
   const totalPago = paidItems.reduce((sum, item) => sum + Number(item.subtotal), 0);
   
-  const selectedTotal = splitMode 
-    ? allItems.filter(item => selectedItems.has(item.id)).reduce((sum, item) => sum + Number(item.subtotal), 0)
+  const selectedTotal = paymentMode === 'by-items' 
+    ? unpaidItems.filter(item => selectedItems.has(item.id)).reduce((sum, item) => sum + Number(item.subtotal), 0)
     : totalGeral;
 
-  const perPersonAmount = splitByPeople ? totalGeral / numberOfPeople : 0;
+  const perPersonAmount = paymentMode === 'by-people' ? totalGeral / numberOfPeople : 0;
+
+  const getPaymentTotal = () => {
+    if (paymentMode === 'by-items') return selectedTotal;
+    if (paymentMode === 'by-people') return perPersonAmount;
+    return totalGeral;
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader />
 
-      <main className="p-4 max-w-2xl mx-auto space-y-6">
+      <main className="p-4 max-w-2xl mx-auto space-y-4">
         {/* Search by Table */}
         <Card>
           <CardHeader className="pb-3">
@@ -347,286 +326,235 @@ const Caixa = () => {
           <>
             {/* Order Summary */}
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">
+                  <CardTitle className="text-lg flex items-center gap-2">
                     Mesa {searchedTable}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">
-                      {orders.length} {orders.length === 1 ? 'pedido' : 'pedidos'}
+                    <Badge variant="secondary" className="font-normal">
+                      {unpaidItems.length} {unpaidItems.length === 1 ? 'item' : 'itens'}
                     </Badge>
-                  </div>
+                  </CardTitle>
+                  <span className="text-2xl font-bold text-primary">
+                    {formatPrice(totalGeral)}
+                  </span>
                 </div>
-                
-                {/* Split Options */}
-                <div className="flex gap-2 mt-3 pt-3 border-t border-border">
-                  <Button
-                    variant={splitMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={toggleSplitMode}
-                    className="gap-1 flex-1"
-                  >
-                    <Split className="h-4 w-4" />
-                    Por Itens
-                  </Button>
-                  <Button
-                    variant={splitByPeople ? "default" : "outline"}
-                    size="sm"
-                    onClick={toggleSplitByPeople}
-                    className="gap-1 flex-1"
-                  >
-                    <Users className="h-4 w-4" />
-                    Por Pessoas
-                  </Button>
-                </div>
-
-                {splitMode && (
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
-                    <p className="text-sm text-muted-foreground">
-                      Selecione os itens a serem pagos
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={selectAllItems}
-                      className="text-xs"
-                    >
-                      {selectedItems.size === unpaidItems.length ? 'Desmarcar todos' : 'Selecionar todos'}
-                    </Button>
-                  </div>
-                )}
-
-                {splitByPeople && (
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
-                    <p className="text-sm text-muted-foreground">
-                      Dividir entre quantas pessoas?
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setNumberOfPeople(Math.max(2, numberOfPeople - 1))}
-                        disabled={numberOfPeople <= 2}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center font-bold">{numberOfPeople}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setNumberOfPeople(Math.min(20, numberOfPeople + 1))}
-                        disabled={numberOfPeople >= 20}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Paid Items (if any) */}
+              <CardContent className="space-y-3">
+                {/* Paid Items Summary */}
                 {paidItems.length > 0 && (
-                  <>
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        Itens já pagos ({formatPrice(totalPago)})
-                      </p>
-                      {paidItems.map((item, index) => (
-                        <div 
-                          key={`paid-${item.id}-${index}`}
-                          className="flex items-center gap-3 py-2 px-3 rounded-lg bg-green-500/10 border border-green-500/30 opacity-60"
-                        >
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          <div className="flex-1">
-                            <p className="font-medium line-through">{item.quantity}x {item.product?.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Pedido #{item.orderNumber} • {formatTime(item.orderTime)}
-                            </p>
-                          </div>
-                          <p className="font-semibold text-green-600 line-through">
-                            {formatPrice(item.subtotal)}
-                          </p>
-                        </div>
-                      ))}
+                  <div className="flex items-center justify-between py-2 px-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <span className="text-sm text-green-700">{paidItems.length} {paidItems.length === 1 ? 'item já pago' : 'itens já pagos'}</span>
                     </div>
-                    <Separator />
-                  </>
+                    <span className="font-medium text-green-700">{formatPrice(totalPago)}</span>
+                  </div>
                 )}
 
                 {/* Unpaid Items List */}
-                {unpaidItems.length > 0 && (
-                  <div className="space-y-2">
-                    {unpaidItems.length > 0 && paidItems.length > 0 && (
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Itens a pagar
-                      </p>
-                    )}
-                    {unpaidItems.map((item, index) => (
-                      <div 
-                        key={`${item.id}-${index}`}
-                        className={`flex items-center gap-3 py-2 px-3 rounded-lg transition-colors ${
-                          splitMode 
-                            ? selectedItems.has(item.id)
-                              ? 'bg-primary/10 border border-primary/30'
-                              : 'bg-secondary/30 hover:bg-secondary/50 cursor-pointer'
-                            : 'bg-secondary/30'
-                        }`}
-                        onClick={() => splitMode && toggleItemSelection(item.id)}
-                      >
-                        {splitMode && (
-                          <Checkbox
-                            checked={selectedItems.has(item.id)}
-                            onCheckedChange={() => toggleItemSelection(item.id)}
-                            className="pointer-events-none"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <p className="font-medium">{item.quantity}x {item.product?.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Pedido #{item.orderNumber} • {formatTime(item.orderTime)}
-                          </p>
-                        </div>
-                        <p className={`font-semibold ${splitMode && selectedItems.has(item.id) ? 'text-primary' : 'text-gold'}`}>
-                          {formatPrice(item.subtotal)}
-                        </p>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {unpaidItems.map((item, index) => (
+                    <div 
+                      key={`${item.id}-${index}`}
+                      className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-all ${
+                        paymentMode === 'by-items'
+                          ? selectedItems.has(item.id)
+                            ? 'bg-primary/15 border-2 border-primary'
+                            : 'bg-muted/50 hover:bg-muted cursor-pointer border-2 border-transparent'
+                          : 'bg-muted/50'
+                      }`}
+                      onClick={() => paymentMode === 'by-items' && toggleItemSelection(item.id)}
+                    >
+                      {paymentMode === 'by-items' && (
+                        <Checkbox
+                          checked={selectedItems.has(item.id)}
+                          className="pointer-events-none"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{item.quantity}x {item.product?.name}</p>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <p className="font-semibold text-primary whitespace-nowrap">
+                        {formatPrice(item.subtotal)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
 
-                {unpaidItems.length === 0 && paidItems.length > 0 && (
-                  <div className="text-center py-4">
-                    <CheckCircle2 className="h-8 w-8 mx-auto text-green-500 mb-2" />
+                {unpaidItems.length === 0 && (
+                  <div className="text-center py-6">
+                    <CheckCircle2 className="h-10 w-10 mx-auto text-green-500 mb-2" />
                     <p className="font-medium text-green-600">Conta fechada!</p>
-                    <p className="text-sm text-muted-foreground">Todos os itens foram pagos</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
 
-                <Separator />
+            {/* Payment Options */}
+            {unpaidItems.length > 0 && (
+              <Card>
+                <CardContent className="pt-4 space-y-4">
+                  {/* How to pay */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Como deseja pagar?</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        variant={paymentMode === 'full' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { setPaymentMode('full'); setSelectedItems(new Set()); }}
+                        className="h-auto py-3 flex-col gap-1"
+                      >
+                        <CreditCard className="h-5 w-5" />
+                        <span className="text-xs">Conta toda</span>
+                      </Button>
+                      <Button
+                        variant={paymentMode === 'by-items' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setPaymentMode('by-items')}
+                        className="h-auto py-3 flex-col gap-1"
+                      >
+                        <CheckCircle2 className="h-5 w-5" />
+                        <span className="text-xs">Por itens</span>
+                      </Button>
+                      <Button
+                        variant={paymentMode === 'by-people' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { setPaymentMode('by-people'); setSelectedItems(new Set()); }}
+                        className="h-auto py-3 flex-col gap-1"
+                      >
+                        <Users className="h-5 w-5" />
+                        <span className="text-xs">Dividir igual</span>
+                      </Button>
+                    </div>
+                  </div>
 
-                {/* Total */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between py-2">
-                    <div>
-                      <span className="text-lg font-medium">
-                        {splitMode ? 'Total Selecionado' : splitByPeople ? 'Total da Mesa' : 'Total a Pagar'}
-                      </span>
-                      {splitMode && selectedItems.size > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          {selectedItems.size} de {unpaidItems.length} itens
+                  {/* By Items Selection Info */}
+                  {paymentMode === 'by-items' && (
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">
+                          {selectedItems.size === 0 
+                            ? 'Toque nos itens acima para selecionar'
+                            : `${selectedItems.size} ${selectedItems.size === 1 ? 'item selecionado' : 'itens selecionados'}`
+                          }
+                        </span>
+                        {selectedItems.size > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedItems(new Set())}
+                            className="h-7 px-2 text-xs"
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            Limpar
+                          </Button>
+                        )}
+                      </div>
+                      {selectedItems.size > 0 && (
+                        <p className="text-lg font-bold text-primary mt-1">
+                          {formatPrice(selectedTotal)}
                         </p>
                       )}
                     </div>
-                    <span className="text-2xl font-bold font-display">
-                      {formatPrice(splitMode ? selectedTotal : totalGeral)}
-                    </span>
-                  </div>
+                  )}
 
-                  {splitByPeople && totalGeral > 0 && (
-                    <div className="flex items-center justify-between py-3 px-4 bg-primary/10 rounded-lg border border-primary/30">
-                      <div>
-                        <span className="text-lg font-medium text-primary">Valor por Pessoa</span>
-                        <p className="text-xs text-muted-foreground">
-                          Dividido entre {numberOfPeople} pessoas
-                        </p>
+                  {/* By People Selector */}
+                  {paymentMode === 'by-people' && (
+                    <div className="bg-primary/10 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-medium">Dividir entre:</span>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => setNumberOfPeople(Math.max(2, numberOfPeople - 1))}
+                            disabled={numberOfPeople <= 2}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="text-xl font-bold w-8 text-center">{numberOfPeople}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => setNumberOfPeople(Math.min(20, numberOfPeople + 1))}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                          <span className="text-muted-foreground">pessoas</span>
+                        </div>
                       </div>
-                      <span className="text-2xl font-bold font-display text-primary">
-                        {formatPrice(perPersonAmount)}
-                      </span>
+                      <Separator className="my-3" />
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Valor por pessoa:</span>
+                        <span className="text-2xl font-bold text-primary">{formatPrice(perPersonAmount)}</span>
+                      </div>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Payment Methods */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  Forma de Pagamento
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Payment Method Selection */}
-                <div className="grid grid-cols-3 gap-3">
+                  <Separator />
+
+                  {/* Payment Method */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Forma de pagamento</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        variant={selectedPaymentMethod === 'dinheiro' ? 'default' : 'outline'}
+                        onClick={() => setSelectedPaymentMethod('dinheiro')}
+                        disabled={isProcessing || (paymentMode === 'by-items' && selectedItems.size === 0)}
+                        className="h-14 flex-col gap-1"
+                      >
+                        <Banknote className="h-5 w-5" />
+                        <span className="text-xs">Dinheiro</span>
+                      </Button>
+                      <Button
+                        variant={selectedPaymentMethod === 'cartao' ? 'default' : 'outline'}
+                        onClick={() => setSelectedPaymentMethod('cartao')}
+                        disabled={isProcessing || (paymentMode === 'by-items' && selectedItems.size === 0)}
+                        className="h-14 flex-col gap-1"
+                      >
+                        <CreditCard className="h-5 w-5" />
+                        <span className="text-xs">Cartão</span>
+                      </Button>
+                      <Button
+                        variant={selectedPaymentMethod === 'pix' ? 'default' : 'outline'}
+                        onClick={() => setSelectedPaymentMethod('pix')}
+                        disabled={isProcessing || (paymentMode === 'by-items' && selectedItems.size === 0)}
+                        className="h-14 flex-col gap-1"
+                      >
+                        <QrCode className="h-5 w-5" />
+                        <span className="text-xs">PIX</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Button */}
                   <Button
-                    variant={selectedPaymentMethod === 'dinheiro' ? 'default' : 'outline'}
+                    className="w-full h-14 text-lg"
                     size="lg"
-                    className="h-20 flex-col gap-2"
-                    onClick={() => setSelectedPaymentMethod('dinheiro')}
-                    disabled={isProcessing}
+                    onClick={() => selectedPaymentMethod && handlePayment(selectedPaymentMethod)}
+                    disabled={
+                      isProcessing || 
+                      !selectedPaymentMethod || 
+                      (paymentMode === 'by-items' && selectedItems.size === 0)
+                    }
                   >
-                    <Banknote className="h-6 w-6" />
-                    <span>Dinheiro</span>
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-5 w-5 mr-2" />
+                        Confirmar {formatPrice(getPaymentTotal())}
+                      </>
+                    )}
                   </Button>
-                  <Button
-                    variant={selectedPaymentMethod === 'cartao' ? 'default' : 'outline'}
-                    size="lg"
-                    className="h-20 flex-col gap-2"
-                    onClick={() => setSelectedPaymentMethod('cartao')}
-                    disabled={isProcessing}
-                  >
-                    <CreditCard className="h-6 w-6" />
-                    <span>Cartão</span>
-                  </Button>
-                  <Button
-                    variant={selectedPaymentMethod === 'pix' ? 'default' : 'outline'}
-                    size="lg"
-                    className="h-20 flex-col gap-2"
-                    onClick={() => setSelectedPaymentMethod('pix')}
-                    disabled={isProcessing}
-                  >
-                    <QrCode className="h-6 w-6" />
-                    <span>PIX</span>
-                  </Button>
-                </div>
-
-                {/* Confirm Payment Button */}
-                <Button
-                  className="w-full h-14 text-lg gap-2"
-                  size="lg"
-                  onClick={() => selectedPaymentMethod && handlePayment(selectedPaymentMethod)}
-                  disabled={
-                    isProcessing || 
-                    !selectedPaymentMethod || 
-                    (splitMode && selectedItems.size === 0) ||
-                    unpaidItems.length === 0
-                  }
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Processando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-5 w-5" />
-                      {splitByPeople 
-                        ? `Pagar ${formatPrice(perPersonAmount)} (1/${numberOfPeople})`
-                        : `Finalizar Pagamento - ${formatPrice(splitMode ? selectedTotal : totalGeral)}`
-                      }
-                    </>
-                  )}
-                </Button>
-
-                {splitMode && selectedItems.size === 0 && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    Selecione os itens para pagar
-                  </p>
-                )}
-
-                {unpaidItems.length === 0 && (
-                  <p className="text-xs text-green-600 text-center font-medium">
-                    ✓ Todos os itens já foram pagos
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
       </main>
