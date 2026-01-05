@@ -22,46 +22,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/caixa" 
-            element={
-              <ProtectedRoute>
-                <Caixa />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/cozinha" 
-            element={
-              <ProtectedRoute>
-                <Cozinha />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/configuracoes" 
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <Configuracoes />
-              </ProtectedRoute>
-            } 
-          />
+          <Route path="/" element={<Index />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/caixa" element={<Caixa />} />
+          <Route path="/cozinha" element={<Cozinha />} />
+          <Route path="/configuracoes" element={<Configuracoes />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
