@@ -16,6 +16,7 @@ const Index = () => {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('bebidas');
   const [searchQuery, setSearchQuery] = useState('');
   const [tableNumber, setTableNumber] = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
   
   const { data: products = [], isLoading } = useProducts();
   const cart = useCart();
@@ -66,7 +67,7 @@ const Index = () => {
           total: cart.total,
           status: 'pending',
           table_number: parsedTable,
-          notes: `Mesa ${tableNumber}`,
+          notes: orderNotes.trim() || null,
         })
         .select()
         .single();
@@ -94,6 +95,7 @@ const Index = () => {
 
       cart.clearCart();
       setTableNumber('');
+      setOrderNotes('');
     } catch (error) {
       logError(error, 'Error creating order');
       toast.error('Erro ao enviar pedido');
@@ -133,7 +135,9 @@ const Index = () => {
         items={cart.items}
         total={cart.total}
         tableNumber={tableNumber}
+        notes={orderNotes}
         onTableNumberChange={setTableNumber}
+        onNotesChange={setOrderNotes}
         onUpdateQuantity={cart.updateQuantity}
         onRemoveItem={cart.removeItem}
         onClearCart={cart.clearCart}
