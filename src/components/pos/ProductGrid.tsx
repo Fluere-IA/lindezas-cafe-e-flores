@@ -1,7 +1,7 @@
 import { Product } from '@/types';
 import { CategoryFilter } from './CategoryTabs';
 import { ProductCard } from './ProductCard';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Coffee } from 'lucide-react';
 
 interface ProductGridProps {
   products: Product[];
@@ -33,16 +33,20 @@ export function ProductGrid({ products, filter, searchQuery, onAddToCart, isLoad
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <Loader2 className="h-10 w-10 animate-spin text-lindezas-gold" />
+        <p className="text-sm text-muted-foreground animate-pulse">Carregando produtos...</p>
       </div>
     );
   }
 
   if (filteredProducts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-        <p className="text-lg">Nenhum produto encontrado</p>
+      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground gap-2">
+        <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center">
+          <Coffee className="h-8 w-8 text-muted-foreground/50" />
+        </div>
+        <p className="text-lg font-medium">Nenhum produto encontrado</p>
         <p className="text-sm">Tente outra busca ou categoria</p>
       </div>
     );
