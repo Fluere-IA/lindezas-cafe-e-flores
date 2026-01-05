@@ -19,7 +19,10 @@ import {
   Users,
   Minus,
   Plus,
-  DollarSign
+  DollarSign,
+  Clock,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,6 +46,15 @@ interface Order {
   order_items: OrderItem[];
 }
 
+interface Payment {
+  id: string;
+  amount: number;
+  payment_method: string;
+  payment_type: string;
+  items_count: number;
+  created_at: string;
+}
+
 interface ItemWithOrder extends OrderItem {
   orderNumber: number;
   orderId: string;
@@ -59,10 +71,16 @@ const Caixa = () => {
   const [customValue, setCustomValue] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'dinheiro' | 'cartao' | 'pix' | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const queryClient = useQueryClient();
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
 
   const parseInputValue = (value: string): number => {
     const cleaned = value.replace(/[^\d]/g, '');
@@ -96,6 +114,28 @@ const Caixa = () => {
     enabled: searchedTable !== null,
   });
 
+  const { data: payments = [] } = useQuery({
+    queryKey: ['table-payments', searchedTable],
+    queryFn: async () => {
+      if (!searchedTable) return [];
+      
+      // Get payments from today for this table
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('table_number', searchedTable)
+        .gte('created_at', today.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return (data as Payment[]) || [];
+    },
+    enabled: searchedTable !== null,
+  });
+
   const handleSearch = () => {
     const num = parseInt(tableNumber);
     if (!num || num < 1) {
@@ -104,6 +144,7 @@ const Caixa = () => {
     }
     setSearchedTable(num);
     resetPaymentState();
+    setShowHistory(false);
   };
 
   const resetPaymentState = () => {
@@ -159,16 +200,43 @@ const Caixa = () => {
     return true;
   };
 
+  const getPaymentTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'full': 'Conta toda',
+      'by-items': 'Por itens',
+      'by-people': 'Dividido',
+      'by-value': 'Por valor'
+    };
+    return labels[type] || type;
+  };
+
+  const getMethodIcon = (method: string) => {
+    switch (method) {
+      case 'dinheiro': return <Banknote className="h-3 w-3" />;
+      case 'cartao': return <CreditCard className="h-3 w-3" />;
+      case 'pix': return <QrCode className="h-3 w-3" />;
+      default: return null;
+    }
+  };
+
   const handlePayment = async (method: 'dinheiro' | 'cartao' | 'pix') => {
-    if (orders.length === 0 || !canPay()) return;
+    if (orders.length === 0 || !canPay() || !searchedTable) return;
 
     setIsProcessing(true);
     try {
       const methodLabels = { dinheiro: 'Dinheiro', cartao: 'Cartão', pix: 'PIX' };
       const paymentTotal = getPaymentTotal();
 
+      // Record payment in history
+      await supabase.from('payments').insert({
+        table_number: searchedTable,
+        amount: paymentTotal,
+        payment_method: method,
+        payment_type: paymentMode,
+        items_count: paymentMode === 'by-items' ? selectedItems.size : 0
+      });
+
       if (paymentMode === 'by-items') {
-        // Mark selected items as paid
         const selectedItemIds = Array.from(selectedItems);
         await supabase
           .from('order_items')
@@ -182,7 +250,6 @@ const Caixa = () => {
         setSelectedItems(new Set());
 
       } else if (paymentMode === 'by-people' || paymentMode === 'by-value') {
-        // Add to paid_amount on all orders proportionally
         const totalOrdersValue = orders.reduce((sum, o) => sum + Number(o.total), 0);
         
         for (const order of orders) {
@@ -196,19 +263,13 @@ const Caixa = () => {
             .eq('id', order.id);
         }
 
-        if (paymentMode === 'by-people') {
-          toast.success(`Pagamento registrado!`, {
-            description: `${methodLabels[method]} - ${formatPrice(perPersonAmount)}`,
-          });
-        } else {
-          toast.success(`Pagamento registrado!`, {
-            description: `${methodLabels[method]} - ${formatPrice(customAmount)}`,
-          });
-          setCustomValue('');
-        }
+        toast.success(`Pagamento registrado!`, {
+          description: `${methodLabels[method]} - ${formatPrice(paymentTotal)}`,
+        });
+        
+        if (paymentMode === 'by-value') setCustomValue('');
 
       } else {
-        // Full payment - mark all unpaid items as paid
         if (unpaidItems.length > 0) {
           await supabase
             .from('order_items')
@@ -216,7 +277,6 @@ const Caixa = () => {
             .in('id', unpaidItems.map(i => i.id));
         }
 
-        // Zero out any remaining amount by adding to paid_amount
         for (const order of orders) {
           const remaining = Number(order.total) - Number(order.paid_amount || 0);
           if (remaining > 0) {
@@ -230,8 +290,8 @@ const Caixa = () => {
 
       // Check if fully paid
       await queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+      await queryClient.invalidateQueries({ queryKey: ['table-payments'] });
       
-      // Refetch to check new totals
       const { data: updatedOrders } = await supabase
         .from('orders')
         .select(`id, total, paid_amount, order_items ( subtotal, is_paid )`)
@@ -246,7 +306,6 @@ const Caixa = () => {
         const newRemaining = newTotalOriginal - newPaidItemsTotal - newPartialPayments;
 
         if (newRemaining <= 0.01) {
-          // Fully paid - close orders
           await supabase
             .from('orders')
             .update({ status: 'paid' })
@@ -329,16 +388,43 @@ const Caixa = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                {totalPago > 0 && (
-                  <div className="flex items-center justify-between py-2 px-3 bg-green-500/10 rounded-lg text-sm">
+                {/* Payment History Toggle */}
+                {payments.length > 0 && (
+                  <button
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="w-full flex items-center justify-between py-2 px-3 bg-green-500/10 rounded-lg text-sm hover:bg-green-500/15 transition-colors"
+                  >
                     <span className="text-green-700 flex items-center gap-1">
                       <CheckCircle2 className="h-4 w-4" />
-                      Já pago
+                      {payments.length} pagamento(s) - {formatPrice(totalPago)}
                     </span>
-                    <span className="font-medium text-green-700">{formatPrice(totalPago)}</span>
+                    {showHistory ? <ChevronUp className="h-4 w-4 text-green-700" /> : <ChevronDown className="h-4 w-4 text-green-700" />}
+                  </button>
+                )}
+
+                {/* Payment History List */}
+                {showHistory && payments.length > 0 && (
+                  <div className="space-y-1.5 py-2 px-1">
+                    {payments.map((payment) => (
+                      <div key={payment.id} className="flex items-center justify-between py-1.5 px-2 bg-green-50 rounded text-xs border border-green-100">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-muted-foreground">{formatTime(payment.created_at)}</span>
+                          <span className="text-green-700">{getPaymentTypeLabel(payment.payment_type)}</span>
+                          {payment.items_count > 0 && (
+                            <span className="text-muted-foreground">({payment.items_count} itens)</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {getMethodIcon(payment.payment_method)}
+                          <span className="font-semibold text-green-700">{formatPrice(payment.amount)}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
+                {/* Unpaid Items */}
                 <div className="space-y-1 max-h-40 overflow-y-auto">
                   {unpaidItems.map((item, index) => (
                     <div 
