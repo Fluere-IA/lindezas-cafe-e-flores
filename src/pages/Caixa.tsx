@@ -657,7 +657,7 @@ const Caixa = () => {
                         className={`h-auto py-3 flex-col gap-1 rounded-xl font-semibold transition-all ${
                           paymentMode === mode 
                             ? 'bg-lindezas-forest text-white shadow-lg' 
-                            : 'border-2 border-lindezas-gold/40 text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-cream'
+                            : 'border-2 border-lindezas-gold/40 bg-white text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-cream'
                         }`}
                       >
                         <Icon className="h-5 w-5" />
@@ -769,7 +769,7 @@ const Caixa = () => {
                         className={`h-14 flex-col gap-1 rounded-xl font-semibold transition-all ${
                           selectedPaymentMethod === method 
                             ? 'bg-lindezas-gold text-lindezas-forest shadow-lg' 
-                            : 'border-2 border-lindezas-gold/40 text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-cream'
+                            : 'border-2 border-lindezas-gold/40 bg-white text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-cream'
                         }`}
                       >
                         <Icon className="h-5 w-5" />
