@@ -13,17 +13,17 @@ const Dashboard = () => {
   const { data: recentOrders, isLoading: recentOrdersLoading } = useRecentOrders();
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-lindezas-cream">
       <DashboardHeader />
       
       <main className="flex-1 p-6 space-y-6 overflow-y-auto">
         {/* Page Title */}
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <BarChart3 className="h-6 w-6 text-primary" />
+          <div className="p-2.5 rounded-xl bg-lindezas-cream border-2 border-lindezas-gold/40 shadow-md">
+            <BarChart3 className="h-6 w-6" style={{ color: '#2D5A27' }} />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
+            <h1 className="font-display text-2xl font-bold text-lindezas-forest">Dashboard</h1>
             <p className="text-sm text-muted-foreground">Visão geral do seu negócio</p>
           </div>
         </div>

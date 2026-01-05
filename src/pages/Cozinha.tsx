@@ -156,8 +156,8 @@ const Cozinha = () => {
         {/* Page Title */}
         <div className="mb-6">
           <h1 className="text-3xl font-display font-bold text-lindezas-forest flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-lindezas-forest to-lindezas-forest/80 text-white shadow-lg">
-              <Package className="h-6 w-6" />
+            <div className="p-2.5 rounded-xl bg-lindezas-cream border-2 border-lindezas-gold/40 shadow-md">
+              <Package className="h-6 w-6" style={{ color: '#2D5A27' }} />
             </div>
             Cozinha
           </h1>
