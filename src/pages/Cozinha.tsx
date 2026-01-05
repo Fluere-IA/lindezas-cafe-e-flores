@@ -15,6 +15,7 @@ import {
   Package
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logError } from '@/lib/errorLogger';
 
 interface OrderItem {
   id: string;
@@ -297,7 +298,7 @@ const Cozinha = () => {
       queryClient.invalidateQueries({ queryKey: ['kitchen-orders-pending'] });
       queryClient.invalidateQueries({ queryKey: ['kitchen-orders-ready'] });
     } catch (error) {
-      console.error('Error marking order ready:', error);
+      logError(error, 'Error marking order ready');
       toast.error('Erro ao atualizar pedido');
     } finally {
       setProcessingId(null);

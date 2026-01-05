@@ -13,14 +13,13 @@ const emailSchema = z.string().trim().email('Email inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter no mínimo 6 caracteres');
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
-  const { signIn, signUp, isAuthenticated, isLoading } = useAuth();
+  const { signIn, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -57,54 +56,28 @@ export default function Auth() {
     setIsSubmitting(true);
     
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            toast({
-              title: 'Erro de autenticação',
-              description: 'Email ou senha incorretos.',
-              variant: 'destructive',
-            });
-          } else {
-            toast({
-              title: 'Erro',
-              description: error.message,
-              variant: 'destructive',
-            });
-          }
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast({
+            title: 'Erro de autenticação',
+            description: 'Email ou senha incorretos.',
+            variant: 'destructive',
+          });
         } else {
           toast({
-            title: 'Bem-vindo!',
-            description: 'Login realizado com sucesso.',
+            title: 'Erro',
+            description: 'Não foi possível fazer login. Tente novamente.',
+            variant: 'destructive',
           });
-          navigate('/');
         }
       } else {
-        const { error } = await signUp(email, password);
-        
-        if (error) {
-          if (error.message.includes('User already registered')) {
-            toast({
-              title: 'Erro',
-              description: 'Este email já está cadastrado.',
-              variant: 'destructive',
-            });
-          } else {
-            toast({
-              title: 'Erro',
-              description: error.message,
-              variant: 'destructive',
-            });
-          }
-        } else {
-          toast({
-            title: 'Conta criada!',
-            description: 'Seu cadastro foi realizado com sucesso.',
-          });
-          navigate('/');
-        }
+        toast({
+          title: 'Bem-vindo!',
+          description: 'Login realizado com sucesso.',
+        });
+        navigate('/');
       }
     } finally {
       setIsSubmitting(false);
@@ -134,7 +107,7 @@ export default function Auth() {
             Lindezas Café & Flores
           </h1>
           <p className="text-gray-500 mt-2">
-            {isLogin ? 'Entre na sua conta' : 'Crie sua conta'}
+            Entre na sua conta
           </p>
         </div>
 
@@ -202,27 +175,20 @@ export default function Auth() {
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isLogin ? 'Entrando...' : 'Criando conta...'}
+                Entrando...
               </>
             ) : (
               <>
                 <Flower2 className="mr-2 h-4 w-4" />
-                {isLogin ? 'Entrar' : 'Criar conta'}
+                Entrar
               </>
             )}
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-lindezas-forest hover:underline text-sm"
-          >
-            {isLogin
-              ? 'Não tem conta? Cadastre-se'
-              : 'Já tem conta? Faça login'}
-          </button>
+        <div className="mt-6 text-center text-sm text-gray-500">
+          <p>Acesso restrito a funcionários</p>
+          <p className="mt-1">Contate o administrador para obter uma conta</p>
         </div>
       </div>
 

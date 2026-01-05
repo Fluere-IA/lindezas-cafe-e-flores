@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { logError } from '@/lib/errorLogger';
+import { productSchema } from '@/lib/validation';
 
 interface GerenciarProdutosProps {
   onBack: () => void;
@@ -96,13 +98,20 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
     }
 
     const productData = {
-      name: formData.name,
+      name: formData.name.trim(),
       price: parseFloat(formData.price),
-      description: formData.description || null,
+      description: formData.description?.trim() || null,
       category_id: formData.category_id || null,
       stock: parseInt(formData.stock) || 100,
       is_active: true,
     };
+
+    // Validate with Zod schema
+    const validation = productSchema.safeParse(productData);
+    if (!validation.success) {
+      toast.error(validation.error.errors[0]?.message || 'Dados inválidos');
+      return;
+    }
 
     try {
       if (editingProduct) {
@@ -122,7 +131,7 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setDialogOpen(false);
     } catch (error) {
-      console.error(error);
+      logError(error, 'Error saving product');
       toast.error('Erro ao salvar produto');
     }
   };
@@ -141,7 +150,7 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
       queryClient.invalidateQueries({ queryKey: ['products-admin'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
     } catch (error) {
-      console.error(error);
+      logError(error, 'Error deleting product');
       toast.error('Erro ao remover produto');
     }
   };

@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { logError } from '@/lib/errorLogger';
+import { categorySchema } from '@/lib/validation';
 
 interface GerenciarCategoriasProps {
   onBack: () => void;
@@ -60,19 +62,28 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
       return;
     }
 
+    // Validate with Zod schema
+    const categoryData = {
+      name: formData.name.trim(),
+      type: formData.type,
+    };
+    
+    const validation = categorySchema.safeParse(categoryData);
+    if (!validation.success) {
+      toast.error(validation.error.errors[0]?.message || 'Dados inválidos');
+      return;
+    }
+
     try {
       if (editingCategory) {
         const { error } = await supabase
           .from('categories')
-          .update({ name: formData.name, type: formData.type })
+          .update(categoryData)
           .eq('id', editingCategory.id);
         if (error) throw error;
         toast.success('Categoria atualizada');
       } else {
-        const { error } = await supabase.from('categories').insert({
-          name: formData.name,
-          type: formData.type,
-        });
+        const { error } = await supabase.from('categories').insert(categoryData);
         if (error) throw error;
         toast.success('Categoria adicionada');
       }
@@ -81,7 +92,7 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setDialogOpen(false);
     } catch (error) {
-      console.error(error);
+      logError(error, 'Error saving category');
       toast.error('Erro ao salvar categoria');
     }
   };
@@ -103,7 +114,7 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
       queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     } catch (error) {
-      console.error(error);
+      logError(error, 'Error deleting category');
       toast.error('Erro ao remover categoria');
     }
   };

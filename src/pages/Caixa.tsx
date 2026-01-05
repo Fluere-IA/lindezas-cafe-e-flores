@@ -27,6 +27,8 @@ import {
   Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logError } from '@/lib/errorLogger';
+import { tableNumberSchema } from '@/lib/validation';
 
 interface OrderItem {
   id: string;
@@ -146,8 +148,9 @@ const Caixa = () => {
 
   const handleSearch = () => {
     const num = parseInt(tableNumber);
-    if (!num || num < 1) {
-      toast.error('Informe um número de mesa válido');
+    const validation = tableNumberSchema.safeParse(num);
+    if (!validation.success) {
+      toast.error('Informe um número de mesa válido (1-99)');
       return;
     }
     setSearchedTable(num);
@@ -196,7 +199,7 @@ const Caixa = () => {
       queryClient.invalidateQueries({ queryKey: ['table-orders'] });
       toast.success('Item removido');
     } catch (error) {
-      console.error('Error deleting item:', error);
+      logError(error, 'Error deleting item');
       toast.error('Erro ao remover item');
     }
   };
@@ -385,7 +388,7 @@ const Caixa = () => {
       setSelectedPaymentMethod(null);
 
     } catch (error) {
-      console.error('Error processing payment:', error);
+      logError(error, 'Error processing payment');
       toast.error('Erro ao processar pagamento');
     } finally {
       setIsProcessing(false);
