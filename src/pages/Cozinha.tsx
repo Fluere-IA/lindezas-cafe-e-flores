@@ -149,26 +149,43 @@ const Cozinha = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-lindezas-cream">
       <DashboardHeader />
 
-      <main className="p-4">
+      <main className="p-6">
+        {/* Page Title */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-display font-bold text-lindezas-forest flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-lindezas-forest to-lindezas-forest/80 text-white shadow-lg">
+              <Package className="h-6 w-6" />
+            </div>
+            Cozinha
+          </h1>
+          <p className="text-muted-foreground mt-1">Gerencie os pedidos em tempo real</p>
+        </div>
+
         <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-4">
-            <TabsTrigger value="pending" className="gap-2">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 bg-white/80 backdrop-blur-sm border border-lindezas-gold/20 shadow-md rounded-xl p-1">
+            <TabsTrigger 
+              value="pending" 
+              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-lindezas-gold data-[state=active]:to-lindezas-gold/80 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <Clock className="h-4 w-4" />
               Pendentes
               {pendingOrders.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge className="ml-1 bg-lindezas-forest text-white border-0">
                   {pendingOrders.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="ready" className="gap-2">
+            <TabsTrigger 
+              value="ready" 
+              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <CheckCircle2 className="h-4 w-4" />
               Prontos
               {readyOrders.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge className="ml-1 bg-green-700 text-white border-0">
                   {readyOrders.length}
                 </Badge>
               )}
@@ -179,23 +196,28 @@ const Cozinha = () => {
           <TabsContent value="pending">
             {isLoadingPending && (
               <div className="flex items-center justify-center py-24">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="h-12 w-12 animate-spin text-lindezas-gold" />
+                  <p className="text-muted-foreground font-medium">Carregando pedidos...</p>
+                </div>
               </div>
             )}
 
             {!isLoadingPending && pendingOrders.length === 0 && (
-              <Card className="border-dashed max-w-md mx-auto mt-12">
+              <Card className="border-dashed border-2 border-lindezas-forest/30 max-w-md mx-auto mt-12 bg-white/80 backdrop-blur-sm">
                 <CardContent className="py-16 text-center">
-                  <CheckCircle2 className="h-16 w-16 mx-auto text-green-500 mb-4" />
-                  <p className="text-xl font-medium">Tudo em dia!</p>
-                  <p className="text-muted-foreground mt-1">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-4 shadow-lg">
+                    <CheckCircle2 className="h-10 w-10 text-white" />
+                  </div>
+                  <p className="text-2xl font-display font-bold text-lindezas-forest">Tudo em dia!</p>
+                  <p className="text-muted-foreground mt-2">
                     Nenhum pedido pendente no momento
                   </p>
                 </CardContent>
               </Card>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {pendingOrders.map((order) => {
                 const elapsed = getElapsedMinutes(order.created_at);
                 const isUrgent = elapsed >= 15;
@@ -204,51 +226,59 @@ const Cozinha = () => {
                 return (
                   <Card 
                     key={order.id} 
-                    className={`overflow-hidden transition-all ${
-                      isUrgent ? 'border-destructive ring-2 ring-destructive/20' : ''
+                    className={`overflow-hidden transition-all duration-300 hover:shadow-xl bg-white/90 backdrop-blur-sm ${
+                      isUrgent 
+                        ? 'border-2 border-red-500 ring-4 ring-red-500/20 animate-pulse' 
+                        : 'border border-lindezas-gold/30 hover:border-lindezas-gold/60'
                     }`}
                   >
-                    <CardHeader className={`pb-2 ${isUrgent ? 'bg-destructive/10' : 'bg-secondary/30'}`}>
+                    <CardHeader className={`pb-3 ${
+                      isUrgent 
+                        ? 'bg-gradient-to-r from-red-500/20 to-red-400/10' 
+                        : 'bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream'
+                    }`}>
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-xl font-bold">
+                        <CardTitle className="text-2xl font-display font-bold text-lindezas-forest">
                           #{order.order_number}
                         </CardTitle>
                         <div className="flex items-center gap-2">
                           {order.table_number && (
-                            <Badge variant="outline" className="gap-1">
+                            <Badge className="gap-1 bg-lindezas-forest text-white border-0 shadow-sm">
                               <Hash className="h-3 w-3" />
                               Mesa {order.table_number}
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <div className={`flex items-center gap-1 text-sm ${
-                        isUrgent ? 'text-destructive font-medium' : 'text-muted-foreground'
+                      <div className={`flex items-center gap-2 text-sm mt-2 ${
+                        isUrgent ? 'text-red-600 font-semibold' : 'text-muted-foreground'
                       }`}>
-                        <Clock className="h-4 w-4" />
+                        <div className={`p-1.5 rounded-full ${isUrgent ? 'bg-red-500/20' : 'bg-lindezas-forest/10'}`}>
+                          <Clock className="h-3.5 w-3.5" />
+                        </div>
                         <span>{formatTime(order.created_at)}</span>
-                        <span className="mx-1">•</span>
-                        <span>{elapsed} min</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="font-bold">{elapsed} min</span>
                         {isUrgent && (
-                          <>
-                            <AlertCircle className="h-4 w-4 ml-1" />
-                            <span>Atrasado</span>
-                          </>
+                          <Badge className="bg-red-500 text-white border-0 gap-1 animate-bounce">
+                            <AlertCircle className="h-3 w-3" />
+                            Atrasado
+                          </Badge>
                         )}
                       </div>
                     </CardHeader>
 
                     <CardContent className="pt-4 space-y-4">
-                      <div className="space-y-2">
+                      <div className="space-y-1 bg-lindezas-cream/50 rounded-xl p-3">
                         {order.order_items.map((item) => (
                           <div 
                             key={item.id}
-                            className="flex items-start gap-3 py-2 border-b border-border last:border-0"
+                            className="flex items-center gap-3 py-2 border-b border-lindezas-gold/20 last:border-0"
                           >
-                            <span className="font-bold text-lg text-primary min-w-[2rem]">
+                            <span className="font-bold text-xl text-lindezas-gold min-w-[2.5rem] text-center bg-lindezas-forest rounded-lg py-1 text-white">
                               {item.quantity}x
                             </span>
-                            <span className="font-medium text-base">
+                            <span className="font-medium text-base text-lindezas-forest">
                               {item.product?.name}
                             </span>
                           </div>
@@ -259,7 +289,7 @@ const Cozinha = () => {
                         onClick={() => handleMarkReady(order)}
                         disabled={isProcessing}
                         size="lg"
-                        className="w-full h-14 text-lg font-semibold gap-2"
+                        className="w-full h-14 text-lg font-bold gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
                       >
                         {isProcessing ? (
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -279,63 +309,70 @@ const Cozinha = () => {
           <TabsContent value="ready">
             {isLoadingReady && (
               <div className="flex items-center justify-center py-24">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="h-12 w-12 animate-spin text-green-600" />
+                  <p className="text-muted-foreground font-medium">Carregando pedidos...</p>
+                </div>
               </div>
             )}
 
             {!isLoadingReady && readyOrders.length === 0 && (
-              <Card className="border-dashed max-w-md mx-auto mt-12">
+              <Card className="border-dashed border-2 border-lindezas-forest/30 max-w-md mx-auto mt-12 bg-white/80 backdrop-blur-sm">
                 <CardContent className="py-16 text-center">
-                  <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-xl font-medium">Nenhum pedido pronto</p>
-                  <p className="text-muted-foreground mt-1">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center mb-4 shadow-lg">
+                    <Package className="h-10 w-10 text-white" />
+                  </div>
+                  <p className="text-2xl font-display font-bold text-lindezas-forest">Nenhum pedido pronto</p>
+                  <p className="text-muted-foreground mt-2">
                     Os pedidos prontos aparecerão aqui
                   </p>
                 </CardContent>
               </Card>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {readyOrders.map((order) => (
                 <Card 
                   key={order.id} 
-                  className="overflow-hidden border-green-500/50"
+                  className="overflow-hidden border-2 border-green-500/50 bg-white/90 backdrop-blur-sm hover:shadow-lg transition-all duration-300"
                 >
-                  <CardHeader className="pb-2 bg-green-500/10">
+                  <CardHeader className="pb-3 bg-gradient-to-r from-green-500/20 to-green-400/10">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-xl font-bold">
+                      <CardTitle className="text-2xl font-display font-bold text-lindezas-forest">
                         #{order.order_number}
                       </CardTitle>
                       <div className="flex items-center gap-2">
                         {order.table_number && (
-                          <Badge variant="outline" className="gap-1">
+                          <Badge className="gap-1 bg-lindezas-forest text-white border-0 shadow-sm">
                             <Hash className="h-3 w-3" />
                             Mesa {order.table_number}
                           </Badge>
                         )}
-                        <Badge className="bg-green-600 text-white">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                        <Badge className="bg-gradient-to-r from-green-600 to-green-500 text-white border-0 shadow-md gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
                           Pronto
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                      <div className="p-1.5 rounded-full bg-green-500/20">
+                        <Clock className="h-3.5 w-3.5 text-green-600" />
+                      </div>
                       <span>Pedido às {formatTime(order.created_at)}</span>
                     </div>
                   </CardHeader>
 
                   <CardContent className="pt-4">
-                    <div className="space-y-2">
+                    <div className="space-y-1 bg-green-50/50 rounded-xl p-3">
                       {order.order_items.map((item) => (
                         <div 
                           key={item.id}
-                          className="flex items-start gap-3 py-2 border-b border-border last:border-0"
+                          className="flex items-center gap-3 py-2 border-b border-green-200 last:border-0"
                         >
-                          <span className="font-bold text-lg text-primary min-w-[2rem]">
+                          <span className="font-bold text-xl min-w-[2.5rem] text-center bg-green-600 rounded-lg py-1 text-white">
                             {item.quantity}x
                           </span>
-                          <span className="font-medium text-base">
+                          <span className="font-medium text-base text-lindezas-forest">
                             {item.product?.name}
                           </span>
                         </div>
