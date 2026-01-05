@@ -645,24 +645,22 @@ const Caixa = () => {
                       { mode: 'by-people' as const, icon: Users, label: 'Dividir' },
                       { mode: 'by-value' as const, icon: DollarSign, label: 'Valor' },
                     ].map(({ mode, icon: Icon, label }) => (
-                      <Button
+                      <button
                         key={mode}
-                        variant={paymentMode === mode ? 'default' : 'outline'}
-                        size="sm"
                         onClick={() => { 
                           setPaymentMode(mode); 
                           setSelectedItems(new Set()); 
                           setCustomValue('');
                         }}
-                        className={`h-auto py-3 flex-col gap-1 rounded-xl font-semibold transition-all ${
+                        className={`h-auto py-3 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all ${
                           paymentMode === mode 
                             ? 'bg-lindezas-forest text-white shadow-lg' 
-                            : 'border-2 border-lindezas-gold/40 bg-white text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-cream'
+                            : 'border-2 border-lindezas-gold/40 bg-lindezas-cream text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-gold/10'
                         }`}
                       >
                         <Icon className="h-5 w-5" />
                         <span className="text-xs">{label}</span>
-                      </Button>
+                      </button>
                     ))}
                   </div>
 
@@ -761,20 +759,19 @@ const Caixa = () => {
                       { method: 'cartao' as const, icon: CreditCard, label: 'Cartão' },
                       { method: 'pix' as const, icon: QrCode, label: 'PIX' },
                     ].map(({ method, icon: Icon, label }) => (
-                      <Button
+                      <button
                         key={method}
-                        variant={selectedPaymentMethod === method ? 'default' : 'outline'}
                         onClick={() => setSelectedPaymentMethod(method)}
                         disabled={isProcessing}
-                        className={`h-14 flex-col gap-1 rounded-xl font-semibold transition-all ${
+                        className={`h-14 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all disabled:opacity-50 ${
                           selectedPaymentMethod === method 
                             ? 'bg-lindezas-gold text-lindezas-forest shadow-lg' 
-                            : 'border-2 border-lindezas-gold/40 bg-white text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-cream'
+                            : 'border-2 border-lindezas-gold/40 bg-lindezas-cream text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-gold/10'
                         }`}
                       >
                         <Icon className="h-5 w-5" />
                         <span className="text-xs">{label}</span>
-                      </Button>
+                      </button>
                     ))}
                   </div>
 

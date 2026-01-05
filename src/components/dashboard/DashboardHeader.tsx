@@ -12,7 +12,7 @@ import {
 import logoLindezas from '@/assets/logo-lindezas.png';
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: BarChart3 },
+  { path: '/dashboard', label: 'Visão Geral', icon: BarChart3 },
   { path: '/', label: 'Pedidos', icon: ShoppingCart },
   { path: '/cozinha', label: 'Cozinha', icon: ChefHat },
   { path: '/caixa', label: 'Caixa', icon: Receipt },
