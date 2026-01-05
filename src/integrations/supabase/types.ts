@@ -102,6 +102,7 @@ export type Database = {
           mode: string
           notes: string | null
           order_number: number
+          paid_amount: number
           status: string
           table_number: number | null
           total: number
@@ -113,6 +114,7 @@ export type Database = {
           mode: string
           notes?: string | null
           order_number?: number
+          paid_amount?: number
           status?: string
           table_number?: number | null
           total?: number
@@ -124,6 +126,7 @@ export type Database = {
           mode?: string
           notes?: string | null
           order_number?: number
+          paid_amount?: number
           status?: string
           table_number?: number | null
           total?: number
