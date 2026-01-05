@@ -61,6 +61,14 @@ interface ItemWithOrder extends OrderItem {
   orderId: string;
 }
 
+interface ClosedBillSummary {
+  tableNumber: number;
+  totalAmount: number;
+  payments: Payment[];
+  items: ItemWithOrder[];
+  closedAt: Date;
+}
+
 type PaymentMode = 'full' | 'by-items' | 'by-people' | 'by-value';
 
 const Caixa = () => {
@@ -73,6 +81,7 @@ const Caixa = () => {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'dinheiro' | 'cartao' | 'pix' | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [closedBillSummary, setClosedBillSummary] = useState<ClosedBillSummary | null>(null);
   const queryClient = useQueryClient();
 
   const formatPrice = (price: number) =>
@@ -345,12 +354,27 @@ const Caixa = () => {
         const newRemaining = newTotalOriginal - newPaidItemsTotal - newPartialPayments;
 
         if (newRemaining <= 0.01) {
+          // Fetch final payments for summary before updating status
+          const { data: finalPayments } = await supabase
+            .from('payments')
+            .select('*')
+            .in('order_id', updatedOrders.map(o => o.id))
+            .order('created_at', { ascending: true });
+
+          // Save summary before clearing
+          setClosedBillSummary({
+            tableNumber: searchedTable,
+            totalAmount: newTotalOriginal,
+            payments: (finalPayments as Payment[]) || [],
+            items: allItems,
+            closedAt: new Date()
+          });
+
           await supabase
             .from('orders')
             .update({ status: 'paid' })
             .in('id', updatedOrders.map(o => o.id));
 
-          toast.success('Conta fechada!', { description: `Mesa ${searchedTable}` });
           setSearchedTable(null);
           setTableNumber('');
           queryClient.invalidateQueries({ queryKey: ['table-orders'] });
@@ -395,6 +419,76 @@ const Caixa = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Closed Bill Summary */}
+        {closedBillSummary && (
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                  <CardTitle className="text-lg text-green-800">Conta Fechada!</CardTitle>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  Mesa {closedBillSummary.tableNumber}
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Items consumed */}
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Itens consumidos</h4>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {closedBillSummary.items.map((item, index) => (
+                    <div key={`${item.id}-${index}`} className="flex justify-between text-sm py-1 px-2 bg-white/60 rounded">
+                      <span>{item.quantity}x {item.product?.name}</span>
+                      <span className="font-medium">{formatPrice(item.subtotal)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator className="bg-green-200" />
+
+              {/* Payments summary */}
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Pagamentos realizados</h4>
+                <div className="space-y-1.5">
+                  {closedBillSummary.payments.map((payment) => (
+                    <div key={payment.id} className="flex items-center justify-between py-1.5 px-2 bg-white/60 rounded text-sm">
+                      <div className="flex items-center gap-2">
+                        {getMethodIcon(payment.payment_method)}
+                        <span className="capitalize">{payment.payment_method}</span>
+                        <span className="text-muted-foreground text-xs">
+                          ({getPaymentTypeLabel(payment.payment_type)})
+                        </span>
+                      </div>
+                      <span className="font-semibold text-green-700">{formatPrice(payment.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator className="bg-green-200" />
+
+              {/* Total */}
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Total pago:</span>
+                <span className="text-2xl font-bold text-green-700">
+                  {formatPrice(closedBillSummary.totalAmount)}
+                </span>
+              </div>
+
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => setClosedBillSummary(null)}
+              >
+                Nova consulta
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {isLoading && (
           <div className="flex items-center justify-center py-12">
