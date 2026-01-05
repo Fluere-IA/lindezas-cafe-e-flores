@@ -43,31 +43,31 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
           <div
             key={card.title}
             className={cn(
-              'relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border-2 p-5 transition-all hover:shadow-lg animate-fade-in',
+              'relative overflow-hidden rounded-2xl bg-white border-2 p-4 md:p-5 transition-all hover:shadow-lg animate-fade-in',
               card.borderColor,
               isLoading && 'animate-pulse'
             )}
             style={{ animationDelay: `${index * 100}ms` }}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-                <p className="mt-2 font-display text-3xl font-bold text-lindezas-forest">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs md:text-sm font-medium text-muted-foreground truncate">{card.title}</p>
+                <p className="mt-1 md:mt-2 font-display text-xl md:text-3xl font-bold text-lindezas-forest truncate">
                   {isLoading ? '...' : card.value}
                 </p>
               </div>
               <div 
-                className="rounded-xl p-3 shadow-md"
+                className="rounded-xl p-2 md:p-3 shadow-md flex-shrink-0"
                 style={{ backgroundColor: card.iconBg }}
               >
-                <Icon className="h-5 w-5 text-white" />
+                <Icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
               </div>
             </div>
           </div>
