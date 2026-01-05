@@ -21,13 +21,11 @@ const Dashboard = () => {
     <div className="flex flex-col min-h-screen bg-lindezas-cream">
       <DashboardHeader />
       
-      <main className="flex-1 p-4 md:p-6 space-y-6 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-6 space-y-5 overflow-y-auto">
         {/* Page Title */}
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-lindezas-cream border-2 border-lindezas-gold/40 shadow-md">
-            <BarChart3 className="h-6 w-6" style={{ color: '#2D5A27' }} />
-          </div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-lindezas-forest">Visão Geral</h1>
+        <div className="flex items-center gap-2.5">
+          <BarChart3 className="h-5 w-5 text-lindezas-forest/70" />
+          <h1 className="font-sans text-xl md:text-2xl font-semibold text-lindezas-forest">Visão Geral</h1>
         </div>
 
         {/* Current Status - Main Focus */}
@@ -37,12 +35,10 @@ const Dashboard = () => {
         <StatsCards stats={stats} isLoading={statsLoading} />
 
         {/* Sales Chart */}
-        <div className="bg-white rounded-2xl border-2 border-lindezas-gold/30 p-6 shadow-lg">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2 rounded-lg bg-lindezas-forest/10">
-              <TrendingUp className="h-5 w-5" style={{ color: '#2D5A27' }} />
-            </div>
-            <h2 className="font-display text-xl font-bold text-lindezas-forest">
+        <div className="bg-white rounded-xl border border-border/50 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="h-4 w-4 text-lindezas-forest/60" />
+            <h2 className="font-sans text-base font-medium text-lindezas-forest">
               Faturamento - Últimos 7 dias
             </h2>
           </div>
@@ -50,12 +46,10 @@ const Dashboard = () => {
         </div>
 
         {/* Top Products */}
-        <div className="bg-white rounded-2xl border-2 border-lindezas-gold/30 p-6 shadow-lg">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2 rounded-lg bg-lindezas-gold/20">
-              <Trophy className="h-5 w-5" style={{ color: '#D4A84B' }} />
-            </div>
-            <h2 className="font-display text-xl font-bold text-lindezas-forest">
+        <div className="bg-white rounded-xl border border-border/50 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="h-4 w-4 text-lindezas-gold" />
+            <h2 className="font-sans text-base font-medium text-lindezas-forest">
               Mais Vendidos Hoje
             </h2>
           </div>

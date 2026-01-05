@@ -50,20 +50,20 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
       className="product-card group text-left w-full overflow-hidden"
     >
       {/* Image/Icon Area */}
-      <div className="relative h-32 bg-gradient-to-br from-secondary/40 to-secondary/70 flex items-center justify-center overflow-hidden">
+      <div className="relative h-36 bg-gradient-to-br from-secondary/30 to-secondary/50 flex items-center justify-center overflow-hidden">
         {productImage ? (
           <img 
             src={productImage} 
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <Icon className={cn('h-10 w-10 transition-transform duration-300 group-hover:scale-110', iconColor)} />
+          <Icon className={cn('h-10 w-10 transition-transform duration-200 group-hover:scale-105', iconColor)} />
         )}
         
         {/* Category Badge */}
         <div className={cn(
-          'absolute top-2 left-2 px-2.5 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wider border backdrop-blur-md shadow-sm',
+          'absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full text-[9px] font-medium uppercase tracking-wide border backdrop-blur-sm',
           badgeStyle
         )}>
           {product.category?.name || 'Geral'}
@@ -71,29 +71,28 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
 
         {/* Stock indicator */}
         {product.stock <= 5 && (
-          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold shadow-sm">
+          <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-destructive/90 text-destructive-foreground text-[10px] font-medium">
             Últimas {product.stock}
           </div>
         )}
 
-        {/* Add overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-gold text-forest flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 shadow-elevated">
-          <Plus className="h-5 w-5" />
+        {/* Add button */}
+        <div className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-lindezas-gold/90 text-lindezas-forest flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <Plus className="h-4 w-4" />
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 bg-gradient-to-b from-card to-card/80">
-        <h3 className="font-sans font-bold text-base text-lindezas-forest line-clamp-1 group-hover:text-lindezas-gold transition-colors tracking-wide">
+      <div className="p-3.5">
+        <h3 className="font-sans font-semibold text-sm text-lindezas-forest line-clamp-1">
           {product.name}
         </h3>
         {product.description && (
-          <p className="text-xs text-lindezas-espresso/70 mt-1 line-clamp-2 leading-relaxed font-medium">
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
             {product.description}
           </p>
         )}
-        <p className="mt-3 font-sans text-xl font-bold text-lindezas-gold">
+        <p className="mt-2 font-sans text-lg font-bold text-lindezas-gold">
           {formattedPrice}
         </p>
       </div>

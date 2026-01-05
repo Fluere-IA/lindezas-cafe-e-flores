@@ -68,10 +68,10 @@
     --gradient-gold: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(var(--gold-light)) 100%);
     --gradient-cream: linear-gradient(180deg, hsl(43 47% 97%) 0%, hsl(43 40% 94%) 100%);
 
-    /* Shadows - warmer tones */
-    --shadow-soft: 0 2px 8px -2px hsl(var(--espresso) / 0.06);
-    --shadow-card: 0 4px 20px -4px hsl(var(--espresso) / 0.10);
-    --shadow-elevated: 0 8px 30px -8px hsl(var(--espresso) / 0.15);
+    /* Shadows - softer, more subtle */
+    --shadow-soft: 0 1px 4px -1px hsl(var(--espresso) / 0.04);
+    --shadow-card: 0 2px 12px -3px hsl(var(--espresso) / 0.06);
+    --shadow-elevated: 0 4px 20px -6px hsl(var(--espresso) / 0.10);
 
     /* Sidebar - Forest Green */
     --sidebar-background: 150 33% 26%;
@@ -133,14 +133,14 @@
 @layer components {
   /* Product Card Styles */
   .product-card {
-    @apply relative overflow-hidden rounded-xl bg-card border border-border/50 transition-all duration-300;
+    @apply relative overflow-hidden rounded-2xl bg-card border border-border/30 transition-all duration-200;
     box-shadow: var(--shadow-soft);
   }
 
   .product-card:hover {
     box-shadow: var(--shadow-card);
-    @apply border-border;
-    transform: translateY(-2px);
+    @apply border-border/50;
+    transform: translateY(-1px);
   }
 
   /* Mode Toggle */
