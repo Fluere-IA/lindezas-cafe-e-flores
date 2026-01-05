@@ -134,6 +134,36 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          items_count: number | null
+          payment_method: string
+          payment_type: string
+          table_number: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          items_count?: number | null
+          payment_method: string
+          payment_type: string
+          table_number: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          items_count?: number | null
+          payment_method?: string
+          payment_type?: string
+          table_number?: number
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category_id: string | null
