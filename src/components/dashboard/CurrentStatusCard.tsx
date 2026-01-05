@@ -1,5 +1,6 @@
 import { Users, Clock, CheckCircle2, DollarSign, AlertTriangle } from 'lucide-react';
 import { CurrentStatus } from '@/hooks/useDashboard';
+import { useState, useEffect } from 'react';
 
 interface CurrentStatusCardProps {
   status: CurrentStatus | undefined;
@@ -9,20 +10,65 @@ interface CurrentStatusCardProps {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-// Returns color based on waiting time (0-5 min: green, 5-10: yellow, 10-15: orange, 15+: red)
-function getWaitingColor(minutes: number): { bg: string; text: string; bar: string } {
+// Returns color based on waiting time in seconds (0-5 min: green, 5-10: yellow, 10-15: orange, 15+: red)
+function getWaitingColor(seconds: number): { bg: string; text: string; bar: string } {
+  const minutes = seconds / 60;
   if (minutes < 5) return { bg: 'bg-green-100', text: 'text-green-700', bar: '#16a34a' };
   if (minutes < 10) return { bg: 'bg-yellow-100', text: 'text-yellow-700', bar: '#eab308' };
   if (minutes < 15) return { bg: 'bg-orange-100', text: 'text-orange-700', bar: '#f97316' };
   return { bg: 'bg-red-100', text: 'text-red-700', bar: '#dc2626' };
 }
 
-function getProgressPercentage(minutes: number): number {
-  // Max at 20 minutes = 100%
-  return Math.min((minutes / 20) * 100, 100);
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function getProgressPercentage(seconds: number): number {
+  // Max at 20 minutes (1200 seconds) = 100%
+  return Math.min((seconds / 1200) * 100, 100);
+}
+
+// Hook to track real-time seconds for each order
+function useRealtimeSeconds(pendingOrders: CurrentStatus['pendingOrdersList'] | undefined) {
+  const [secondsMap, setSecondsMap] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    if (!pendingOrders || pendingOrders.length === 0) {
+      setSecondsMap({});
+      return;
+    }
+
+    // Initialize with current minutes converted to seconds
+    const initial: Record<number, number> = {};
+    pendingOrders.forEach(order => {
+      initial[order.orderNumber] = order.minutesWaiting * 60;
+    });
+    setSecondsMap(initial);
+
+    // Update every second
+    const interval = setInterval(() => {
+      setSecondsMap(prev => {
+        const updated = { ...prev };
+        pendingOrders.forEach(order => {
+          if (updated[order.orderNumber] !== undefined) {
+            updated[order.orderNumber] = updated[order.orderNumber] + 1;
+          }
+        });
+        return updated;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [pendingOrders]);
+
+  return secondsMap;
 }
 
 export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps) {
+  const secondsMap = useRealtimeSeconds(status?.pendingOrdersList);
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl border-2 border-lindezas-gold/30 p-6 shadow-lg animate-pulse">
@@ -62,9 +108,10 @@ export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps)
           </div>
           
           <div className="space-y-2 max-h-36 overflow-y-auto">
-            {status?.pendingOrdersList.slice(0, 5).map((order) => {
-              const colors = getWaitingColor(order.minutesWaiting);
-              const progress = getProgressPercentage(order.minutesWaiting);
+          {status?.pendingOrdersList.slice(0, 5).map((order) => {
+              const seconds = secondsMap[order.orderNumber] ?? order.minutesWaiting * 60;
+              const colors = getWaitingColor(seconds);
+              const progress = getProgressPercentage(seconds);
               
               return (
                 <div 
@@ -83,15 +130,15 @@ export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps)
                         </span>
                       )}
                     </div>
-                    <span className={`text-sm font-bold ${colors.text}`}>
-                      {order.minutesWaiting} min
+                    <span className={`text-sm font-bold font-mono ${colors.text}`}>
+                      {formatTime(seconds)}
                     </span>
                   </div>
                   
                   {/* Progress Bar */}
                   <div className="h-2 bg-white/60 rounded-full overflow-hidden">
                     <div 
-                      className="h-full rounded-full transition-all duration-500"
+                      className="h-full rounded-full transition-all duration-300"
                       style={{ 
                         width: `${progress}%`,
                         backgroundColor: colors.bar,
