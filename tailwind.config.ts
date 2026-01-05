@@ -71,6 +71,11 @@ export default {
         latte: "hsl(var(--latte))",
         "flower-pink": "hsl(var(--flower-pink))",
         espresso: "hsl(var(--espresso))",
+        // Prefixed versions for lindezas-* classes
+        "lindezas-cream": "hsl(var(--cream))",
+        "lindezas-forest": "hsl(var(--forest))",
+        "lindezas-gold": "hsl(var(--gold))",
+        "lindezas-espresso": "hsl(var(--espresso))",
       },
       borderRadius: {
         lg: "var(--radius)",
