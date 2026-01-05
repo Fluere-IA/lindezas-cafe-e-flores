@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Receipt } from 'lucide-react';
+import { Receipt, ChefHat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logoLindezas from '@/assets/logo-lindezas.png';
 
@@ -12,16 +12,28 @@ export function Header() {
           alt="Lindezas Café & Flores" 
           className="h-10 w-auto object-contain"
         />
-        <Link to="/caixa">
-          <Button 
-            variant="secondary" 
-            size="sm"
-            className="gap-2"
-          >
-            <Receipt className="h-4 w-4" />
-            Caixa
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/cozinha">
+            <Button 
+              variant="secondary" 
+              size="sm"
+              className="gap-2"
+            >
+              <ChefHat className="h-4 w-4" />
+              Cozinha
+            </Button>
+          </Link>
+          <Link to="/caixa">
+            <Button 
+              variant="secondary" 
+              size="sm"
+              className="gap-2"
+            >
+              <Receipt className="h-4 w-4" />
+              Caixa
+            </Button>
+          </Link>
+        </div>
       </div>
     </header>
   );
