@@ -148,8 +148,13 @@ export function CartSheet({
                 key={item.product.id}
                 className="p-3 bg-card rounded-xl border border-border/50 shadow-soft space-y-2"
               >
-                {/* Product Name - Full width, no truncate */}
-                <p className="font-medium text-sm leading-snug">{item.product.name}</p>
+                {/* Product Name + Total Price */}
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-sm leading-snug flex-1">{item.product.name}</p>
+                  <span className="font-bold text-sm text-gold whitespace-nowrap">
+                    {formatPrice(item.product.price * item.quantity)}
+                  </span>
+                </div>
                 
                 {/* Controls Row */}
                 <div className="flex items-center justify-between">
@@ -176,13 +181,10 @@ export function CartSheet({
                     </button>
                   </div>
 
-                  {/* Price Info */}
+                  {/* Unit Price + Delete */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">
-                      {formatPrice(item.product.price)}
-                    </span>
-                    <span className="font-bold text-sm text-gold">
-                      {formatPrice(item.product.price * item.quantity)}
+                      {formatPrice(item.product.price)} cada
                     </span>
                     <button
                       onClick={() => {
