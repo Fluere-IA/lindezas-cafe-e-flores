@@ -1,6 +1,8 @@
-import { Minus, Plus, Trash2, ShoppingBag, Send } from 'lucide-react';
+import { useState } from 'react';
+import { Minus, Plus, Trash2, ShoppingBag, Send, User, Hash } from 'lucide-react';
 import { CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -13,6 +15,10 @@ import { cn } from '@/lib/utils';
 interface CartSheetProps {
   items: CartItem[];
   total: number;
+  customerName: string;
+  tableNumber: string;
+  onCustomerNameChange: (name: string) => void;
+  onTableNumberChange: (table: string) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onClearCart: () => void;
@@ -22,6 +28,10 @@ interface CartSheetProps {
 export function CartSheet({
   items,
   total,
+  customerName,
+  tableNumber,
+  onCustomerNameChange,
+  onTableNumberChange,
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
@@ -31,6 +41,7 @@ export function CartSheet({
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const hasIdentification = customerName.trim() || tableNumber.trim();
 
   return (
     <Sheet>
@@ -53,8 +64,8 @@ export function CartSheet({
         </Button>
       </SheetTrigger>
       
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl px-0">
-        <SheetHeader className="px-4 pb-4 border-b border-border">
+      <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl px-0 flex flex-col">
+        <SheetHeader className="px-4 pb-4 border-b border-border shrink-0">
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2">
               <ShoppingBag className="h-5 w-5 text-primary" />
@@ -74,7 +85,35 @@ export function CartSheet({
           </p>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" style={{ maxHeight: 'calc(85vh - 200px)' }}>
+        {/* Customer Identification */}
+        <div className="px-4 py-3 border-b border-border bg-secondary/20 shrink-0">
+          <p className="text-sm font-medium mb-2">Identificação</p>
+          <div className="flex gap-2">
+            <div className="flex-1 relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Seu nome"
+                value={customerName}
+                onChange={(e) => onCustomerNameChange(e.target.value.slice(0, 50))}
+                className="pl-9 h-10"
+                maxLength={50}
+              />
+            </div>
+            <div className="w-24 relative">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Mesa"
+                value={tableNumber}
+                onChange={(e) => onTableNumberChange(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                className="pl-9 h-10 text-center"
+                maxLength={2}
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <ShoppingBag className="h-16 w-16 mb-4 opacity-30" />
@@ -127,7 +166,7 @@ export function CartSheet({
           )}
         </div>
 
-        <div className="border-t border-border p-4 space-y-4 bg-background">
+        <div className="border-t border-border p-4 space-y-4 bg-background shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground text-lg">Total</span>
             <span className="font-display text-2xl font-bold">
@@ -137,16 +176,21 @@ export function CartSheet({
 
           <Button
             onClick={onCheckout}
-            disabled={items.length === 0}
+            disabled={items.length === 0 || !hasIdentification}
             size="lg"
             className={cn(
               'w-full h-14 text-lg font-semibold gap-2',
-              items.length === 0 && 'opacity-50'
+              (items.length === 0 || !hasIdentification) && 'opacity-50'
             )}
           >
             <Send className="h-5 w-5" />
             Enviar para Cozinha
           </Button>
+          {!hasIdentification && items.length > 0 && (
+            <p className="text-xs text-muted-foreground text-center">
+              Informe seu nome ou número da mesa
+            </p>
+          )}
         </div>
       </SheetContent>
     </Sheet>

@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { Header } from '@/components/pos/Header';
-import { CategoryTabs } from '@/components/pos/CategoryTabs';
+import { CategoryTabs, CategoryFilter } from '@/components/pos/CategoryTabs';
 import { SearchBar } from '@/components/pos/SearchBar';
 import { ProductGrid } from '@/components/pos/ProductGrid';
 import { CartSheet } from '@/components/pos/CartSheet';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
-import { CategoryFilter, Product } from '@/types';
+import { Product } from '@/types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [tableNumber, setTableNumber] = useState('');
   
   const { data: products = [], isLoading } = useProducts();
   const cart = useCart();
@@ -27,8 +29,20 @@ const Index = () => {
 
   const handleCheckout = async () => {
     if (cart.items.length === 0) return;
+    
+    const hasIdentification = customerName.trim() || tableNumber.trim();
+    if (!hasIdentification) {
+      toast.error('Informe seu nome ou número da mesa');
+      return;
+    }
 
     try {
+      // Build notes with customer info
+      const notes = [
+        customerName.trim() && `Cliente: ${customerName.trim()}`,
+        tableNumber.trim() && `Mesa: ${tableNumber.trim()}`,
+      ].filter(Boolean).join(' | ');
+
       // Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -36,6 +50,8 @@ const Index = () => {
           mode: 'mesa',
           total: cart.total,
           status: 'pending',
+          table_number: tableNumber.trim() ? parseInt(tableNumber) : null,
+          notes: notes || null,
         })
         .select()
         .single();
@@ -57,11 +73,14 @@ const Index = () => {
 
       if (itemsError) throw itemsError;
 
+      const identifier = customerName.trim() || `Mesa ${tableNumber}`;
       toast.success('Pedido enviado para a cozinha!', {
-        description: `Pedido #${order.order_number} - R$ ${cart.total.toFixed(2)}`,
+        description: `${identifier} - Pedido #${order.order_number}`,
       });
 
       cart.clearCart();
+      setCustomerName('');
+      setTableNumber('');
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Erro ao enviar pedido', {
@@ -102,6 +121,10 @@ const Index = () => {
       <CartSheet
         items={cart.items}
         total={cart.total}
+        customerName={customerName}
+        tableNumber={tableNumber}
+        onCustomerNameChange={setCustomerName}
+        onTableNumberChange={setTableNumber}
         onUpdateQuantity={cart.updateQuantity}
         onRemoveItem={cart.removeItem}
         onClearCart={cart.clearCart}

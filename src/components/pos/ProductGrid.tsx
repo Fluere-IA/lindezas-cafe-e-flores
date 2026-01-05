@@ -1,4 +1,5 @@
-import { Product, CategoryFilter } from '@/types';
+import { Product } from '@/types';
+import { CategoryFilter } from './CategoryTabs';
 import { ProductCard } from './ProductCard';
 import { Loader2 } from 'lucide-react';
 
@@ -12,9 +13,12 @@ interface ProductGridProps {
 
 export function ProductGrid({ products, filter, searchQuery, onAddToCart, isLoading }: ProductGridProps) {
   const filteredProducts = products.filter((product) => {
-    // Filter by category
-    if (filter !== 'all' && product.category?.type !== filter) {
-      return false;
+    // Filter by category name
+    if (filter !== 'all') {
+      const categoryName = product.category?.name?.toLowerCase();
+      if (categoryName !== filter) {
+        return false;
+      }
     }
     
     // Filter by search query
