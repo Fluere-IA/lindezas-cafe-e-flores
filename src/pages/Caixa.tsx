@@ -539,7 +539,10 @@ const Caixa = () => {
               <CardHeader className="pb-3 bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-lindezas-forest text-white border-0 px-3 py-1.5 text-base font-bold">
+                    <Badge 
+                      className="border-0 px-3 py-1.5 text-base font-bold"
+                      style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}
+                    >
                       Mesa {searchedTable}
                     </Badge>
                   </div>
@@ -603,7 +606,14 @@ const Caixa = () => {
                       onClick={() => paymentMode === 'by-items' && toggleItemSelection(item.id)}
                     >
                       {paymentMode === 'by-items' && (
-                        <Checkbox checked={selectedItems.has(item.id)} className="pointer-events-none border-lindezas-forest data-[state=checked]:bg-lindezas-forest" />
+                        <Checkbox 
+                          checked={selectedItems.has(item.id)} 
+                          className="pointer-events-none"
+                          style={{
+                            border: '2px solid #2D5A27',
+                            backgroundColor: selectedItems.has(item.id) ? '#2D5A27' : '#ffffff'
+                          }}
+                        />
                       )}
                       <span className="flex-1 truncate font-medium text-lindezas-espresso">{item.quantity}x {item.product?.name}</span>
                       <span className="font-bold text-lindezas-forest">{formatPrice(item.subtotal)}</span>
