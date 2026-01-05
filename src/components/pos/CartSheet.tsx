@@ -104,7 +104,6 @@ export function CartSheet({
               <p className="text-sm font-medium">Observações</p>
             </div>
             <Textarea
-              placeholder="Ex: Sem cebola, ponto da carne, alergias..."
               value={notes}
               onChange={(e) => onNotesChange(e.target.value.slice(0, 500))}
               className="min-h-[60px] text-sm border-2 border-gold/30 focus:border-gold bg-background resize-none"
