@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X } from 'lucide-react';
+import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -96,15 +96,24 @@ export function DashboardHeader() {
           </DropdownMenu>
         </div>
         
-        {/* Date - Hidden on small screens */}
-        <div className="hidden sm:flex items-center">
-          <p className="text-sm font-medium text-white/80">
+        {/* Settings & Date */}
+        <div className="flex items-center gap-2">
+          <p className="hidden sm:block text-sm font-medium text-white/80">
             {new Date().toLocaleDateString('pt-BR', {
               weekday: 'long',
               day: 'numeric',
               month: 'short',
             }).replace('.', '')}
           </p>
+          <Link
+            to="/configuracoes"
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              currentPath === '/configuracoes' ? 'bg-white/20' : 'hover:bg-white/10'
+            )}
+          >
+            <Settings className="h-5 w-5 text-white" />
+          </Link>
         </div>
       </div>
     </header>
