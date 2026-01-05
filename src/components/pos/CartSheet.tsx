@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Minus, Plus, Trash2, ShoppingBag, Send, Hash, MessageSquare } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Send, Hash, ChevronDown, ChevronUp } from 'lucide-react';
 import { CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,11 +38,20 @@ export function CartSheet({
   onClearCart,
   onCheckout,
 }: CartSheetProps) {
+  const [showNotes, setShowNotes] = useState(false);
+  
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const hasTableNumber = tableNumber.trim().length > 0;
+
+  // Haptic feedback helper
+  const vibrate = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(30);
+    }
+  };
 
   return (
     <Sheet>
@@ -65,144 +74,168 @@ export function CartSheet({
         </Button>
       </SheetTrigger>
       
-      <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl px-0 flex flex-col border-t-4 border-gold/50">
-        <SheetHeader className="px-5 pb-4 border-b border-border shrink-0">
-          <SheetTitle className="flex items-center gap-3 font-display text-xl">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <ShoppingBag className="h-5 w-5 text-primary" />
-            </div>
-            Pedido
-          </SheetTitle>
-          <p className="text-sm text-muted-foreground text-left pl-[52px]">
-            {items.length} {items.length === 1 ? 'item selecionado' : 'itens selecionados'}
-          </p>
-        </SheetHeader>
-
-        {/* Table Number and Notes */}
-        <div className="px-5 py-4 border-b border-border bg-gradient-to-r from-gold/5 to-gold/10 shrink-0 space-y-3">
-          <div className="flex items-center gap-4">
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0 flex flex-col border-t-4 border-gold/50">
+        {/* Compact Header */}
+        <SheetHeader className="px-4 py-3 border-b border-border shrink-0">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="flex items-center gap-2.5 font-display text-lg">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <ShoppingBag className="h-4 w-4 text-primary" />
+              </div>
+              Pedido
+              <span className="text-sm font-normal text-muted-foreground">
+                ({itemCount} {itemCount === 1 ? 'item' : 'itens'})
+              </span>
+            </SheetTitle>
+            
+            {/* Table Number - Inline */}
             <div className="flex items-center gap-2">
               <Hash className="h-4 w-4 text-gold" />
-              <p className="text-sm font-medium">Mesa</p>
-            </div>
-            <div className="w-20 relative">
               <Input
-                placeholder="Nº"
+                placeholder="Mesa"
                 value={tableNumber}
                 onChange={(e) => onTableNumberChange(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                className="h-11 text-center font-bold text-lg border-2 border-gold/30 focus:border-gold bg-background"
+                className="w-16 h-9 text-center font-bold text-base border-2 border-gold/30 focus:border-gold bg-background rounded-lg"
                 maxLength={2}
                 inputMode="numeric"
               />
             </div>
           </div>
+        </SheetHeader>
+
+        {/* Collapsible Notes Section */}
+        <div className="px-4 py-2 border-b border-border bg-secondary/30 shrink-0">
+          <button
+            onClick={() => setShowNotes(!showNotes)}
+            className="w-full flex items-center justify-between text-sm text-muted-foreground py-1"
+          >
+            <span className="flex items-center gap-2">
+              📝 Observações
+              {notes && <span className="text-xs bg-gold/20 text-gold px-1.5 py-0.5 rounded">Preenchido</span>}
+            </span>
+            {showNotes ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
           
-          {/* Order Notes */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-gold" />
-              <p className="text-sm font-medium">Observações</p>
+          {showNotes && (
+            <div className="pt-2 pb-1 animate-fade-in">
+              <Textarea
+                placeholder="Ex: Sem cebola, ponto da carne..."
+                value={notes}
+                onChange={(e) => onNotesChange(e.target.value.slice(0, 200))}
+                className="min-h-[50px] text-sm border border-border bg-background resize-none"
+                maxLength={200}
+              />
+              <p className="text-[10px] text-muted-foreground text-right mt-1">
+                {notes.length}/200
+              </p>
             </div>
-            <Textarea
-              value={notes}
-              onChange={(e) => onNotesChange(e.target.value.slice(0, 500))}
-              className="min-h-[60px] text-sm border-2 border-gold/30 focus:border-gold bg-background resize-none"
-              maxLength={500}
-            />
-          </div>
+          )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+        {/* Items List */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                <ShoppingBag className="h-10 w-10 opacity-30" />
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                <ShoppingBag className="h-8 w-8 opacity-30" />
               </div>
-              <p className="text-base font-display text-lg">Pedido vazio</p>
-              <p className="text-sm mt-1">Toque nos produtos para adicionar</p>
+              <p className="font-display text-base">Pedido vazio</p>
+              <p className="text-xs mt-1">Toque nos produtos para adicionar</p>
             </div>
           ) : (
-            items.map((item, index) => (
+            items.map((item) => (
               <div
                 key={item.product.id}
-                className="p-4 bg-card rounded-2xl border border-border/50 shadow-soft animate-scale-in"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-soft"
               >
-                {/* Product name - full width */}
-                <p className="font-medium text-sm leading-tight mb-2">{item.product.name}</p>
-                
-                {/* Controls row */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <p className="text-xs text-muted-foreground mr-2">
-                      {formatPrice(item.product.price)}
-                    </p>
-                    <button
-                      onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
-                      className="w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors border border-border/50"
-                    >
-                      <Minus className="h-3.5 w-3.5" />
-                    </button>
-                    <span className="w-7 text-center font-bold">{item.quantity}</span>
-                    <button
-                      onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
-                      className="w-8 h-8 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors border border-primary/20"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                {/* Quantity Controls - Compact */}
+                <div className="flex items-center gap-0.5 bg-secondary/50 rounded-lg p-0.5">
+                  <button
+                    onClick={() => {
+                      vibrate();
+                      onUpdateQuantity(item.product.id, item.quantity - 1);
+                    }}
+                    className="w-8 h-8 rounded-lg bg-white hover:bg-gray-50 flex items-center justify-center transition-colors active:scale-95 shadow-sm"
+                  >
+                    <Minus className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                  <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
+                  <button
+                    onClick={() => {
+                      vibrate();
+                      onUpdateQuantity(item.product.id, item.quantity + 1);
+                    }}
+                    className="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors active:scale-95"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
 
-                  <div className="flex items-center gap-2">
-                    <p className="font-display text-base font-bold text-gold">
-                      {formatPrice(item.product.price * item.quantity)}
-                    </p>
-                    <button
-                      onClick={() => onRemoveItem(item.product.id)}
-                      className="w-8 h-8 rounded-full hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                {/* Product Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm leading-tight truncate">{item.product.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatPrice(item.product.price)} cada
+                  </p>
+                </div>
+
+                {/* Price & Delete */}
+                <div className="flex items-center gap-1.5">
+                  <p className="font-bold text-sm text-gold whitespace-nowrap">
+                    {formatPrice(item.product.price * item.quantity)}
+                  </p>
+                  <button
+                    onClick={() => {
+                      vibrate();
+                      onRemoveItem(item.product.id);
+                    }}
+                    className="w-7 h-7 rounded-full hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors active:scale-90"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             ))
           )}
         </div>
 
-        <div className="border-t-2 border-gold/20 p-5 space-y-4 bg-gradient-to-t from-gold/5 to-transparent shrink-0">
-          {items.length > 0 && (
-            <div className="flex justify-center">
-              <button
-                onClick={onClearCart}
-                className="text-xs text-muted-foreground hover:text-destructive transition-colors px-4 py-2 rounded-full hover:bg-destructive/10 border border-border"
-              >
-                Limpar tudo
-              </button>
-            </div>
-          )}
-          
+        {/* Footer - Compact */}
+        <div className="border-t-2 border-gold/20 px-4 py-3 bg-gradient-to-t from-gold/5 to-transparent shrink-0 space-y-3">
+          {/* Total & Clear */}
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-base">Total do pedido</span>
-            <span className="font-display text-3xl font-bold text-primary">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">Total</span>
+              {items.length > 0 && (
+                <button
+                  onClick={onClearCart}
+                  className="text-[10px] text-muted-foreground hover:text-destructive transition-colors px-2 py-1 rounded-full hover:bg-destructive/10 border border-border"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+            <span className="font-display text-2xl font-bold text-primary">
               {formatPrice(total)}
             </span>
           </div>
 
+          {/* Submit Button */}
           <Button
             onClick={onCheckout}
             disabled={items.length === 0 || !hasTableNumber}
             size="lg"
             className={cn(
-              'w-full h-14 text-lg font-semibold gap-3 bg-gradient-to-r from-primary to-forest-light hover:from-forest-light hover:to-primary shadow-elevated transition-all duration-300',
+              'w-full h-12 text-base font-semibold gap-2 bg-gradient-to-r from-primary to-forest-light hover:from-forest-light hover:to-primary shadow-elevated transition-all duration-300 active:scale-[0.98]',
               (items.length === 0 || !hasTableNumber) && 'opacity-50'
             )}
           >
-            <Send className="h-5 w-5" />
+            <Send className="h-4 w-4" />
             <span className="font-display">Enviar para Cozinha</span>
           </Button>
+          
           {!hasTableNumber && items.length > 0 && (
-            <p className="text-xs text-gold text-center font-medium">
-              ⚠️ Informe o número da mesa para continuar
+            <p className="text-[11px] text-gold text-center font-medium">
+              ⚠️ Informe o número da mesa
             </p>
           )}
         </div>
