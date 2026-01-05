@@ -20,7 +20,8 @@ import {
   Users,
   Minus,
   Plus,
-  X
+  X,
+  DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -51,7 +52,7 @@ interface ItemWithOrder extends OrderItem {
   orderId: string;
 }
 
-type PaymentMode = 'full' | 'by-items' | 'by-people';
+type PaymentMode = 'full' | 'by-items' | 'by-people' | 'by-value';
 
 const Caixa = () => {
   const [tableNumber, setTableNumber] = useState('');
@@ -59,6 +60,8 @@ const Caixa = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('full');
   const [numberOfPeople, setNumberOfPeople] = useState(2);
+  const [paidPeople, setPaidPeople] = useState(0);
+  const [customValue, setCustomValue] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'dinheiro' | 'cartao' | 'pix' | null>(null);
   const queryClient = useQueryClient();
@@ -66,9 +69,15 @@ const Caixa = () => {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const parseInputValue = (value: string): number => {
+    const cleaned = value.replace(/[^\d]/g, '');
+    return cleaned ? parseInt(cleaned) / 100 : 0;
+  };
+
+  const formatInputValue = (value: string): string => {
+    const numValue = parseInputValue(value);
+    if (numValue === 0) return '';
+    return numValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const { data: orders = [], isLoading } = useQuery({
@@ -117,6 +126,8 @@ const Caixa = () => {
   const resetPaymentState = () => {
     setPaymentMode('full');
     setNumberOfPeople(2);
+    setPaidPeople(0);
+    setCustomValue('');
     setSelectedItems(new Set());
     setSelectedPaymentMethod(null);
   };
@@ -135,105 +146,6 @@ const Caixa = () => {
       newSelected.add(itemId);
     }
     setSelectedItems(newSelected);
-  };
-
-  const handlePayment = async (method: 'dinheiro' | 'cartao' | 'pix') => {
-    if (orders.length === 0) return;
-    
-    if (paymentMode === 'by-items' && selectedItems.size === 0) {
-      toast.error('Selecione os itens a serem pagos');
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const methodLabels = {
-        dinheiro: 'Dinheiro',
-        cartao: 'Cartão',
-        pix: 'PIX'
-      };
-
-      if (paymentMode === 'by-items') {
-        // Partial payment - mark selected items as paid
-        const selectedItemIds = Array.from(selectedItems);
-        
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .update({ 
-            is_paid: true, 
-            paid_at: new Date().toISOString(),
-            payment_method: method 
-          })
-          .in('id', selectedItemIds);
-
-        if (itemsError) throw itemsError;
-
-        const selectedTotal = unpaidItems
-          .filter(item => selectedItems.has(item.id))
-          .reduce((sum, item) => sum + Number(item.subtotal), 0);
-
-        toast.success(`Pagamento registrado!`, {
-          description: `${selectedItems.size} ${selectedItems.size === 1 ? 'item' : 'itens'} - ${methodLabels[method]} - ${formatPrice(selectedTotal)}`,
-        });
-
-        // Check if all items are now paid
-        const remainingUnpaid = unpaidItems.filter(item => !selectedItems.has(item.id));
-        if (remainingUnpaid.length === 0) {
-          const orderIds = orders.map(o => o.id);
-          await supabase
-            .from('orders')
-            .update({ status: 'paid', notes: `Pago via ${method}` })
-            .in('id', orderIds);
-
-          setSearchedTable(null);
-          setTableNumber('');
-        }
-        
-        resetPaymentState();
-        queryClient.invalidateQueries({ queryKey: ['table-orders'] });
-      } else if (paymentMode === 'by-people') {
-        toast.success(`Pagamento de 1 pessoa registrado!`, {
-          description: `${methodLabels[method]} - ${formatPrice(perPersonAmount)}`,
-        });
-        resetPaymentState();
-      } else {
-        // Full payment
-        const allItemIds = unpaidItems.map(item => item.id);
-        
-        if (allItemIds.length > 0) {
-          await supabase
-            .from('order_items')
-            .update({ 
-              is_paid: true, 
-              paid_at: new Date().toISOString(),
-              payment_method: method 
-            })
-            .in('id', allItemIds);
-        }
-
-        const orderIds = orders.map(o => o.id);
-        
-        const { error } = await supabase
-          .from('orders')
-          .update({ status: 'paid', notes: `Pago via ${method}` })
-          .in('id', orderIds);
-
-        if (error) throw error;
-
-        toast.success(`Conta fechada!`, {
-          description: `Mesa ${searchedTable} - ${methodLabels[method]} - ${formatPrice(totalGeral)}`,
-        });
-
-        setSearchedTable(null);
-        setTableNumber('');
-        queryClient.invalidateQueries({ queryKey: ['table-orders'] });
-      }
-    } catch (error) {
-      console.error('Error processing payment:', error);
-      toast.error('Erro ao processar pagamento');
-    } finally {
-      setIsProcessing(false);
-    }
   };
 
   // Calculate totals
@@ -256,11 +168,112 @@ const Caixa = () => {
     : totalGeral;
 
   const perPersonAmount = paymentMode === 'by-people' ? totalGeral / numberOfPeople : 0;
+  const remainingAfterPaid = paymentMode === 'by-people' ? totalGeral - (perPersonAmount * paidPeople) : totalGeral;
+  const customAmount = parseInputValue(customValue);
+  const remainingAfterCustom = totalGeral - customAmount;
 
   const getPaymentTotal = () => {
     if (paymentMode === 'by-items') return selectedTotal;
     if (paymentMode === 'by-people') return perPersonAmount;
+    if (paymentMode === 'by-value') return Math.min(customAmount, totalGeral);
     return totalGeral;
+  };
+
+  const canPay = () => {
+    if (!selectedPaymentMethod) return false;
+    if (paymentMode === 'by-items' && selectedItems.size === 0) return false;
+    if (paymentMode === 'by-value' && (customAmount <= 0 || customAmount > totalGeral)) return false;
+    if (paymentMode === 'by-people' && paidPeople >= numberOfPeople) return false;
+    return true;
+  };
+
+  const handlePayment = async (method: 'dinheiro' | 'cartao' | 'pix') => {
+    if (orders.length === 0 || !canPay()) return;
+
+    setIsProcessing(true);
+    try {
+      const methodLabels = { dinheiro: 'Dinheiro', cartao: 'Cartão', pix: 'PIX' };
+      const paymentTotal = getPaymentTotal();
+
+      if (paymentMode === 'by-items') {
+        const selectedItemIds = Array.from(selectedItems);
+        
+        await supabase
+          .from('order_items')
+          .update({ is_paid: true, paid_at: new Date().toISOString(), payment_method: method })
+          .in('id', selectedItemIds);
+
+        toast.success(`Pagamento registrado!`, {
+          description: `${methodLabels[method]} - ${formatPrice(selectedTotal)}`,
+        });
+
+        const remainingUnpaid = unpaidItems.filter(item => !selectedItems.has(item.id));
+        if (remainingUnpaid.length === 0) {
+          await supabase.from('orders').update({ status: 'paid' }).in('id', orders.map(o => o.id));
+          setSearchedTable(null);
+          setTableNumber('');
+        }
+        
+        resetPaymentState();
+        queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+
+      } else if (paymentMode === 'by-people') {
+        const newPaidPeople = paidPeople + 1;
+        setPaidPeople(newPaidPeople);
+        
+        toast.success(`Pagamento ${newPaidPeople}/${numberOfPeople} registrado!`, {
+          description: `${methodLabels[method]} - ${formatPrice(perPersonAmount)}`,
+        });
+
+        if (newPaidPeople >= numberOfPeople) {
+          // All people paid, close the bill
+          await supabase.from('order_items').update({ is_paid: true, paid_at: new Date().toISOString(), payment_method: method }).in('id', unpaidItems.map(i => i.id));
+          await supabase.from('orders').update({ status: 'paid' }).in('id', orders.map(o => o.id));
+          
+          toast.success('Conta fechada!', { description: `Mesa ${searchedTable} - Total: ${formatPrice(totalGeral)}` });
+          setSearchedTable(null);
+          setTableNumber('');
+          queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+        }
+        setSelectedPaymentMethod(null);
+
+      } else if (paymentMode === 'by-value') {
+        toast.success(`Pagamento parcial registrado!`, {
+          description: `${methodLabels[method]} - ${formatPrice(customAmount)}`,
+        });
+
+        if (customAmount >= totalGeral) {
+          await supabase.from('order_items').update({ is_paid: true, paid_at: new Date().toISOString(), payment_method: method }).in('id', unpaidItems.map(i => i.id));
+          await supabase.from('orders').update({ status: 'paid' }).in('id', orders.map(o => o.id));
+          setSearchedTable(null);
+          setTableNumber('');
+          queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+        }
+        
+        setCustomValue('');
+        setSelectedPaymentMethod(null);
+
+      } else {
+        // Full payment
+        if (unpaidItems.length > 0) {
+          await supabase.from('order_items').update({ is_paid: true, paid_at: new Date().toISOString(), payment_method: method }).in('id', unpaidItems.map(i => i.id));
+        }
+        await supabase.from('orders').update({ status: 'paid' }).in('id', orders.map(o => o.id));
+
+        toast.success(`Conta fechada!`, {
+          description: `Mesa ${searchedTable} - ${methodLabels[method]} - ${formatPrice(totalGeral)}`,
+        });
+
+        setSearchedTable(null);
+        setTableNumber('');
+        queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast.error('Erro ao processar pagamento');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -268,15 +281,9 @@ const Caixa = () => {
       <DashboardHeader />
 
       <main className="p-4 max-w-2xl mx-auto space-y-4">
-        {/* Search by Table */}
+        {/* Search */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Hash className="h-5 w-5 text-primary" />
-              Buscar Mesa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -291,19 +298,13 @@ const Caixa = () => {
                   maxLength={2}
                 />
               </div>
-              <Button 
-                onClick={handleSearch} 
-                size="lg" 
-                className="h-12 px-6"
-              >
-                <Search className="h-5 w-5 mr-2" />
-                Buscar
+              <Button onClick={handleSearch} size="lg" className="h-12 px-6">
+                <Search className="h-5 w-5" />
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Results */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -312,12 +313,9 @@ const Caixa = () => {
 
         {searchedTable && !isLoading && orders.length === 0 && (
           <Card className="border-dashed">
-            <CardContent className="py-12 text-center">
-              <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-lg font-medium">Nenhum pedido pendente</p>
-              <p className="text-sm text-muted-foreground">
-                Mesa {searchedTable} não possui pedidos em aberto
-              </p>
+            <CardContent className="py-8 text-center">
+              <AlertCircle className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+              <p className="font-medium">Mesa {searchedTable} sem pedidos</p>
             </CardContent>
           </Card>
         )}
@@ -328,35 +326,26 @@ const Caixa = () => {
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    Mesa {searchedTable}
-                    <Badge variant="secondary" className="font-normal">
-                      {unpaidItems.length} {unpaidItems.length === 1 ? 'item' : 'itens'}
-                    </Badge>
-                  </CardTitle>
-                  <span className="text-2xl font-bold text-primary">
-                    {formatPrice(totalGeral)}
-                  </span>
+                  <CardTitle className="text-lg">Mesa {searchedTable}</CardTitle>
+                  <span className="text-2xl font-bold text-primary">{formatPrice(totalGeral)}</span>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Paid Items Summary */}
+              <CardContent className="space-y-2">
                 {paidItems.length > 0 && (
-                  <div className="flex items-center justify-between py-2 px-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <span className="text-sm text-green-700">{paidItems.length} {paidItems.length === 1 ? 'item já pago' : 'itens já pagos'}</span>
-                    </div>
+                  <div className="flex items-center justify-between py-2 px-3 bg-green-500/10 rounded-lg text-sm">
+                    <span className="text-green-700 flex items-center gap-1">
+                      <CheckCircle2 className="h-4 w-4" />
+                      {paidItems.length} pago(s)
+                    </span>
                     <span className="font-medium text-green-700">{formatPrice(totalPago)}</span>
                   </div>
                 )}
 
-                {/* Unpaid Items List */}
-                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                <div className="space-y-1 max-h-40 overflow-y-auto">
                   {unpaidItems.map((item, index) => (
                     <div 
                       key={`${item.id}-${index}`}
-                      className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-all ${
+                      className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-all text-sm ${
                         paymentMode === 'by-items'
                           ? selectedItems.has(item.id)
                             ? 'bg-primary/15 border-2 border-primary'
@@ -366,190 +355,147 @@ const Caixa = () => {
                       onClick={() => paymentMode === 'by-items' && toggleItemSelection(item.id)}
                     >
                       {paymentMode === 'by-items' && (
-                        <Checkbox
-                          checked={selectedItems.has(item.id)}
-                          className="pointer-events-none"
-                        />
+                        <Checkbox checked={selectedItems.has(item.id)} className="pointer-events-none" />
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{item.quantity}x {item.product?.name}</p>
-                      </div>
-                      <p className="font-semibold text-primary whitespace-nowrap">
-                        {formatPrice(item.subtotal)}
-                      </p>
+                      <span className="flex-1 truncate">{item.quantity}x {item.product?.name}</span>
+                      <span className="font-semibold text-primary">{formatPrice(item.subtotal)}</span>
                     </div>
                   ))}
                 </div>
-
-                {unpaidItems.length === 0 && (
-                  <div className="text-center py-6">
-                    <CheckCircle2 className="h-10 w-10 mx-auto text-green-500 mb-2" />
-                    <p className="font-medium text-green-600">Conta fechada!</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
-            {/* Payment Options */}
+            {/* Payment */}
             {unpaidItems.length > 0 && (
               <Card>
                 <CardContent className="pt-4 space-y-4">
-                  {/* How to pay */}
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Como deseja pagar?</p>
-                    <div className="grid grid-cols-3 gap-2">
+                  {/* Payment Mode */}
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[
+                      { mode: 'full' as const, icon: CreditCard, label: 'Tudo' },
+                      { mode: 'by-items' as const, icon: CheckCircle2, label: 'Itens' },
+                      { mode: 'by-people' as const, icon: Users, label: 'Dividir' },
+                      { mode: 'by-value' as const, icon: DollarSign, label: 'Valor' },
+                    ].map(({ mode, icon: Icon, label }) => (
                       <Button
-                        variant={paymentMode === 'full' ? 'default' : 'outline'}
+                        key={mode}
+                        variant={paymentMode === mode ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => { setPaymentMode('full'); setSelectedItems(new Set()); }}
-                        className="h-auto py-3 flex-col gap-1"
+                        onClick={() => { 
+                          setPaymentMode(mode); 
+                          setSelectedItems(new Set()); 
+                          setPaidPeople(0);
+                          setCustomValue('');
+                        }}
+                        className="h-auto py-2 flex-col gap-0.5"
                       >
-                        <CreditCard className="h-5 w-5" />
-                        <span className="text-xs">Conta toda</span>
+                        <Icon className="h-4 w-4" />
+                        <span className="text-[10px]">{label}</span>
                       </Button>
-                      <Button
-                        variant={paymentMode === 'by-items' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setPaymentMode('by-items')}
-                        className="h-auto py-3 flex-col gap-1"
-                      >
-                        <CheckCircle2 className="h-5 w-5" />
-                        <span className="text-xs">Por itens</span>
-                      </Button>
-                      <Button
-                        variant={paymentMode === 'by-people' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => { setPaymentMode('by-people'); setSelectedItems(new Set()); }}
-                        className="h-auto py-3 flex-col gap-1"
-                      >
-                        <Users className="h-5 w-5" />
-                        <span className="text-xs">Dividir igual</span>
-                      </Button>
-                    </div>
+                    ))}
                   </div>
 
-                  {/* By Items Selection Info */}
+                  {/* Mode-specific UI */}
                   {paymentMode === 'by-items' && (
-                    <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                      {selectedItems.size === 0 
+                        ? <span className="text-muted-foreground">Toque nos itens para selecionar</span>
+                        : <div className="flex justify-between items-center">
+                            <span>{selectedItems.size} selecionado(s)</span>
+                            <span className="font-bold text-primary">{formatPrice(selectedTotal)}</span>
+                          </div>
+                      }
+                    </div>
+                  )}
+
+                  {paymentMode === 'by-people' && (
+                    <div className="bg-primary/10 rounded-lg p-3 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">
-                          {selectedItems.size === 0 
-                            ? 'Toque nos itens acima para selecionar'
-                            : `${selectedItems.size} ${selectedItems.size === 1 ? 'item selecionado' : 'itens selecionados'}`
-                          }
-                        </span>
-                        {selectedItems.size > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedItems(new Set())}
-                            className="h-7 px-2 text-xs"
-                          >
-                            <X className="h-3 w-3 mr-1" />
-                            Limpar
+                        <span className="text-sm">Pessoas:</span>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setNumberOfPeople(Math.max(2, numberOfPeople - 1))} disabled={numberOfPeople <= 2}>
+                            <Minus className="h-4 w-4" />
                           </Button>
-                        )}
+                          <span className="font-bold w-6 text-center">{numberOfPeople}</span>
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setNumberOfPeople(numberOfPeople + 1)}>
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      {selectedItems.size > 0 && (
-                        <p className="text-lg font-bold text-primary mt-1">
-                          {formatPrice(selectedTotal)}
-                        </p>
+                      <Separator />
+                      <div className="flex justify-between text-sm">
+                        <span>Cada um paga:</span>
+                        <span className="font-bold text-primary text-lg">{formatPrice(perPersonAmount)}</span>
+                      </div>
+                      {paidPeople > 0 && (
+                        <>
+                          <Separator />
+                          <div className="flex justify-between text-sm">
+                            <span className="text-green-600">{paidPeople} já pagou</span>
+                            <span className="font-medium">Falta: {formatPrice(remainingAfterPaid)}</span>
+                          </div>
+                        </>
                       )}
                     </div>
                   )}
 
-                  {/* By People Selector */}
-                  {paymentMode === 'by-people' && (
-                    <div className="bg-primary/10 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium">Dividir entre:</span>
-                        <div className="flex items-center gap-3">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9"
-                            onClick={() => setNumberOfPeople(Math.max(2, numberOfPeople - 1))}
-                            disabled={numberOfPeople <= 2}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="text-xl font-bold w-8 text-center">{numberOfPeople}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9"
-                            onClick={() => setNumberOfPeople(Math.min(20, numberOfPeople + 1))}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                          <span className="text-muted-foreground">pessoas</span>
+                  {paymentMode === 'by-value' && (
+                    <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0,00"
+                          value={formatInputValue(customValue)}
+                          onChange={(e) => setCustomValue(e.target.value.replace(/[^\d]/g, ''))}
+                          className="pl-10 h-12 text-xl font-bold text-right"
+                        />
+                      </div>
+                      {customAmount > 0 && customAmount < totalGeral && (
+                        <div className="flex justify-between text-sm pt-1">
+                          <span className="text-muted-foreground">Restará:</span>
+                          <span className="font-medium text-orange-600">{formatPrice(remainingAfterCustom)}</span>
                         </div>
-                      </div>
-                      <Separator className="my-3" />
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Valor por pessoa:</span>
-                        <span className="text-2xl font-bold text-primary">{formatPrice(perPersonAmount)}</span>
-                      </div>
+                      )}
+                      {customAmount > totalGeral && (
+                        <p className="text-xs text-destructive">Valor maior que o total</p>
+                      )}
                     </div>
                   )}
 
                   <Separator />
 
                   {/* Payment Method */}
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Forma de pagamento</p>
-                    <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { method: 'dinheiro' as const, icon: Banknote, label: 'Dinheiro' },
+                      { method: 'cartao' as const, icon: CreditCard, label: 'Cartão' },
+                      { method: 'pix' as const, icon: QrCode, label: 'PIX' },
+                    ].map(({ method, icon: Icon, label }) => (
                       <Button
-                        variant={selectedPaymentMethod === 'dinheiro' ? 'default' : 'outline'}
-                        onClick={() => setSelectedPaymentMethod('dinheiro')}
-                        disabled={isProcessing || (paymentMode === 'by-items' && selectedItems.size === 0)}
-                        className="h-14 flex-col gap-1"
+                        key={method}
+                        variant={selectedPaymentMethod === method ? 'default' : 'outline'}
+                        onClick={() => setSelectedPaymentMethod(method)}
+                        disabled={isProcessing}
+                        className="h-12 flex-col gap-0.5"
                       >
-                        <Banknote className="h-5 w-5" />
-                        <span className="text-xs">Dinheiro</span>
+                        <Icon className="h-4 w-4" />
+                        <span className="text-xs">{label}</span>
                       </Button>
-                      <Button
-                        variant={selectedPaymentMethod === 'cartao' ? 'default' : 'outline'}
-                        onClick={() => setSelectedPaymentMethod('cartao')}
-                        disabled={isProcessing || (paymentMode === 'by-items' && selectedItems.size === 0)}
-                        className="h-14 flex-col gap-1"
-                      >
-                        <CreditCard className="h-5 w-5" />
-                        <span className="text-xs">Cartão</span>
-                      </Button>
-                      <Button
-                        variant={selectedPaymentMethod === 'pix' ? 'default' : 'outline'}
-                        onClick={() => setSelectedPaymentMethod('pix')}
-                        disabled={isProcessing || (paymentMode === 'by-items' && selectedItems.size === 0)}
-                        className="h-14 flex-col gap-1"
-                      >
-                        <QrCode className="h-5 w-5" />
-                        <span className="text-xs">PIX</span>
-                      </Button>
-                    </div>
+                    ))}
                   </div>
 
-                  {/* Confirm Button */}
+                  {/* Confirm */}
                   <Button
-                    className="w-full h-14 text-lg"
-                    size="lg"
+                    className="w-full h-12 text-base"
                     onClick={() => selectedPaymentMethod && handlePayment(selectedPaymentMethod)}
-                    disabled={
-                      isProcessing || 
-                      !selectedPaymentMethod || 
-                      (paymentMode === 'by-items' && selectedItems.size === 0)
-                    }
+                    disabled={isProcessing || !canPay()}
                   >
                     {isProcessing ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                        Processando...
-                      </>
+                      <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
                     ) : (
-                      <>
-                        <CheckCircle2 className="h-5 w-5 mr-2" />
-                        Confirmar {formatPrice(getPaymentTotal())}
-                      </>
+                      <><CheckCircle2 className="h-4 w-4 mr-2" /> Confirmar {formatPrice(getPaymentTotal())}</>
                     )}
                   </Button>
                 </CardContent>
