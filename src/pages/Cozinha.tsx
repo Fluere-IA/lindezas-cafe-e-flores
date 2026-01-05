@@ -253,21 +253,30 @@ const Cozinha = () => {
                           )}
                         </div>
                       </div>
-                      <div className={`flex items-center gap-2 text-sm mt-2 ${
-                        isUrgent ? 'text-red-600 font-semibold' : 'text-muted-foreground'
-                      }`}>
-                        <div className={`p-1.5 rounded-full ${isUrgent ? 'bg-red-500/20' : 'bg-lindezas-forest/10'}`}>
-                          <Clock className="h-3.5 w-3.5" />
+                      {/* Waiting Time Progress Bar */}
+                      <div className="mt-3">
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ 
+                              width: `${Math.min((elapsed / 20) * 100, 100)}%`,
+                              backgroundColor: elapsed < 5 ? '#16a34a' : elapsed < 10 ? '#eab308' : elapsed < 15 ? '#f97316' : '#dc2626',
+                            }}
+                          />
                         </div>
-                        <span>{formatTime(order.created_at)}</span>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="font-bold">{elapsed} min</span>
-                        {isUrgent && (
-                          <Badge className="bg-red-500 text-white border-0 gap-1 animate-bounce">
-                            <AlertCircle className="h-3 w-3" />
-                            Atrasado
-                          </Badge>
-                        )}
+                        <div className={`flex items-center gap-2 text-sm mt-2 ${
+                          isUrgent ? 'text-red-600 font-semibold' : 'text-muted-foreground'
+                        }`}>
+                          <span>{formatTime(order.created_at)}</span>
+                          <span>•</span>
+                          <span className="font-bold">{elapsed} min</span>
+                          {isUrgent && (
+                            <Badge className="bg-red-500 border-0 gap-1 animate-bounce" style={{ color: '#ffffff' }}>
+                              <AlertCircle className="h-3 w-3" />
+                              Atrasado
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </CardHeader>
 
@@ -278,7 +287,10 @@ const Cozinha = () => {
                             key={item.id}
                             className="flex items-center gap-3 py-2 border-b border-lindezas-gold/20 last:border-0"
                           >
-                            <span className="font-bold text-xl text-lindezas-gold min-w-[2.5rem] text-center bg-lindezas-forest rounded-lg py-1 text-white">
+                            <span 
+                              className="font-bold text-lg min-w-[2.5rem] text-center rounded-lg py-1"
+                              style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}
+                            >
                               {item.quantity}x
                             </span>
                             <span className="font-medium text-base text-lindezas-forest">
@@ -292,14 +304,15 @@ const Cozinha = () => {
                         onClick={() => handleMarkReady(order)}
                         disabled={isProcessing}
                         size="lg"
-                        className="w-full h-14 text-lg font-bold gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                        className="w-full h-14 text-lg font-bold gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                        style={{ color: '#ffffff' }}
                       >
                         {isProcessing ? (
                           <Loader2 className="h-5 w-5 animate-spin" />
                         ) : (
                           <CheckCircle2 className="h-5 w-5" />
                         )}
-                        Marcar como Pronto
+                        Marcar como Feito
                       </Button>
                     </CardContent>
                   </Card>
@@ -323,11 +336,11 @@ const Cozinha = () => {
               <Card className="border-dashed border-2 border-lindezas-gold/30 max-w-md mx-auto mt-12 bg-white/80 backdrop-blur-sm">
                 <CardContent className="py-16 text-center">
                   <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-lindezas-gold to-lindezas-gold/80 flex items-center justify-center mb-4 shadow-lg">
-                    <Package className="h-10 w-10 text-white" />
+                    <Package className="h-10 w-10" style={{ color: '#ffffff' }} />
                   </div>
-                  <p className="text-2xl font-display font-bold text-lindezas-forest">Nenhum pedido feito</p>
+                  <p className="text-2xl font-display font-bold text-lindezas-forest">Nenhum pedido entregue</p>
                   <p className="text-muted-foreground mt-2">
-                    Os pedidos feitos aparecerão aqui
+                    Os pedidos entregues aparecerão aqui
                   </p>
                 </CardContent>
               </Card>
@@ -353,7 +366,7 @@ const Cozinha = () => {
                         )}
                         <Badge className="border-0 shadow-md gap-1" style={{ backgroundColor: '#D4A84B', color: '#ffffff' }}>
                           <CheckCircle2 className="h-3 w-3" />
-                          Feito
+                          Entregue
                         </Badge>
                       </div>
                     </div>
