@@ -206,7 +206,7 @@ export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps)
           <p className="font-display text-3xl font-bold" style={{ color: '#16a34a' }}>
             {status?.readyOrders || 0}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">prontos para servir</p>
+          <p className="text-xs text-muted-foreground mt-1">pedidos finalizados</p>
         </div>
 
         {/* Open Amount */}
