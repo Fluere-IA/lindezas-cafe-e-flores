@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Minus, Plus, Trash2, ShoppingBag, Send, Hash, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Send, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -89,13 +89,13 @@ export function CartSheet({
             </SheetTitle>
             
             {/* Table Number - Inline */}
-            <div className="flex items-center gap-2">
-              <Hash className="h-4 w-4 text-gold" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-muted-foreground">Mesa</span>
               <Input
                 placeholder="Nº"
                 value={tableNumber}
                 onChange={(e) => onTableNumberChange(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                className="w-14 h-9 text-center font-bold text-base border-2 border-gold/30 focus:border-gold bg-background rounded-lg"
+                className="w-12 h-8 text-center font-bold text-sm border-2 border-gold/30 focus:border-gold bg-background rounded-lg placeholder:text-xs placeholder:font-normal"
                 maxLength={2}
                 inputMode="numeric"
               />
@@ -146,53 +146,54 @@ export function CartSheet({
             items.map((item) => (
               <div
                 key={item.product.id}
-                className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-soft"
+                className="p-3 bg-card rounded-xl border border-border/50 shadow-soft space-y-2"
               >
-                {/* Quantity Controls - Compact */}
-                <div className="flex items-center gap-0.5 bg-secondary/50 rounded-lg p-0.5">
-                  <button
-                    onClick={() => {
-                      vibrate();
-                      onUpdateQuantity(item.product.id, item.quantity - 1);
-                    }}
-                    className="w-8 h-8 rounded-lg bg-white hover:bg-gray-50 flex items-center justify-center transition-colors active:scale-95 shadow-sm"
-                  >
-                    <Minus className="h-3.5 w-3.5 text-muted-foreground" />
-                  </button>
-                  <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
-                  <button
-                    onClick={() => {
-                      vibrate();
-                      onUpdateQuantity(item.product.id, item.quantity + 1);
-                    }}
-                    className="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors active:scale-95"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                {/* Product Name - Full width, no truncate */}
+                <p className="font-medium text-sm leading-snug">{item.product.name}</p>
+                
+                {/* Controls Row */}
+                <div className="flex items-center justify-between">
+                  {/* Quantity Controls - Compact */}
+                  <div className="flex items-center gap-0.5 bg-secondary/50 rounded-lg p-0.5">
+                    <button
+                      onClick={() => {
+                        vibrate();
+                        onUpdateQuantity(item.product.id, item.quantity - 1);
+                      }}
+                      className="w-7 h-7 rounded-md bg-white hover:bg-gray-50 flex items-center justify-center transition-colors active:scale-95 shadow-sm"
+                    >
+                      <Minus className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                    <span className="w-6 text-center font-bold text-sm">{item.quantity}</span>
+                    <button
+                      onClick={() => {
+                        vibrate();
+                        onUpdateQuantity(item.product.id, item.quantity + 1);
+                      }}
+                      className="w-7 h-7 rounded-md bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors active:scale-95"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
 
-                {/* Product Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm leading-tight truncate">{item.product.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatPrice(item.product.price)} cada
-                  </p>
-                </div>
-
-                {/* Price & Delete */}
-                <div className="flex items-center gap-1.5">
-                  <p className="font-bold text-sm text-gold whitespace-nowrap">
-                    {formatPrice(item.product.price * item.quantity)}
-                  </p>
-                  <button
-                    onClick={() => {
-                      vibrate();
-                      onRemoveItem(item.product.id);
-                    }}
-                    className="w-7 h-7 rounded-full hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors active:scale-90"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  {/* Price Info */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {formatPrice(item.product.price)}
+                    </span>
+                    <span className="font-bold text-sm text-gold">
+                      {formatPrice(item.product.price * item.quantity)}
+                    </span>
+                    <button
+                      onClick={() => {
+                        vibrate();
+                        onRemoveItem(item.product.id);
+                      }}
+                      className="w-6 h-6 rounded-full hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors active:scale-90"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
