@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Receipt, ChefHat } from 'lucide-react';
+import { Receipt, ChefHat, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logoLindezas from '@/assets/logo-lindezas.png';
 
@@ -21,6 +21,16 @@ export function Header() {
             >
               <ChefHat className="h-4 w-4" />
               Cozinha
+            </Button>
+          </Link>
+          <Link to="/prontos">
+            <Button 
+              variant="secondary" 
+              size="sm"
+              className="gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              Prontos
             </Button>
           </Link>
           <Link to="/caixa">
