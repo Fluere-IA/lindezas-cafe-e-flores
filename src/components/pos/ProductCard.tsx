@@ -52,11 +52,17 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
       {/* Image/Icon Area */}
       <div className="relative h-36 bg-gradient-to-br from-secondary/30 to-secondary/50 flex items-center justify-center overflow-hidden">
         {productImage ? (
-          <img 
-            src={productImage} 
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          <>
+            <img 
+              src={productImage} 
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            {/* Illustrative image notice */}
+            <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/50 text-white text-[8px] font-medium backdrop-blur-sm">
+              Imagem ilustrativa
+            </div>
+          </>
         ) : (
           <Icon className={cn('h-10 w-10 transition-transform duration-200 group-hover:scale-105', iconColor)} />
         )}
