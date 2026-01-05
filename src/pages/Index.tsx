@@ -9,6 +9,8 @@ import { useCart } from '@/hooks/useCart';
 import { Product } from '@/types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/errorLogger';
+import { tableNumberSchema, orderItemSchema } from '@/lib/validation';
 
 const Index = () => {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('bebidas');
@@ -34,6 +36,27 @@ const Index = () => {
       return;
     }
 
+    // Validate table number
+    const parsedTable = parseInt(tableNumber);
+    const tableValidation = tableNumberSchema.safeParse(parsedTable);
+    if (!tableValidation.success) {
+      toast.error(tableValidation.error.errors[0]?.message || 'Número da mesa inválido');
+      return;
+    }
+
+    // Validate order items
+    for (const item of cart.items) {
+      const itemValidation = orderItemSchema.safeParse({
+        product_id: item.product.id,
+        quantity: item.quantity,
+        unit_price: item.product.price,
+      });
+      if (!itemValidation.success) {
+        toast.error('Erro nos itens do pedido');
+        return;
+      }
+    }
+
     try {
       // Create order
       const { data: order, error: orderError } = await supabase
@@ -42,7 +65,7 @@ const Index = () => {
           mode: 'mesa',
           total: cart.total,
           status: 'pending',
-          table_number: parseInt(tableNumber),
+          table_number: parsedTable,
           notes: `Mesa ${tableNumber}`,
         })
         .select()
@@ -72,10 +95,8 @@ const Index = () => {
       cart.clearCart();
       setTableNumber('');
     } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error('Erro ao enviar pedido', {
-        description: 'Tente novamente',
-      });
+      logError(error, 'Error creating order');
+      toast.error('Erro ao enviar pedido');
     }
   };
 
