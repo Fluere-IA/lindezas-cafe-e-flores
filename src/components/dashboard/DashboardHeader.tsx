@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import logoLindezas from '@/assets/logo-lindezas.png';
 
 const navItems = [
@@ -20,8 +23,24 @@ const navItems = [
 
 export function DashboardHeader() {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
   const [open, setOpen] = useState(false);
+  const { user, role, signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível sair da conta.',
+        variant: 'destructive',
+      });
+    } else {
+      navigate('/auth');
+    }
+  };
 
   return (
     <header 
@@ -96,7 +115,7 @@ export function DashboardHeader() {
           </DropdownMenu>
         </div>
         
-        {/* Settings & Date */}
+        {/* Settings, User & Logout */}
         <div className="flex items-center gap-2">
           <p className="hidden sm:block text-sm font-medium text-white/80">
             {new Date().toLocaleDateString('pt-BR', {
@@ -105,6 +124,13 @@ export function DashboardHeader() {
               month: 'short',
             }).replace('.', '')}
           </p>
+          
+          {role && (
+            <span className="hidden sm:inline-block text-xs bg-white/20 px-2 py-1 rounded-full">
+              {role === 'admin' ? 'Admin' : role === 'cashier' ? 'Caixa' : 'Cozinha'}
+            </span>
+          )}
+          
           <Link
             to="/configuracoes"
             className={cn(
@@ -114,6 +140,16 @@ export function DashboardHeader() {
           >
             <Settings className="h-5 w-5 text-white" />
           </Link>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSignOut}
+            className="text-white hover:bg-white/10"
+            title="Sair"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
         </div>
       </div>
     </header>
