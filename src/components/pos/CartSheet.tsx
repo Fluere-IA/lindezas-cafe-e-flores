@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Minus, Plus, Trash2, ShoppingBag, Send, User, Hash } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Send, Hash } from 'lucide-react';
 import { CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,9 +15,7 @@ import { cn } from '@/lib/utils';
 interface CartSheetProps {
   items: CartItem[];
   total: number;
-  customerName: string;
   tableNumber: string;
-  onCustomerNameChange: (name: string) => void;
   onTableNumberChange: (table: string) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
@@ -28,9 +26,7 @@ interface CartSheetProps {
 export function CartSheet({
   items,
   total,
-  customerName,
   tableNumber,
-  onCustomerNameChange,
   onTableNumberChange,
   onUpdateQuantity,
   onRemoveItem,
@@ -41,7 +37,7 @@ export function CartSheet({
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const hasIdentification = customerName.trim() || tableNumber.trim();
+  const hasTableNumber = tableNumber.trim().length > 0;
 
   return (
     <Sheet>
@@ -85,27 +81,17 @@ export function CartSheet({
           </p>
         </SheetHeader>
 
-        {/* Customer Identification */}
+        {/* Table Number */}
         <div className="px-4 py-3 border-b border-border bg-secondary/20 shrink-0">
-          <p className="text-sm font-medium mb-2">Identificação</p>
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Seu nome"
-                value={customerName}
-                onChange={(e) => onCustomerNameChange(e.target.value.slice(0, 50))}
-                className="pl-9 h-10"
-                maxLength={50}
-              />
-            </div>
-            <div className="w-24 relative">
+          <div className="flex items-center gap-3">
+            <p className="text-sm font-medium">Mesa</p>
+            <div className="w-20 relative">
               <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Mesa"
+                placeholder="Nº"
                 value={tableNumber}
                 onChange={(e) => onTableNumberChange(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                className="pl-9 h-10 text-center"
+                className="pl-9 h-10 text-center font-semibold"
                 maxLength={2}
                 inputMode="numeric"
               />
@@ -128,8 +114,8 @@ export function CartSheet({
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{item.product.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="font-medium text-sm leading-tight">{item.product.name}</p>
+                  <p className="text-xs text-muted-foreground">
                     {formatPrice(item.product.price)} cada
                   </p>
                 </div>
@@ -176,19 +162,19 @@ export function CartSheet({
 
           <Button
             onClick={onCheckout}
-            disabled={items.length === 0 || !hasIdentification}
+            disabled={items.length === 0 || !hasTableNumber}
             size="lg"
             className={cn(
               'w-full h-14 text-lg font-semibold gap-2',
-              (items.length === 0 || !hasIdentification) && 'opacity-50'
+              (items.length === 0 || !hasTableNumber) && 'opacity-50'
             )}
           >
             <Send className="h-5 w-5" />
             Enviar para Cozinha
           </Button>
-          {!hasIdentification && items.length > 0 && (
+          {!hasTableNumber && items.length > 0 && (
             <p className="text-xs text-muted-foreground text-center">
-              Informe seu nome ou número da mesa
+              Informe o número da mesa
             </p>
           )}
         </div>

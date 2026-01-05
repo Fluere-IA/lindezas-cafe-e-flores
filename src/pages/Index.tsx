@@ -11,9 +11,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('bebidas');
   const [searchQuery, setSearchQuery] = useState('');
-  const [customerName, setCustomerName] = useState('');
   const [tableNumber, setTableNumber] = useState('');
   
   const { data: products = [], isLoading } = useProducts();
@@ -30,19 +29,12 @@ const Index = () => {
   const handleCheckout = async () => {
     if (cart.items.length === 0) return;
     
-    const hasIdentification = customerName.trim() || tableNumber.trim();
-    if (!hasIdentification) {
-      toast.error('Informe seu nome ou número da mesa');
+    if (!tableNumber.trim()) {
+      toast.error('Informe o número da mesa');
       return;
     }
 
     try {
-      // Build notes with customer info
-      const notes = [
-        customerName.trim() && `Cliente: ${customerName.trim()}`,
-        tableNumber.trim() && `Mesa: ${tableNumber.trim()}`,
-      ].filter(Boolean).join(' | ');
-
       // Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -50,8 +42,8 @@ const Index = () => {
           mode: 'mesa',
           total: cart.total,
           status: 'pending',
-          table_number: tableNumber.trim() ? parseInt(tableNumber) : null,
-          notes: notes || null,
+          table_number: parseInt(tableNumber),
+          notes: `Mesa ${tableNumber}`,
         })
         .select()
         .single();
@@ -73,13 +65,11 @@ const Index = () => {
 
       if (itemsError) throw itemsError;
 
-      const identifier = customerName.trim() || `Mesa ${tableNumber}`;
       toast.success('Pedido enviado para a cozinha!', {
-        description: `${identifier} - Pedido #${order.order_number}`,
+        description: `Mesa ${tableNumber} - Pedido #${order.order_number}`,
       });
 
       cart.clearCart();
-      setCustomerName('');
       setTableNumber('');
     } catch (error) {
       console.error('Error creating order:', error);
@@ -121,9 +111,7 @@ const Index = () => {
       <CartSheet
         items={cart.items}
         total={cart.total}
-        customerName={customerName}
         tableNumber={tableNumber}
-        onCustomerNameChange={setCustomerName}
         onTableNumberChange={setTableNumber}
         onUpdateQuantity={cart.updateQuantity}
         onRemoveItem={cart.removeItem}
