@@ -114,26 +114,23 @@ const Caixa = () => {
     enabled: searchedTable !== null,
   });
 
+  // Fetch payments linked to current orders only
+  const orderIds = orders.map(o => o.id);
   const { data: payments = [] } = useQuery({
-    queryKey: ['table-payments', searchedTable],
+    queryKey: ['order-payments', orderIds],
     queryFn: async () => {
-      if (!searchedTable) return [];
-      
-      // Get payments from today for this table
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      if (orderIds.length === 0) return [];
       
       const { data, error } = await supabase
         .from('payments')
         .select('*')
-        .eq('table_number', searchedTable)
-        .gte('created_at', today.toISOString())
+        .in('order_id', orderIds)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return (data as Payment[]) || [];
     },
-    enabled: searchedTable !== null,
+    enabled: orderIds.length > 0,
   });
 
   const handleSearch = () => {
@@ -227,9 +224,10 @@ const Caixa = () => {
       const methodLabels = { dinheiro: 'Dinheiro', cartao: 'Cartão', pix: 'PIX' };
       const paymentTotal = getPaymentTotal();
 
-      // Record payment in history
+      // Record payment linked to first order (for history tracking)
       await supabase.from('payments').insert({
         table_number: searchedTable,
+        order_id: orders[0].id,
         amount: paymentTotal,
         payment_method: method,
         payment_type: paymentMode,
@@ -290,7 +288,7 @@ const Caixa = () => {
 
       // Check if fully paid
       await queryClient.invalidateQueries({ queryKey: ['table-orders'] });
-      await queryClient.invalidateQueries({ queryKey: ['table-payments'] });
+      await queryClient.invalidateQueries({ queryKey: ['order-payments'] });
       
       const { data: updatedOrders } = await supabase
         .from('orders')
@@ -388,7 +386,7 @@ const Caixa = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                {/* Payment History Toggle */}
+                {/* Payment History Toggle - only for current orders */}
                 {payments.length > 0 && (
                   <button
                     onClick={() => setShowHistory(!showHistory)}
@@ -396,7 +394,7 @@ const Caixa = () => {
                   >
                     <span className="text-green-700 flex items-center gap-1">
                       <CheckCircle2 className="h-4 w-4" />
-                      {payments.length} pagamento(s) - {formatPrice(totalPago)}
+                      {payments.length} pagamento(s) registrado(s)
                     </span>
                     {showHistory ? <ChevronUp className="h-4 w-4 text-green-700" /> : <ChevronDown className="h-4 w-4 text-green-700" />}
                   </button>

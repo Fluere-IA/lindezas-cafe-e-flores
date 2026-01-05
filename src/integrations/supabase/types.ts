@@ -140,6 +140,7 @@ export type Database = {
           created_at: string
           id: string
           items_count: number | null
+          order_id: string | null
           payment_method: string
           payment_type: string
           table_number: number
@@ -149,6 +150,7 @@ export type Database = {
           created_at?: string
           id?: string
           items_count?: number | null
+          order_id?: string | null
           payment_method: string
           payment_type: string
           table_number: number
@@ -158,11 +160,20 @@ export type Database = {
           created_at?: string
           id?: string
           items_count?: number | null
+          order_id?: string | null
           payment_method?: string
           payment_type?: string
           table_number?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
