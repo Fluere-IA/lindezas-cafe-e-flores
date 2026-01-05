@@ -42,8 +42,11 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_paid: boolean
           notes: string | null
           order_id: string
+          paid_at: string | null
+          payment_method: string | null
           product_id: string
           quantity: number
           subtotal: number
@@ -52,8 +55,11 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_paid?: boolean
           notes?: string | null
           order_id: string
+          paid_at?: string | null
+          payment_method?: string | null
           product_id: string
           quantity?: number
           subtotal: number
@@ -62,8 +68,11 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_paid?: boolean
           notes?: string | null
           order_id?: string
+          paid_at?: string | null
+          payment_method?: string | null
           product_id?: string
           quantity?: number
           subtotal?: number

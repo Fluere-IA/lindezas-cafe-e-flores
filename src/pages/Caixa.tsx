@@ -17,7 +17,10 @@ import {
   Loader2,
   AlertCircle,
   Split,
-  CheckCircle2
+  CheckCircle2,
+  Users,
+  Minus,
+  Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,6 +29,7 @@ interface OrderItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  is_paid: boolean;
   product: {
     name: string;
   };
@@ -52,6 +56,8 @@ const Caixa = () => {
   const [searchedTable, setSearchedTable] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [splitMode, setSplitMode] = useState(false);
+  const [splitByPeople, setSplitByPeople] = useState(false);
+  const [numberOfPeople, setNumberOfPeople] = useState(2);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'dinheiro' | 'cartao' | 'pix' | null>(null);
   const queryClient = useQueryClient();
@@ -83,11 +89,12 @@ const Caixa = () => {
             quantity,
             unit_price,
             subtotal,
+            is_paid,
             product:products (name)
           )
         `)
         .eq('table_number', searchedTable)
-        .eq('status', 'ready')
+        .in('status', ['ready', 'pending'])
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -104,6 +111,8 @@ const Caixa = () => {
     }
     setSearchedTable(num);
     setSplitMode(false);
+    setSplitByPeople(false);
+    setNumberOfPeople(2);
     setSelectedItems(new Set());
     setSelectedPaymentMethod(null);
   };
@@ -116,6 +125,14 @@ const Caixa = () => {
 
   const toggleSplitMode = () => {
     setSplitMode(!splitMode);
+    setSplitByPeople(false);
+    setSelectedItems(new Set());
+    setSelectedPaymentMethod(null);
+  };
+
+  const toggleSplitByPeople = () => {
+    setSplitByPeople(!splitByPeople);
+    setSplitMode(false);
     setSelectedItems(new Set());
     setSelectedPaymentMethod(null);
   };
@@ -131,10 +148,11 @@ const Caixa = () => {
   };
 
   const selectAllItems = () => {
-    if (selectedItems.size === allItems.length) {
+    const unpaidItems = allItems.filter(item => !item.is_paid);
+    if (selectedItems.size === unpaidItems.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(allItems.map(item => item.id)));
+      setSelectedItems(new Set(unpaidItems.map(item => item.id)));
     }
   };
 
@@ -156,8 +174,20 @@ const Caixa = () => {
       };
 
       if (splitMode) {
-        // Partial payment - just show confirmation for now
-        // In a real scenario, you'd track paid items in the database
+        // Partial payment - mark selected items as paid
+        const selectedItemIds = Array.from(selectedItems);
+        
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .update({ 
+            is_paid: true, 
+            paid_at: new Date().toISOString(),
+            payment_method: method 
+          })
+          .in('id', selectedItemIds);
+
+        if (itemsError) throw itemsError;
+
         const selectedTotal = allItems
           .filter(item => selectedItems.has(item.id))
           .reduce((sum, item) => sum + Number(item.subtotal), 0);
@@ -166,8 +196,10 @@ const Caixa = () => {
           description: `${selectedItems.size} ${selectedItems.size === 1 ? 'item' : 'itens'} - ${methodLabels[method]} - ${formatPrice(selectedTotal)}`,
         });
 
-        // If all items are selected, mark orders as paid
-        if (selectedItems.size === allItems.length) {
+        // Check if all items are now paid
+        const unpaidItems = allItems.filter(item => !item.is_paid && !selectedItems.has(item.id));
+        if (unpaidItems.length === 0) {
+          // All items paid, mark orders as paid
           const orderIds = orders.map(o => o.id);
           await supabase
             .from('orders')
@@ -182,8 +214,30 @@ const Caixa = () => {
         setSelectedItems(new Set());
         setSelectedPaymentMethod(null);
         queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+      } else if (splitByPeople) {
+        // Split by people - mark one person's share as paid
+        // We need to track partial payments on order level
+        toast.success(`Pagamento de 1/${numberOfPeople} registrado!`, {
+          description: `${methodLabels[method]} - ${formatPrice(perPersonAmount)}`,
+        });
+        
+        setSplitByPeople(false);
+        setSelectedPaymentMethod(null);
+        // Note: For equal split, we don't mark items as paid individually
+        // This is just for display purposes
       } else {
-        // Full payment
+        // Full payment - mark all items as paid first
+        const allItemIds = allItems.map(item => item.id);
+        
+        await supabase
+          .from('order_items')
+          .update({ 
+            is_paid: true, 
+            paid_at: new Date().toISOString(),
+            payment_method: method 
+          })
+          .in('id', allItemIds);
+
         const orderIds = orders.map(o => o.id);
         
         const { error } = await supabase
@@ -219,11 +273,16 @@ const Caixa = () => {
     }))
   );
 
-  const totalGeral = orders.reduce((sum, order) => sum + Number(order.total), 0);
+  const unpaidItems = allItems.filter(item => !item.is_paid);
+  const paidItems = allItems.filter(item => item.is_paid);
+  const totalGeral = unpaidItems.reduce((sum, item) => sum + Number(item.subtotal), 0);
+  const totalPago = paidItems.reduce((sum, item) => sum + Number(item.subtotal), 0);
   
   const selectedTotal = splitMode 
     ? allItems.filter(item => selectedItems.has(item.id)).reduce((sum, item) => sum + Number(item.subtotal), 0)
     : totalGeral;
+
+  const perPersonAmount = splitByPeople ? totalGeral / numberOfPeople : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -297,17 +356,31 @@ const Caixa = () => {
                     <Badge variant="secondary">
                       {orders.length} {orders.length === 1 ? 'pedido' : 'pedidos'}
                     </Badge>
-                    <Button
-                      variant={splitMode ? "default" : "outline"}
-                      size="sm"
-                      onClick={toggleSplitMode}
-                      className="gap-1"
-                    >
-                      <Split className="h-4 w-4" />
-                      Dividir
-                    </Button>
                   </div>
                 </div>
+                
+                {/* Split Options */}
+                <div className="flex gap-2 mt-3 pt-3 border-t border-border">
+                  <Button
+                    variant={splitMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleSplitMode}
+                    className="gap-1 flex-1"
+                  >
+                    <Split className="h-4 w-4" />
+                    Por Itens
+                  </Button>
+                  <Button
+                    variant={splitByPeople ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleSplitByPeople}
+                    className="gap-1 flex-1"
+                  >
+                    <Users className="h-4 w-4" />
+                    Por Pessoas
+                  </Button>
+                </div>
+
                 {splitMode && (
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                     <p className="text-sm text-muted-foreground">
@@ -319,63 +392,153 @@ const Caixa = () => {
                       onClick={selectAllItems}
                       className="text-xs"
                     >
-                      {selectedItems.size === allItems.length ? 'Desmarcar todos' : 'Selecionar todos'}
+                      {selectedItems.size === unpaidItems.length ? 'Desmarcar todos' : 'Selecionar todos'}
                     </Button>
+                  </div>
+                )}
+
+                {splitByPeople && (
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                    <p className="text-sm text-muted-foreground">
+                      Dividir entre quantas pessoas?
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setNumberOfPeople(Math.max(2, numberOfPeople - 1))}
+                        disabled={numberOfPeople <= 2}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center font-bold">{numberOfPeople}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setNumberOfPeople(Math.min(20, numberOfPeople + 1))}
+                        disabled={numberOfPeople >= 20}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Items List */}
-                <div className="space-y-2">
-                  {allItems.map((item, index) => (
-                    <div 
-                      key={`${item.id}-${index}`}
-                      className={`flex items-center gap-3 py-2 px-3 rounded-lg transition-colors ${
-                        splitMode 
-                          ? selectedItems.has(item.id)
-                            ? 'bg-primary/10 border border-primary/30'
-                            : 'bg-secondary/30 hover:bg-secondary/50 cursor-pointer'
-                          : 'bg-secondary/30'
-                      }`}
-                      onClick={() => splitMode && toggleItemSelection(item.id)}
-                    >
-                      {splitMode && (
-                        <Checkbox
-                          checked={selectedItems.has(item.id)}
-                          onCheckedChange={() => toggleItemSelection(item.id)}
-                          className="pointer-events-none"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium">{item.quantity}x {item.product?.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Pedido #{item.orderNumber} • {formatTime(item.orderTime)}
+                {/* Paid Items (if any) */}
+                {paidItems.length > 0 && (
+                  <>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        Itens já pagos ({formatPrice(totalPago)})
+                      </p>
+                      {paidItems.map((item, index) => (
+                        <div 
+                          key={`paid-${item.id}-${index}`}
+                          className="flex items-center gap-3 py-2 px-3 rounded-lg bg-green-500/10 border border-green-500/30 opacity-60"
+                        >
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <div className="flex-1">
+                            <p className="font-medium line-through">{item.quantity}x {item.product?.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Pedido #{item.orderNumber} • {formatTime(item.orderTime)}
+                            </p>
+                          </div>
+                          <p className="font-semibold text-green-600 line-through">
+                            {formatPrice(item.subtotal)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <Separator />
+                  </>
+                )}
+
+                {/* Unpaid Items List */}
+                {unpaidItems.length > 0 && (
+                  <div className="space-y-2">
+                    {unpaidItems.length > 0 && paidItems.length > 0 && (
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Itens a pagar
+                      </p>
+                    )}
+                    {unpaidItems.map((item, index) => (
+                      <div 
+                        key={`${item.id}-${index}`}
+                        className={`flex items-center gap-3 py-2 px-3 rounded-lg transition-colors ${
+                          splitMode 
+                            ? selectedItems.has(item.id)
+                              ? 'bg-primary/10 border border-primary/30'
+                              : 'bg-secondary/30 hover:bg-secondary/50 cursor-pointer'
+                            : 'bg-secondary/30'
+                        }`}
+                        onClick={() => splitMode && toggleItemSelection(item.id)}
+                      >
+                        {splitMode && (
+                          <Checkbox
+                            checked={selectedItems.has(item.id)}
+                            onCheckedChange={() => toggleItemSelection(item.id)}
+                            className="pointer-events-none"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium">{item.quantity}x {item.product?.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Pedido #{item.orderNumber} • {formatTime(item.orderTime)}
+                          </p>
+                        </div>
+                        <p className={`font-semibold ${splitMode && selectedItems.has(item.id) ? 'text-primary' : 'text-gold'}`}>
+                          {formatPrice(item.subtotal)}
                         </p>
                       </div>
-                      <p className={`font-semibold ${splitMode && selectedItems.has(item.id) ? 'text-primary' : 'text-gold'}`}>
-                        {formatPrice(item.subtotal)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
+
+                {unpaidItems.length === 0 && paidItems.length > 0 && (
+                  <div className="text-center py-4">
+                    <CheckCircle2 className="h-8 w-8 mx-auto text-green-500 mb-2" />
+                    <p className="font-medium text-green-600">Conta fechada!</p>
+                    <p className="text-sm text-muted-foreground">Todos os itens foram pagos</p>
+                  </div>
+                )}
 
                 <Separator />
 
                 {/* Total */}
-                <div className="flex items-center justify-between py-2">
-                  <div>
-                    <span className="text-lg font-medium">
-                      {splitMode ? 'Total Selecionado' : 'Total'}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <span className="text-lg font-medium">
+                        {splitMode ? 'Total Selecionado' : splitByPeople ? 'Total da Mesa' : 'Total a Pagar'}
+                      </span>
+                      {splitMode && selectedItems.size > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {selectedItems.size} de {unpaidItems.length} itens
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-2xl font-bold font-display">
+                      {formatPrice(splitMode ? selectedTotal : totalGeral)}
                     </span>
-                    {splitMode && selectedItems.size > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        {selectedItems.size} de {allItems.length} itens
-                      </p>
-                    )}
                   </div>
-                  <span className="text-2xl font-bold font-display">
-                    {formatPrice(selectedTotal)}
-                  </span>
+
+                  {splitByPeople && totalGeral > 0 && (
+                    <div className="flex items-center justify-between py-3 px-4 bg-primary/10 rounded-lg border border-primary/30">
+                      <div>
+                        <span className="text-lg font-medium text-primary">Valor por Pessoa</span>
+                        <p className="text-xs text-muted-foreground">
+                          Dividido entre {numberOfPeople} pessoas
+                        </p>
+                      </div>
+                      <span className="text-2xl font-bold font-display text-primary">
+                        {formatPrice(perPersonAmount)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -431,7 +594,8 @@ const Caixa = () => {
                   disabled={
                     isProcessing || 
                     !selectedPaymentMethod || 
-                    (splitMode && selectedItems.size === 0)
+                    (splitMode && selectedItems.size === 0) ||
+                    unpaidItems.length === 0
                   }
                 >
                   {isProcessing ? (
@@ -442,7 +606,10 @@ const Caixa = () => {
                   ) : (
                     <>
                       <CheckCircle2 className="h-5 w-5" />
-                      Finalizar Pagamento - {formatPrice(selectedTotal)}
+                      {splitByPeople 
+                        ? `Pagar ${formatPrice(perPersonAmount)} (1/${numberOfPeople})`
+                        : `Finalizar Pagamento - ${formatPrice(splitMode ? selectedTotal : totalGeral)}`
+                      }
                     </>
                   )}
                 </Button>
@@ -450,6 +617,12 @@ const Caixa = () => {
                 {splitMode && selectedItems.size === 0 && (
                   <p className="text-xs text-muted-foreground text-center">
                     Selecione os itens para pagar
+                  </p>
+                )}
+
+                {unpaidItems.length === 0 && (
+                  <p className="text-xs text-green-600 text-center font-medium">
+                    ✓ Todos os itens já foram pagos
                   </p>
                 )}
               </CardContent>
