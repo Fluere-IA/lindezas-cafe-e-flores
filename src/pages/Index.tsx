@@ -84,7 +84,7 @@ const Index = () => {
       <DashboardHeader />
       
       {/* Toolbar */}
-      <div className="sticky top-0 z-40 px-4 py-3 border-b border-border bg-background/95 backdrop-blur space-y-3">
+      <div className="sticky top-0 z-40 px-4 py-2.5 bg-background/98 backdrop-blur-sm space-y-2.5">
         <SearchBar
           value={searchQuery}
           onChange={setSearchQuery}
