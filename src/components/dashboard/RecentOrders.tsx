@@ -49,29 +49,32 @@ export function RecentOrders({ orders, isLoading }: RecentOrdersProps) {
         return (
           <div
             key={order.id}
-            className="flex items-center gap-4 p-3 rounded-lg bg-secondary/30 border border-border/30 animate-fade-in"
+            className="flex items-center gap-4 p-4 rounded-xl bg-lindezas-cream/70 border border-lindezas-gold/20 animate-fade-in hover:shadow-md transition-all"
             style={{ animationDelay: `${index * 50}ms` }}
           >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <div 
+              className="w-11 h-11 rounded-xl flex items-center justify-center shadow-md"
+              style={{ backgroundColor: '#2D5A27' }}
+            >
               {order.mode === 'mesa' ? (
-                <Users className="h-5 w-5 text-primary" />
+                <Users className="h-5 w-5 text-white" />
               ) : (
-                <Store className="h-5 w-5 text-primary" />
+                <Store className="h-5 w-5 text-white" />
               )}
             </div>
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="font-medium text-sm text-foreground">
+                <p className="font-semibold text-sm text-lindezas-forest">
                   Pedido #{order.orderNumber}
                 </p>
                 {order.mode === 'mesa' && order.tableNumber && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-lindezas-forest/10 text-lindezas-forest font-medium">
                     Mesa {order.tableNumber}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {formatDistanceToNow(new Date(order.createdAt), { 
                   addSuffix: true, 
                   locale: ptBR 
@@ -80,15 +83,15 @@ export function RecentOrders({ orders, isLoading }: RecentOrdersProps) {
             </div>
             
             <div className={cn(
-              'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
               status.className
             )}>
               <StatusIcon className="h-3.5 w-3.5" />
               <span>{status.label}</span>
             </div>
             
-            <div className="text-right min-w-[80px]">
-              <p className="font-display font-semibold text-gold">
+            <div className="text-right min-w-[90px]">
+              <p className="font-display font-bold text-lg text-lindezas-gold">
                 {formatCurrency(order.total)}
               </p>
             </div>

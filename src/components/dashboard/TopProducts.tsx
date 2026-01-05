@@ -35,23 +35,21 @@ export function TopProducts({ products, isLoading }: TopProductsProps) {
       {products.map((product, index) => (
         <div
           key={product.productId}
-          className={cn(
-            'flex items-center gap-4 p-3 rounded-lg bg-secondary/30 border border-border/30 animate-fade-in',
-          )}
+          className="flex items-center gap-4 p-3 rounded-xl bg-lindezas-cream/70 border border-lindezas-gold/20 animate-fade-in hover:shadow-md transition-all"
           style={{ animationDelay: `${index * 80}ms` }}
         >
-          <div className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center font-display font-bold text-sm',
-            index === 0 && 'bg-gold text-white',
-            index === 1 && 'bg-muted-foreground/60 text-white',
-            index === 2 && 'bg-espresso text-white',
-            index > 2 && 'bg-secondary text-muted-foreground'
-          )}>
+          <div 
+            className="w-9 h-9 rounded-full flex items-center justify-center font-display font-bold text-sm shadow-md"
+            style={{
+              backgroundColor: index === 0 ? '#D4A84B' : index === 1 ? '#8B8B8B' : index === 2 ? '#CD7F32' : '#E8E4DC',
+              color: index <= 2 ? '#ffffff' : '#4A3728'
+            }}
+          >
             {index + 1}
           </div>
           
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm text-foreground truncate">
+            <p className="font-semibold text-sm text-lindezas-forest truncate">
               {product.productName}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -60,7 +58,7 @@ export function TopProducts({ products, isLoading }: TopProductsProps) {
           </div>
           
           <div className="text-right">
-            <p className="font-display font-semibold text-gold">
+            <p className="font-display font-bold text-lindezas-gold">
               {formatCurrency(product.totalRevenue)}
             </p>
           </div>
