@@ -24,17 +24,19 @@ export function DashboardHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="bg-primary text-primary-foreground px-4 md:px-6 py-3">
+    <header className="bg-gradient-to-r from-primary via-primary to-forest-light text-primary-foreground px-4 md:px-6 py-3 shadow-elevated">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4 md:gap-6">
-          <img 
-            src={logoLindezas} 
-            alt="Lindezas Café & Flores" 
-            className="h-10 md:h-12 w-auto object-contain"
-          />
+          <div className="bg-white/10 rounded-xl p-1.5 backdrop-blur-sm">
+            <img 
+              src={logoLindezas} 
+              alt="Lindezas Café & Flores" 
+              className="h-9 md:h-11 w-auto object-contain"
+            />
+          </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1 bg-white/5 rounded-full p-1">
             {navItems.map((item) => {
               const isActive = currentPath === item.path;
               return (
@@ -42,10 +44,10 @@ export function DashboardHeader() {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                    'flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200',
                     isActive 
-                      ? 'bg-white/15 text-white' 
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                      ? 'bg-gold text-forest shadow-md' 
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -90,9 +92,9 @@ export function DashboardHeader() {
         
         {/* Date - Hidden on small screens */}
         <div className="hidden sm:flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-xs text-primary-foreground/70">Hoje</p>
-            <p className="text-sm font-medium">
+          <div className="text-right bg-white/5 rounded-xl px-4 py-2">
+            <p className="text-[10px] uppercase tracking-wider text-gold font-medium">Hoje</p>
+            <p className="text-sm font-display">
               {new Date().toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: 'numeric',

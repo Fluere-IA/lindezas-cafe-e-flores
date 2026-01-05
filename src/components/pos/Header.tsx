@@ -5,19 +5,21 @@ import logoLindezas from '@/assets/logo-lindezas.png';
 
 export function Header() {
   return (
-    <header className="bg-primary text-primary-foreground px-4 py-3">
+    <header className="bg-gradient-to-r from-primary via-primary to-forest-light text-primary-foreground px-4 py-3 shadow-elevated">
       <div className="flex items-center justify-between">
-        <img 
-          src={logoLindezas} 
-          alt="Lindezas Café & Flores" 
-          className="h-10 w-auto object-contain"
-        />
+        <div className="bg-white/10 rounded-xl p-1.5 backdrop-blur-sm">
+          <img 
+            src={logoLindezas} 
+            alt="Lindezas Café & Flores" 
+            className="h-9 w-auto object-contain"
+          />
+        </div>
         <div className="flex items-center gap-2">
           <Link to="/cozinha">
             <Button 
               variant="secondary" 
               size="sm"
-              className="gap-2"
+              className="gap-2 bg-white/10 hover:bg-white/20 text-white border-0 backdrop-blur-sm"
             >
               <ChefHat className="h-4 w-4" />
               Cozinha
@@ -25,9 +27,8 @@ export function Header() {
           </Link>
           <Link to="/caixa">
             <Button 
-              variant="secondary" 
               size="sm"
-              className="gap-2"
+              className="gap-2 bg-gold hover:bg-gold-light text-forest font-semibold"
             >
               <Receipt className="h-4 w-4" />
               Caixa
