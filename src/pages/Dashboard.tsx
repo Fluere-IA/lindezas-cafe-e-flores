@@ -18,13 +18,24 @@ const Dashboard = () => {
       
       <main className="flex-1 p-6 space-y-6 overflow-y-auto">
         {/* Page Title */}
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-lindezas-cream border-2 border-lindezas-gold/40 shadow-md">
-            <BarChart3 className="h-6 w-6" style={{ color: '#2D5A27' }} />
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-lindezas-cream border-2 border-lindezas-gold/40 shadow-md">
+              <BarChart3 className="h-6 w-6" style={{ color: '#2D5A27' }} />
+            </div>
+            <div>
+              <h1 className="font-display text-3xl font-bold text-lindezas-forest">Dashboard</h1>
+              <p className="text-sm text-muted-foreground">Visão geral do seu negócio</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-display text-2xl font-bold text-lindezas-forest">Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Visão geral do seu negócio</p>
+          
+          {/* Quick Summary Badge */}
+          <div className="flex items-center gap-3">
+            <div className="px-4 py-2 rounded-xl bg-lindezas-forest/10 border border-lindezas-forest/20">
+              <span className="text-sm font-semibold text-lindezas-forest">
+                {stats?.todayOrders || 0} pedidos hoje
+              </span>
+            </div>
           </div>
         </div>
 
