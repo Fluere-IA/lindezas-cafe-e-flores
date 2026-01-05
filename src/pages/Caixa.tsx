@@ -652,11 +652,13 @@ const Caixa = () => {
                           setSelectedItems(new Set()); 
                           setCustomValue('');
                         }}
-                        className={`h-auto py-3 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all ${
-                          paymentMode === mode 
-                            ? 'bg-lindezas-forest text-white shadow-lg' 
-                            : 'border-2 border-lindezas-gold/40 bg-lindezas-cream text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-gold/10'
-                        }`}
+                        className="h-auto py-3 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all"
+                        style={{
+                          backgroundColor: paymentMode === mode ? '#2D5A27' : '#F5F0E8',
+                          color: paymentMode === mode ? '#ffffff' : '#4A3728',
+                          border: paymentMode === mode ? 'none' : '2px solid rgba(212, 168, 75, 0.4)',
+                          boxShadow: paymentMode === mode ? '0 4px 12px rgba(45, 90, 39, 0.3)' : 'none'
+                        }}
                       >
                         <Icon className="h-5 w-5" />
                         <span className="text-xs">{label}</span>
@@ -763,11 +765,13 @@ const Caixa = () => {
                         key={method}
                         onClick={() => setSelectedPaymentMethod(method)}
                         disabled={isProcessing}
-                        className={`h-14 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all disabled:opacity-50 ${
-                          selectedPaymentMethod === method 
-                            ? 'bg-lindezas-gold text-lindezas-forest shadow-lg' 
-                            : 'border-2 border-lindezas-gold/40 bg-lindezas-cream text-lindezas-espresso hover:border-lindezas-gold hover:bg-lindezas-gold/10'
-                        }`}
+                        className="h-14 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all disabled:opacity-50"
+                        style={{
+                          backgroundColor: selectedPaymentMethod === method ? '#D4A84B' : '#F5F0E8',
+                          color: selectedPaymentMethod === method ? '#2D5A27' : '#4A3728',
+                          border: selectedPaymentMethod === method ? 'none' : '2px solid rgba(212, 168, 75, 0.4)',
+                          boxShadow: selectedPaymentMethod === method ? '0 4px 12px rgba(212, 168, 75, 0.4)' : 'none'
+                        }}
                       >
                         <Icon className="h-5 w-5" />
                         <span className="text-xs">{label}</span>
