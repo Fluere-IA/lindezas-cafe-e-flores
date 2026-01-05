@@ -1,13 +1,24 @@
 import { BarChart3, TrendingUp, Trophy, Clock } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { StatsCards } from '@/components/dashboard/StatsCards';
+import { CurrentStatusCard } from '@/components/dashboard/CurrentStatusCard';
+import { PaymentMethodsCard } from '@/components/dashboard/PaymentMethodsCard';
 import { SalesChart } from '@/components/dashboard/SalesChart';
 import { TopProducts } from '@/components/dashboard/TopProducts';
 import { RecentOrders } from '@/components/dashboard/RecentOrders';
-import { useDashboardStats, useTopProducts, useDailySales, useRecentOrders } from '@/hooks/useDashboard';
+import { 
+  useDashboardStats, 
+  useCurrentStatus,
+  usePaymentMethodStats,
+  useTopProducts, 
+  useDailySales, 
+  useRecentOrders 
+} from '@/hooks/useDashboard';
 
 const Dashboard = () => {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: currentStatus, isLoading: statusLoading } = useCurrentStatus();
+  const { data: paymentStats, isLoading: paymentLoading } = usePaymentMethodStats();
   const { data: topProducts, isLoading: topProductsLoading } = useTopProducts();
   const { data: dailySales, isLoading: dailySalesLoading } = useDailySales();
   const { data: recentOrders, isLoading: recentOrdersLoading } = useRecentOrders();
@@ -16,7 +27,7 @@ const Dashboard = () => {
     <div className="flex flex-col min-h-screen bg-lindezas-cream">
       <DashboardHeader />
       
-      <main className="flex-1 p-6 space-y-6 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-6 space-y-6 overflow-y-auto">
         {/* Page Title */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
@@ -24,28 +35,22 @@ const Dashboard = () => {
               <BarChart3 className="h-6 w-6" style={{ color: '#2D5A27' }} />
             </div>
             <div>
-              <h1 className="font-display text-3xl font-bold text-lindezas-forest">Dashboard</h1>
+              <h1 className="font-display text-2xl md:text-3xl font-bold text-lindezas-forest">Dashboard</h1>
               <p className="text-sm text-muted-foreground">Visão geral do seu negócio</p>
-            </div>
-          </div>
-          
-          {/* Quick Summary Badge */}
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2 rounded-xl bg-lindezas-forest/10 border border-lindezas-forest/20">
-              <span className="text-sm font-semibold text-lindezas-forest">
-                {stats?.todayOrders || 0} pedidos hoje
-              </span>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Current Status - Main Focus */}
+        <CurrentStatusCard status={currentStatus} isLoading={statusLoading} />
+
+        {/* Stats Cards with Weekly Comparison */}
         <StatsCards stats={stats} isLoading={statsLoading} />
 
-        {/* Charts and Lists Grid */}
+        {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Sales Chart - Takes 2 columns */}
-          <div className="lg:col-span-2 bg-white/90 backdrop-blur-sm rounded-2xl border border-lindezas-gold/30 p-6 shadow-lg">
+          <div className="lg:col-span-2 bg-white rounded-2xl border-2 border-lindezas-gold/30 p-6 shadow-lg">
             <div className="flex items-center gap-3 mb-5">
               <div className="p-2 rounded-lg bg-lindezas-forest/10">
                 <TrendingUp className="h-5 w-5" style={{ color: '#2D5A27' }} />
@@ -57,31 +62,37 @@ const Dashboard = () => {
             <SalesChart data={dailySales} isLoading={dailySalesLoading} />
           </div>
 
+          {/* Payment Methods */}
+          <PaymentMethodsCard stats={paymentStats} isLoading={paymentLoading} />
+        </div>
+
+        {/* Bottom Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Products */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-lindezas-gold/30 p-6 shadow-lg">
+          <div className="bg-white rounded-2xl border-2 border-lindezas-gold/30 p-6 shadow-lg">
             <div className="flex items-center gap-3 mb-5">
               <div className="p-2 rounded-lg bg-lindezas-gold/20">
                 <Trophy className="h-5 w-5" style={{ color: '#D4A84B' }} />
               </div>
               <h2 className="font-display text-xl font-bold text-lindezas-forest">
-                Mais Vendidos
+                Mais Vendidos Hoje
               </h2>
             </div>
             <TopProducts products={topProducts} isLoading={topProductsLoading} />
           </div>
-        </div>
 
-        {/* Recent Orders */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-lindezas-gold/30 p-6 shadow-lg">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2 rounded-lg bg-flower-blue/15">
-              <Clock className="h-5 w-5 text-flower-blue" />
+          {/* Recent Orders */}
+          <div className="bg-white rounded-2xl border-2 border-lindezas-gold/30 p-6 shadow-lg">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 rounded-lg bg-flower-blue/15">
+                <Clock className="h-5 w-5 text-flower-blue" />
+              </div>
+              <h2 className="font-display text-xl font-bold text-lindezas-forest">
+                Pedidos Recentes
+              </h2>
             </div>
-            <h2 className="font-display text-xl font-bold text-lindezas-forest">
-              Pedidos Recentes
-            </h2>
+            <RecentOrders orders={recentOrders} isLoading={recentOrdersLoading} />
           </div>
-          <RecentOrders orders={recentOrders} isLoading={recentOrdersLoading} />
         </div>
       </main>
     </div>
