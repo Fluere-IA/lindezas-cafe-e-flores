@@ -7,6 +7,17 @@ export interface DashboardStats {
   todayOrders: number;
   averageTicket: number;
   pendingOrders: number;
+  lastWeekSales: number;
+  lastWeekOrders: number;
+  salesGrowth: number;
+  ordersGrowth: number;
+}
+
+export interface CurrentStatus {
+  activeTables: number[];
+  pendingOrders: number;
+  readyOrders: number;
+  totalOpenAmount: number;
 }
 
 export interface TopProduct {
@@ -32,6 +43,12 @@ export interface RecentOrder {
   createdAt: string;
 }
 
+export interface PaymentMethodStats {
+  method: string;
+  total: number;
+  count: number;
+}
+
 export function useDashboardStats() {
   return useQuery({
     queryKey: ['dashboard-stats'],
@@ -39,8 +56,13 @@ export function useDashboardStats() {
       const today = new Date();
       const startOfToday = startOfDay(today).toISOString();
       const endOfToday = endOfDay(today).toISOString();
+      
+      // Same day last week
+      const lastWeekDay = subDays(today, 7);
+      const startOfLastWeekDay = startOfDay(lastWeekDay).toISOString();
+      const endOfLastWeekDay = endOfDay(lastWeekDay).toISOString();
 
-      // Get today's orders
+      // Get today's orders (paid status means completed)
       const { data: todayOrders, error } = await supabase
         .from('orders')
         .select('total, status')
@@ -49,20 +71,115 @@ export function useDashboardStats() {
 
       if (error) throw error;
 
-      const completedOrders = todayOrders?.filter(o => o.status === 'completed') || [];
-      const pendingOrders = todayOrders?.filter(o => o.status === 'pending' || o.status === 'preparing') || [];
+      // Get last week same day orders
+      const { data: lastWeekOrders } = await supabase
+        .from('orders')
+        .select('total, status')
+        .gte('created_at', startOfLastWeekDay)
+        .lte('created_at', endOfLastWeekDay);
+
+      const completedOrders = todayOrders?.filter(o => o.status === 'paid') || [];
+      const pendingOrders = todayOrders?.filter(o => o.status === 'pending' || o.status === 'ready') || [];
       
       const todaySales = completedOrders.reduce((sum, order) => sum + Number(order.total), 0);
       const averageTicket = completedOrders.length > 0 ? todaySales / completedOrders.length : 0;
+
+      const lastWeekCompleted = lastWeekOrders?.filter(o => o.status === 'paid') || [];
+      const lastWeekSales = lastWeekCompleted.reduce((sum, order) => sum + Number(order.total), 0);
+
+      // Calculate growth percentages
+      const salesGrowth = lastWeekSales > 0 
+        ? ((todaySales - lastWeekSales) / lastWeekSales) * 100 
+        : todaySales > 0 ? 100 : 0;
+      
+      const ordersGrowth = lastWeekCompleted.length > 0 
+        ? ((completedOrders.length - lastWeekCompleted.length) / lastWeekCompleted.length) * 100 
+        : completedOrders.length > 0 ? 100 : 0;
 
       return {
         todaySales,
         todayOrders: completedOrders.length,
         averageTicket,
         pendingOrders: pendingOrders.length,
+        lastWeekSales,
+        lastWeekOrders: lastWeekCompleted.length,
+        salesGrowth,
+        ordersGrowth,
       };
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
+  });
+}
+
+export function useCurrentStatus() {
+  return useQuery({
+    queryKey: ['current-status'],
+    queryFn: async (): Promise<CurrentStatus> => {
+      // Get all open orders (pending or ready)
+      const { data: openOrders, error } = await supabase
+        .from('orders')
+        .select('table_number, status, total, paid_amount')
+        .in('status', ['pending', 'ready']);
+
+      if (error) throw error;
+
+      const activeTables = [...new Set(
+        openOrders
+          ?.filter(o => o.table_number !== null)
+          .map(o => o.table_number as number)
+      )].sort((a, b) => a - b);
+
+      const pendingOrders = openOrders?.filter(o => o.status === 'pending').length || 0;
+      const readyOrders = openOrders?.filter(o => o.status === 'ready').length || 0;
+      
+      const totalOpenAmount = openOrders?.reduce((sum, o) => {
+        return sum + (Number(o.total) - Number(o.paid_amount || 0));
+      }, 0) || 0;
+
+      return {
+        activeTables,
+        pendingOrders,
+        readyOrders,
+        totalOpenAmount,
+      };
+    },
+    refetchInterval: 10000,
+  });
+}
+
+export function usePaymentMethodStats() {
+  return useQuery({
+    queryKey: ['payment-method-stats'],
+    queryFn: async (): Promise<PaymentMethodStats[]> => {
+      const today = new Date();
+      const startOfToday = startOfDay(today).toISOString();
+      
+      const { data: payments, error } = await supabase
+        .from('payments')
+        .select('payment_method, amount')
+        .gte('created_at', startOfToday);
+
+      if (error) throw error;
+
+      const methodMap = new Map<string, { total: number; count: number }>();
+      
+      payments?.forEach((p) => {
+        const existing = methodMap.get(p.payment_method);
+        if (existing) {
+          existing.total += Number(p.amount);
+          existing.count += 1;
+        } else {
+          methodMap.set(p.payment_method, { total: Number(p.amount), count: 1 });
+        }
+      });
+
+      return Array.from(methodMap.entries()).map(([method, data]) => ({
+        method,
+        total: data.total,
+        count: data.count,
+      }));
+    },
+    refetchInterval: 30000,
   });
 }
 
@@ -70,7 +187,8 @@ export function useTopProducts() {
   return useQuery({
     queryKey: ['top-products'],
     queryFn: async (): Promise<TopProduct[]> => {
-      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      const today = new Date();
+      const startOfToday = startOfDay(today).toISOString();
 
       const { data: orderItems, error } = await supabase
         .from('order_items')
@@ -80,11 +198,10 @@ export function useTopProducts() {
           product_id,
           products (name)
         `)
-        .gte('created_at', thirtyDaysAgo);
+        .gte('created_at', startOfToday);
 
       if (error) throw error;
 
-      // Aggregate by product
       const productMap = new Map<string, TopProduct>();
       
       orderItems?.forEach((item: any) => {
@@ -102,11 +219,11 @@ export function useTopProducts() {
         }
       });
 
-      // Sort by quantity and get top 5
       return Array.from(productMap.values())
         .sort((a, b) => b.totalQuantity - a.totalQuantity)
         .slice(0, 5);
     },
+    refetchInterval: 30000,
   });
 }
 
@@ -120,14 +237,12 @@ export function useDailySales() {
         .from('orders')
         .select('total, created_at, status')
         .gte('created_at', startOfDay(sevenDaysAgo).toISOString())
-        .eq('status', 'completed');
+        .eq('status', 'paid');
 
       if (error) throw error;
 
-      // Group by day
       const dailyMap = new Map<string, { total: number; orders: number }>();
       
-      // Initialize all 7 days
       for (let i = 6; i >= 0; i--) {
         const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
         dailyMap.set(date, { total: 0, orders: 0 });
@@ -159,7 +274,7 @@ export function useRecentOrders() {
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(8);
 
       if (error) throw error;
 
@@ -173,6 +288,6 @@ export function useRecentOrders() {
         createdAt: order.created_at,
       }));
     },
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 10000,
   });
 }
