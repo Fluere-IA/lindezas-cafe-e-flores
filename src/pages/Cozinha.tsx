@@ -1,22 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ChefHat, 
   Clock, 
   CheckCircle2, 
-  ArrowLeft,
   Loader2,
   AlertCircle,
   Hash,
   Package
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
 
 interface OrderItem {
   id: string;
@@ -152,22 +150,7 @@ const Cozinha = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-primary text-primary-foreground">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Link to="/">
-              <Button variant="secondary" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-2">
-              <ChefHat className="h-6 w-6" />
-              <h1 className="font-display text-xl font-bold">Cozinha</h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader />
 
       <main className="p-4">
         <Tabs defaultValue="pending" className="w-full">

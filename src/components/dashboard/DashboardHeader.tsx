@@ -1,13 +1,19 @@
-import { Link } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, BarChart3, ArrowLeft } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { ShoppingCart, BarChart3, ChefHat, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logoLindezas from '@/assets/logo-lindezas.png';
 
-interface DashboardHeaderProps {
-  activeTab?: 'dashboard' | 'pos';
-}
+export function DashboardHeader() {
+  const location = useLocation();
+  const currentPath = location.pathname;
 
-export function DashboardHeader({ activeTab = 'dashboard' }: DashboardHeaderProps) {
+  const navItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: BarChart3 },
+    { path: '/', label: 'Pedidos', icon: ShoppingCart },
+    { path: '/cozinha', label: 'Cozinha', icon: ChefHat },
+    { path: '/caixa', label: 'Caixa', icon: Receipt },
+  ];
+
   return (
     <header className="bg-primary text-primary-foreground px-6 py-3">
       <div className="flex items-center justify-between">
@@ -19,30 +25,24 @@ export function DashboardHeader({ activeTab = 'dashboard' }: DashboardHeaderProp
           />
           
           <nav className="flex items-center gap-1">
-            <Link
-              to="/dashboard"
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                activeTab === 'dashboard' 
-                  ? 'bg-white/15 text-white' 
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
-              )}
-            >
-              <BarChart3 className="h-4 w-4" />
-              Dashboard
-            </Link>
-            <Link
-              to="/"
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                activeTab === 'pos' 
-                  ? 'bg-white/15 text-white' 
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
-              )}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              Pedidos
-            </Link>
+            {navItems.map((item) => {
+              const isActive = currentPath === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                    isActive 
+                      ? 'bg-white/15 text-white' 
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
         

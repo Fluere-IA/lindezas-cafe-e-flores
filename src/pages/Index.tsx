@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Header } from '@/components/pos/Header';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { CategoryTabs, CategoryFilter } from '@/components/pos/CategoryTabs';
 import { SearchBar } from '@/components/pos/SearchBar';
 import { ProductGrid } from '@/components/pos/ProductGrid';
@@ -81,7 +81,7 @@ const Index = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20">
-      <Header />
+      <DashboardHeader />
       
       {/* Toolbar */}
       <div className="sticky top-0 z-40 px-4 py-3 border-b border-border bg-background/95 backdrop-blur space-y-3">
