@@ -124,16 +124,8 @@ const PendingOrdersGrid = ({
             }`}>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-2xl font-display font-bold text-lindezas-forest">
-                  #{order.order_number}
+                  {order.table_number ? `Mesa ${order.table_number}` : 'Balcão'}
                 </CardTitle>
-                <div className="flex items-center gap-2">
-                  {order.table_number && (
-                    <Badge className="gap-1 bg-lindezas-forest text-white border-0 shadow-sm">
-                      <Hash className="h-3 w-3" />
-                      Mesa {order.table_number}
-                    </Badge>
-                  )}
-                </div>
               </div>
               {/* Waiting Time Progress Bar */}
               <div className="mt-3">
@@ -428,20 +420,12 @@ const Cozinha = () => {
                   <CardHeader className="pb-3 bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-2xl font-display font-bold text-lindezas-forest">
-                        #{order.order_number}
+                        {order.table_number ? `Mesa ${order.table_number}` : 'Balcão'}
                       </CardTitle>
-                      <div className="flex items-center gap-2">
-                        {order.table_number && (
-                          <Badge className="gap-1 border-0 shadow-sm" style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}>
-                            <Hash className="h-3 w-3" />
-                            Mesa {order.table_number}
-                          </Badge>
-                        )}
-                        <Badge className="border-0 shadow-md gap-1" style={{ backgroundColor: '#D4A84B', color: '#ffffff' }}>
-                          <CheckCircle2 className="h-3 w-3" />
-                          Entregue
-                        </Badge>
-                      </div>
+                      <Badge className="border-0 shadow-md gap-1" style={{ backgroundColor: '#D4A84B', color: '#ffffff' }}>
+                        <CheckCircle2 className="h-3 w-3" />
+                        Entregue
+                      </Badge>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                       <div className="p-1.5 rounded-full bg-lindezas-gold/20">

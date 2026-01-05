@@ -108,7 +108,7 @@ export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps)
           </div>
           
           <div className="space-y-2 max-h-36 overflow-y-auto">
-          {status?.pendingOrdersList.slice(0, 5).map((order) => {
+            {status?.pendingOrdersList.slice(0, 5).map((order) => {
               const seconds = secondsMap[order.orderNumber] ?? order.minutesWaiting * 60;
               const colors = getWaitingColor(seconds);
               const progress = getProgressPercentage(seconds);
@@ -121,11 +121,8 @@ export function CurrentStatusCard({ status, isLoading }: CurrentStatusCardProps)
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className={`font-bold ${colors.text}`}>
-                        #{order.orderNumber}
-                      </span>
                       {order.tableNumber && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/60 text-muted-foreground">
+                        <span className={`font-bold ${colors.text}`}>
                           Mesa {order.tableNumber}
                         </span>
                       )}
