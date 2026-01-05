@@ -14,11 +14,9 @@ interface ProductGridProps {
 export function ProductGrid({ products, filter, searchQuery, onAddToCart, isLoading }: ProductGridProps) {
   const filteredProducts = products.filter((product) => {
     // Filter by category name
-    if (filter !== 'all') {
-      const categoryName = product.category?.name?.toLowerCase();
-      if (categoryName !== filter) {
-        return false;
-      }
+    const categoryName = product.category?.name?.toLowerCase();
+    if (categoryName !== filter) {
+      return false;
     }
     
     // Filter by search query
