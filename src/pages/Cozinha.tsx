@@ -165,10 +165,10 @@ const Cozinha = () => {
         </div>
 
         <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 bg-white/80 backdrop-blur-sm border border-lindezas-gold/20 shadow-md rounded-xl p-1">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 bg-white border border-lindezas-gold/30 shadow-md rounded-xl p-1.5">
             <TabsTrigger 
               value="pending" 
-              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-lindezas-gold data-[state=active]:to-lindezas-gold/80 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+              className="gap-2 rounded-lg text-lindezas-espresso font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-lindezas-gold data-[state=active]:to-lindezas-gold/80 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
             >
               <Clock className="h-4 w-4" />
               Pendentes
@@ -180,7 +180,7 @@ const Cozinha = () => {
             </TabsTrigger>
             <TabsTrigger 
               value="ready" 
-              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+              className="gap-2 rounded-lg text-lindezas-espresso font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
             >
               <CheckCircle2 className="h-4 w-4" />
               Prontos
