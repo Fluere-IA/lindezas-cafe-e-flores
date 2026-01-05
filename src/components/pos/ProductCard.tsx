@@ -49,6 +49,11 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
   const handleClick = () => {
     if (isAdding) return;
     
+    // Haptic feedback for mobile devices
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50); // Short 50ms vibration
+    }
+    
     setIsAdding(true);
     onAdd(product);
     
