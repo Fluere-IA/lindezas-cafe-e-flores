@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Minus, Plus, Trash2, ShoppingBag, Send, Hash } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Send, Hash, MessageSquare } from 'lucide-react';
 import { CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Sheet,
   SheetContent,
@@ -16,7 +17,9 @@ interface CartSheetProps {
   items: CartItem[];
   total: number;
   tableNumber: string;
+  notes: string;
   onTableNumberChange: (table: string) => void;
+  onNotesChange: (notes: string) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onClearCart: () => void;
@@ -27,7 +30,9 @@ export function CartSheet({
   items,
   total,
   tableNumber,
+  notes,
   onTableNumberChange,
+  onNotesChange,
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
@@ -73,8 +78,8 @@ export function CartSheet({
           </p>
         </SheetHeader>
 
-        {/* Table Number */}
-        <div className="px-5 py-4 border-b border-border bg-gradient-to-r from-gold/5 to-gold/10 shrink-0">
+        {/* Table Number and Notes */}
+        <div className="px-5 py-4 border-b border-border bg-gradient-to-r from-gold/5 to-gold/10 shrink-0 space-y-3">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Hash className="h-4 w-4 text-gold" />
@@ -90,6 +95,21 @@ export function CartSheet({
                 inputMode="numeric"
               />
             </div>
+          </div>
+          
+          {/* Order Notes */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-gold" />
+              <p className="text-sm font-medium">Observações</p>
+            </div>
+            <Textarea
+              placeholder="Ex: Sem cebola, ponto da carne, alergias..."
+              value={notes}
+              onChange={(e) => onNotesChange(e.target.value.slice(0, 500))}
+              className="min-h-[60px] text-sm border-2 border-gold/30 focus:border-gold bg-background resize-none"
+              maxLength={500}
+            />
           </div>
         </div>
 

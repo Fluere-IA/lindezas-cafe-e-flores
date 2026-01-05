@@ -156,6 +156,15 @@ const PendingOrdersGrid = ({
             </CardHeader>
 
             <CardContent className="pt-4 space-y-4">
+              {/* Order Notes */}
+              {order.notes && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                  <p className="text-sm font-medium text-yellow-800">
+                    📝 {order.notes}
+                  </p>
+                </div>
+              )}
+              
               <div className="space-y-1 bg-lindezas-cream/50 rounded-xl p-3">
                 {order.order_items.map((item) => (
                   <div 
@@ -437,6 +446,15 @@ const Cozinha = () => {
                   </CardHeader>
 
                   <CardContent className="pt-4">
+                    {/* Order Notes */}
+                    {order.notes && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-3">
+                        <p className="text-sm font-medium text-yellow-800">
+                          📝 {order.notes}
+                        </p>
+                      </div>
+                    )}
+                    
                     <div className="space-y-1 bg-lindezas-cream/50 rounded-xl p-3">
                       {order.order_items.map((item) => (
                         <div 
