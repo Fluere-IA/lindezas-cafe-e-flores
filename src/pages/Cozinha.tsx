@@ -191,12 +191,7 @@ const Cozinha = () => {
               }}
             >
               <CheckCircle2 className="h-4 w-4" />
-              <span>Prontos</span>
-              {readyOrders.length > 0 && (
-                <Badge className="ml-1 border-0" style={{ backgroundColor: '#16a34a', color: '#ffffff' }}>
-                  {readyOrders.length}
-                </Badge>
-              )}
+              <span>Feitos</span>
             </TabsTrigger>
           </TabsList>
 
@@ -325,14 +320,14 @@ const Cozinha = () => {
             )}
 
             {!isLoadingReady && readyOrders.length === 0 && (
-              <Card className="border-dashed border-2 border-lindezas-forest/30 max-w-md mx-auto mt-12 bg-white/80 backdrop-blur-sm">
+              <Card className="border-dashed border-2 border-lindezas-gold/30 max-w-md mx-auto mt-12 bg-white/80 backdrop-blur-sm">
                 <CardContent className="py-16 text-center">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center mb-4 shadow-lg">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-lindezas-gold to-lindezas-gold/80 flex items-center justify-center mb-4 shadow-lg">
                     <Package className="h-10 w-10 text-white" />
                   </div>
-                  <p className="text-2xl font-display font-bold text-lindezas-forest">Nenhum pedido pronto</p>
+                  <p className="text-2xl font-display font-bold text-lindezas-forest">Nenhum pedido feito</p>
                   <p className="text-muted-foreground mt-2">
-                    Os pedidos prontos aparecerão aqui
+                    Os pedidos feitos aparecerão aqui
                   </p>
                 </CardContent>
               </Card>
@@ -342,42 +337,42 @@ const Cozinha = () => {
               {readyOrders.map((order) => (
                 <Card 
                   key={order.id} 
-                  className="overflow-hidden border-2 border-green-500/50 bg-white/90 backdrop-blur-sm hover:shadow-lg transition-all duration-300"
+                  className="overflow-hidden border border-lindezas-gold/40 bg-white/90 backdrop-blur-sm hover:shadow-lg transition-all duration-300"
                 >
-                  <CardHeader className="pb-3 bg-gradient-to-r from-green-500/20 to-green-400/10">
+                  <CardHeader className="pb-3 bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-2xl font-display font-bold text-lindezas-forest">
                         #{order.order_number}
                       </CardTitle>
                       <div className="flex items-center gap-2">
                         {order.table_number && (
-                          <Badge className="gap-1 bg-lindezas-forest text-white border-0 shadow-sm">
+                          <Badge className="gap-1 border-0 shadow-sm" style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}>
                             <Hash className="h-3 w-3" />
                             Mesa {order.table_number}
                           </Badge>
                         )}
-                        <Badge className="bg-gradient-to-r from-green-600 to-green-500 text-white border-0 shadow-md gap-1">
+                        <Badge className="border-0 shadow-md gap-1" style={{ backgroundColor: '#D4A84B', color: '#ffffff' }}>
                           <CheckCircle2 className="h-3 w-3" />
-                          Pronto
+                          Feito
                         </Badge>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                      <div className="p-1.5 rounded-full bg-green-500/20">
-                        <Clock className="h-3.5 w-3.5 text-green-600" />
+                      <div className="p-1.5 rounded-full bg-lindezas-gold/20">
+                        <Clock className="h-3.5 w-3.5 text-lindezas-gold" />
                       </div>
                       <span>Pedido às {formatTime(order.created_at)}</span>
                     </div>
                   </CardHeader>
 
                   <CardContent className="pt-4">
-                    <div className="space-y-1 bg-green-50/50 rounded-xl p-3">
+                    <div className="space-y-1 bg-lindezas-cream/50 rounded-xl p-3">
                       {order.order_items.map((item) => (
                         <div 
                           key={item.id}
-                          className="flex items-center gap-3 py-2 border-b border-green-200 last:border-0"
+                          className="flex items-center gap-3 py-2 border-b border-lindezas-gold/20 last:border-0"
                         >
-                          <span className="font-bold text-xl min-w-[2.5rem] text-center bg-green-600 rounded-lg py-1 text-white">
+                          <span className="font-bold text-xl min-w-[2.5rem] text-center rounded-lg py-1" style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}>
                             {item.quantity}x
                           </span>
                           <span className="font-medium text-base text-lindezas-forest">
