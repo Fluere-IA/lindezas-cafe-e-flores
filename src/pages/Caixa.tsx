@@ -22,7 +22,8 @@ import {
   DollarSign,
   Clock,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -162,6 +163,34 @@ const Caixa = () => {
     setSelectedItems(newSelected);
   };
 
+  const handleDeleteItem = async (item: ItemWithOrder) => {
+    if (!confirm(`Remover "${item.product?.name}" do pedido?`)) return;
+    
+    try {
+      // Delete the order item
+      await supabase
+        .from('order_items')
+        .delete()
+        .eq('id', item.id);
+
+      // Update the order total
+      const order = orders.find(o => o.id === item.orderId);
+      if (order) {
+        const newTotal = Number(order.total) - Number(item.subtotal);
+        await supabase
+          .from('orders')
+          .update({ total: Math.max(0, newTotal) })
+          .eq('id', item.orderId);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['table-orders'] });
+      toast.success('Item removido');
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast.error('Erro ao remover item');
+    }
+  };
+
   // Calculate totals
   const allItems: ItemWithOrder[] = orders.flatMap(order => 
     order.order_items.map(item => ({
@@ -180,12 +209,24 @@ const Caixa = () => {
   const totalRestante = Math.max(0, totalOriginal - totalPago);
   
   const selectedTotal = unpaidItems.filter(item => selectedItems.has(item.id)).reduce((sum, item) => sum + Number(item.subtotal), 0);
-  const perPersonAmount = paymentMode === 'by-people' && numberOfPeople > 0 ? totalRestante / numberOfPeople : 0;
   const customAmount = parseInputValue(customValue);
+
+  // "Dividir por pessoas" - valor fixo por pessoa calculado uma única vez no total original
+  // Não recalcula após pagamentos parciais
+  const perPersonAmount = paymentMode === 'by-people' && numberOfPeople > 0 
+    ? totalOriginal / numberOfPeople 
+    : 0;
+  
+  // Quantas pessoas já pagaram (baseado no que já foi pago)
+  const paidPeopleCount = totalPago > 0 ? Math.floor(totalPago / perPersonAmount) : 0;
+  const remainingPeople = Math.max(0, numberOfPeople - paidPeopleCount);
+  
+  // O que cada pessoa deve pagar permanece fixo
+  const personPaymentAmount = perPersonAmount;
 
   const getPaymentTotal = () => {
     if (paymentMode === 'by-items') return selectedTotal;
-    if (paymentMode === 'by-people') return perPersonAmount;
+    if (paymentMode === 'by-people') return Math.min(personPaymentAmount, totalRestante);
     if (paymentMode === 'by-value') return Math.min(customAmount, totalRestante);
     return totalRestante;
   };
@@ -441,6 +482,17 @@ const Caixa = () => {
                       )}
                       <span className="flex-1 truncate">{item.quantity}x {item.product?.name}</span>
                       <span className="font-semibold text-primary">{formatPrice(item.subtotal)}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteItem(item);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -501,18 +553,33 @@ const Caixa = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Dividir entre:</span>
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setNumberOfPeople(Math.max(2, numberOfPeople - 1))} disabled={numberOfPeople <= 2}>
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setNumberOfPeople(Math.max(2, numberOfPeople - 1))} disabled={numberOfPeople <= 2 || paidPeopleCount > 0}>
                             <Minus className="h-4 w-4" />
                           </Button>
                           <span className="font-bold w-6 text-center">{numberOfPeople}</span>
-                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setNumberOfPeople(numberOfPeople + 1)}>
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setNumberOfPeople(numberOfPeople + 1)} disabled={paidPeopleCount > 0}>
                             <Plus className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                      <div className="flex justify-between items-center pt-2 border-t border-primary/20">
-                        <span className="text-sm">Cada pessoa:</span>
-                        <span className="font-bold text-primary text-lg">{formatPrice(perPersonAmount)}</span>
+                      <Separator className="bg-primary/20" />
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-sm">
+                          <span>Valor por pessoa:</span>
+                          <span className="font-bold text-primary text-lg">{formatPrice(personPaymentAmount)}</span>
+                        </div>
+                        {paidPeopleCount > 0 && (
+                          <div className="flex justify-between items-center text-sm text-green-600">
+                            <span>✓ Já pagaram:</span>
+                            <span className="font-medium">{paidPeopleCount} pessoa(s)</span>
+                          </div>
+                        )}
+                        {remainingPeople > 0 && (
+                          <div className="flex justify-between items-center text-sm text-orange-600">
+                            <span>Faltam:</span>
+                            <span className="font-medium">{remainingPeople} pessoa(s)</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
