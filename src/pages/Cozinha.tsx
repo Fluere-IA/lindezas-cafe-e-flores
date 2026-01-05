@@ -34,6 +34,176 @@ interface Order {
   order_items: OrderItem[];
 }
 
+// Hook to track real-time seconds for each order
+function useRealtimeSeconds(orders: Order[]) {
+  const [secondsMap, setSecondsMap] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (orders.length === 0) {
+      setSecondsMap({});
+      return;
+    }
+
+    // Initialize with current elapsed seconds
+    const initial: Record<string, number> = {};
+    orders.forEach(order => {
+      const created = new Date(order.created_at);
+      const now = new Date();
+      initial[order.id] = Math.floor((now.getTime() - created.getTime()) / 1000);
+    });
+    setSecondsMap(initial);
+
+    // Update every second
+    const interval = setInterval(() => {
+      setSecondsMap(prev => {
+        const updated = { ...prev };
+        orders.forEach(order => {
+          if (updated[order.id] !== undefined) {
+            updated[order.id] = updated[order.id] + 1;
+          }
+        });
+        return updated;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [orders]);
+
+  return secondsMap;
+}
+
+function formatTimeDisplay(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function getWaitingColor(seconds: number): string {
+  const minutes = seconds / 60;
+  if (minutes < 5) return '#16a34a';
+  if (minutes < 10) return '#eab308';
+  if (minutes < 15) return '#f97316';
+  return '#dc2626';
+}
+
+// Component for pending orders with real-time timer
+const PendingOrdersGrid = ({ 
+  orders, 
+  formatTime, 
+  processingId, 
+  onMarkReady 
+}: { 
+  orders: Order[]; 
+  formatTime: (dateString: string) => string;
+  processingId: string | null;
+  onMarkReady: (order: Order) => void;
+}) => {
+  const secondsMap = useRealtimeSeconds(orders);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {orders.map((order) => {
+        const seconds = secondsMap[order.id] ?? 0;
+        const elapsed = Math.floor(seconds / 60);
+        const isUrgent = elapsed >= 15;
+        const isProcessing = processingId === order.id;
+
+        return (
+          <Card 
+            key={order.id} 
+            className={`overflow-hidden transition-all duration-300 hover:shadow-xl bg-white/90 backdrop-blur-sm ${
+              isUrgent 
+                ? 'border-2 border-red-500 ring-4 ring-red-500/20 animate-pulse' 
+                : 'border border-lindezas-gold/30 hover:border-lindezas-gold/60'
+            }`}
+          >
+            <CardHeader className={`pb-3 ${
+              isUrgent 
+                ? 'bg-gradient-to-r from-red-500/20 to-red-400/10' 
+                : 'bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream'
+            }`}>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl font-display font-bold text-lindezas-forest">
+                  #{order.order_number}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  {order.table_number && (
+                    <Badge className="gap-1 bg-lindezas-forest text-white border-0 shadow-sm">
+                      <Hash className="h-3 w-3" />
+                      Mesa {order.table_number}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              {/* Waiting Time Progress Bar */}
+              <div className="mt-3">
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${Math.min((seconds / 1200) * 100, 100)}%`,
+                      backgroundColor: getWaitingColor(seconds),
+                    }}
+                  />
+                </div>
+                <div className={`flex items-center gap-2 text-sm mt-2 ${
+                  isUrgent ? 'text-red-600 font-semibold' : 'text-muted-foreground'
+                }`}>
+                  <span>{formatTime(order.created_at)}</span>
+                  <span>•</span>
+                  <span className="font-bold font-mono">{formatTimeDisplay(seconds)}</span>
+                  {isUrgent && (
+                    <Badge className="bg-red-500 border-0 gap-1 animate-bounce" style={{ color: '#ffffff' }}>
+                      <AlertCircle className="h-3 w-3" />
+                      Atrasado
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="pt-4 space-y-4">
+              <div className="space-y-1 bg-lindezas-cream/50 rounded-xl p-3">
+                {order.order_items.map((item) => (
+                  <div 
+                    key={item.id}
+                    className="flex items-center gap-3 py-2 border-b border-lindezas-gold/20 last:border-0"
+                  >
+                    <span 
+                      className="font-bold text-lg min-w-[2.5rem] text-center rounded-lg py-1"
+                      style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}
+                    >
+                      {item.quantity}x
+                    </span>
+                    <span className="font-medium text-base text-lindezas-forest">
+                      {item.product?.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                onClick={() => onMarkReady(order)}
+                disabled={isProcessing}
+                size="lg"
+                className="w-full h-14 text-lg font-bold gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                style={{ color: '#ffffff' }}
+              >
+                {isProcessing ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5" />
+                )}
+                Marcar como Feito
+              </Button>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+};
+
 const Cozinha = () => {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -41,12 +211,6 @@ const Cozinha = () => {
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getElapsedMinutes = (dateString: string) => {
-    const created = new Date(dateString);
-    const now = new Date();
-    return Math.floor((now.getTime() - created.getTime()) / 60000);
   };
 
   const { data: pendingOrders = [], isLoading: isLoadingPending } = useQuery({
@@ -220,105 +384,14 @@ const Cozinha = () => {
               </Card>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pendingOrders.map((order) => {
-                const elapsed = getElapsedMinutes(order.created_at);
-                const isUrgent = elapsed >= 15;
-                const isProcessing = processingId === order.id;
-
-                return (
-                  <Card 
-                    key={order.id} 
-                    className={`overflow-hidden transition-all duration-300 hover:shadow-xl bg-white/90 backdrop-blur-sm ${
-                      isUrgent 
-                        ? 'border-2 border-red-500 ring-4 ring-red-500/20 animate-pulse' 
-                        : 'border border-lindezas-gold/30 hover:border-lindezas-gold/60'
-                    }`}
-                  >
-                    <CardHeader className={`pb-3 ${
-                      isUrgent 
-                        ? 'bg-gradient-to-r from-red-500/20 to-red-400/10' 
-                        : 'bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream'
-                    }`}>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-2xl font-display font-bold text-lindezas-forest">
-                          #{order.order_number}
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          {order.table_number && (
-                            <Badge className="gap-1 bg-lindezas-forest text-white border-0 shadow-sm">
-                              <Hash className="h-3 w-3" />
-                              Mesa {order.table_number}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      {/* Waiting Time Progress Bar */}
-                      <div className="mt-3">
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{ 
-                              width: `${Math.min((elapsed / 20) * 100, 100)}%`,
-                              backgroundColor: elapsed < 5 ? '#16a34a' : elapsed < 10 ? '#eab308' : elapsed < 15 ? '#f97316' : '#dc2626',
-                            }}
-                          />
-                        </div>
-                        <div className={`flex items-center gap-2 text-sm mt-2 ${
-                          isUrgent ? 'text-red-600 font-semibold' : 'text-muted-foreground'
-                        }`}>
-                          <span>{formatTime(order.created_at)}</span>
-                          <span>•</span>
-                          <span className="font-bold">{elapsed} min</span>
-                          {isUrgent && (
-                            <Badge className="bg-red-500 border-0 gap-1 animate-bounce" style={{ color: '#ffffff' }}>
-                              <AlertCircle className="h-3 w-3" />
-                              Atrasado
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="pt-4 space-y-4">
-                      <div className="space-y-1 bg-lindezas-cream/50 rounded-xl p-3">
-                        {order.order_items.map((item) => (
-                          <div 
-                            key={item.id}
-                            className="flex items-center gap-3 py-2 border-b border-lindezas-gold/20 last:border-0"
-                          >
-                            <span 
-                              className="font-bold text-lg min-w-[2.5rem] text-center rounded-lg py-1"
-                              style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}
-                            >
-                              {item.quantity}x
-                            </span>
-                            <span className="font-medium text-base text-lindezas-forest">
-                              {item.product?.name}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <Button
-                        onClick={() => handleMarkReady(order)}
-                        disabled={isProcessing}
-                        size="lg"
-                        className="w-full h-14 text-lg font-bold gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
-                        style={{ color: '#ffffff' }}
-                      >
-                        {isProcessing ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="h-5 w-5" />
-                        )}
-                        Marcar como Feito
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            {!isLoadingPending && pendingOrders.length > 0 && (
+              <PendingOrdersGrid 
+                orders={pendingOrders} 
+                formatTime={formatTime}
+                processingId={processingId}
+                onMarkReady={handleMarkReady}
+              />
+            )}
           </TabsContent>
 
           {/* Ready Orders Tab (History) */}
