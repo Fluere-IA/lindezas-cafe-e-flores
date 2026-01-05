@@ -62,24 +62,14 @@ export function CartSheet({
       
       <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl px-0 flex flex-col border-t-4 border-gold/50">
         <SheetHeader className="px-5 pb-4 border-b border-border shrink-0">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="flex items-center gap-3 font-display text-xl">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <ShoppingBag className="h-5 w-5 text-primary" />
-              </div>
-              Pedido
-            </SheetTitle>
-            {items.length > 0 && (
-              <button
-                onClick={onClearCart}
-                className="text-xs text-muted-foreground hover:text-destructive transition-colors px-3 py-1.5 rounded-full hover:bg-destructive/10"
-              >
-                Limpar tudo
-              </button>
-            )}
-          </div>
+          <SheetTitle className="flex items-center gap-3 font-display text-xl">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <ShoppingBag className="h-5 w-5 text-primary" />
+            </div>
+            Pedido
+          </SheetTitle>
           <p className="text-sm text-muted-foreground text-left pl-[52px]">
-            {items.length} {items.length === 1 ? 'item' : 'itens'} selecionados
+            {items.length} {items.length === 1 ? 'item selecionado' : 'itens selecionados'}
           </p>
         </SheetHeader>
 
@@ -116,42 +106,44 @@ export function CartSheet({
             items.map((item, index) => (
               <div
                 key={item.product.id}
-                className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border/50 shadow-soft animate-scale-in"
+                className="p-4 bg-card rounded-2xl border border-border/50 shadow-soft animate-scale-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm leading-tight">{item.product.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {formatPrice(item.product.price)} cada
-                  </p>
-                </div>
+                {/* Product name - full width */}
+                <p className="font-medium text-sm leading-tight mb-2">{item.product.name}</p>
                 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
-                    className="w-9 h-9 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors border border-border/50"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span className="w-8 text-center font-bold text-lg">{item.quantity}</span>
-                  <button
-                    onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
-                    className="w-9 h-9 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors border border-primary/20"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
+                {/* Controls row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground mr-2">
+                      {formatPrice(item.product.price)}
+                    </p>
+                    <button
+                      onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
+                      className="w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors border border-border/50"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="w-7 text-center font-bold">{item.quantity}</span>
+                    <button
+                      onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
+                      className="w-8 h-8 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors border border-primary/20"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
 
-                <div className="flex items-center gap-2 ml-2">
-                  <p className="font-display text-lg font-bold text-gold min-w-[75px] text-right">
-                    {formatPrice(item.product.price * item.quantity)}
-                  </p>
-                  <button
-                    onClick={() => onRemoveItem(item.product.id)}
-                    className="w-9 h-9 rounded-full hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <p className="font-display text-base font-bold text-gold">
+                      {formatPrice(item.product.price * item.quantity)}
+                    </p>
+                    <button
+                      onClick={() => onRemoveItem(item.product.id)}
+                      className="w-8 h-8 rounded-full hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -159,6 +151,17 @@ export function CartSheet({
         </div>
 
         <div className="border-t-2 border-gold/20 p-5 space-y-4 bg-gradient-to-t from-gold/5 to-transparent shrink-0">
+          {items.length > 0 && (
+            <div className="flex justify-center">
+              <button
+                onClick={onClearCart}
+                className="text-xs text-muted-foreground hover:text-destructive transition-colors px-4 py-2 rounded-full hover:bg-destructive/10 border border-border"
+              >
+                Limpar tudo
+              </button>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground text-base">Total do pedido</span>
             <span className="font-display text-3xl font-bold text-primary">
