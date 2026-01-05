@@ -120,7 +120,6 @@ export function CartSheet({
           {showNotes && (
             <div className="pt-2 pb-1 animate-fade-in">
               <Textarea
-                placeholder="Ex: Sem cebola, ponto da carne..."
                 value={notes}
                 onChange={(e) => onNotesChange(e.target.value.slice(0, 200))}
                 className="min-h-[50px] text-sm border border-border bg-background resize-none"
