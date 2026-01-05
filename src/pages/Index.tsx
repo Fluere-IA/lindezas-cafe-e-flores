@@ -23,10 +23,7 @@ const Index = () => {
 
   const handleAddToCart = (product: Product) => {
     cart.addItem(product);
-    toast.success(`+1 ${product.name}`, {
-      duration: 1000,
-      position: 'top-center',
-    });
+    // Visual feedback is now handled directly in ProductCard
   };
 
   const handleCheckout = async () => {
