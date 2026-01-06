@@ -1,4 +1,4 @@
-import { Coffee, Flower2, ChefHat } from "lucide-react";
+import { Coffee, UtensilsCrossed, ChefHat } from "lucide-react";
 
 const features = [
   {
@@ -8,10 +8,10 @@ const features = [
     color: "bg-amber-100 text-amber-600",
   },
   {
-    icon: Flower2,
-    title: "Para Híbridos",
-    description: "Venda flores e cafés no mesmo carrinho. Sistema unificado para negócios que combinam diferentes tipos de produtos e serviços.",
-    color: "bg-pink-100 text-pink-600",
+    icon: UtensilsCrossed,
+    title: "Para Restaurantes",
+    description: "Controle completo de pedidos e mesas. Sistema unificado para gerenciar desde o pedido até a entrega na mesa.",
+    color: "bg-emerald-100 text-emerald-600",
   },
   {
     icon: ChefHat,
@@ -34,7 +34,7 @@ export function ForWhoSection() {
             Feito para quem atende com excelência
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Seja uma cafeteria tradicional, uma floricultura ou um negócio híbrido, 
+            Seja uma cafeteria tradicional ou um restaurante, 
             o Servire se adapta ao seu fluxo de trabalho.
           </p>
         </div>

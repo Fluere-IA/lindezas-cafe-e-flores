@@ -11,7 +11,7 @@ export function LandingFooter() {
               <span className="text-2xl font-bold text-white">Servire</span>
             </Link>
             <p className="text-slate-400 max-w-md">
-              Sistema de gestão completo para cafeterias, floriculturas e restaurantes. 
+              Sistema de gestão completo para cafeterias e restaurantes. 
               Simplifique suas operações e foque no que importa: atender bem.
             </p>
           </div>
