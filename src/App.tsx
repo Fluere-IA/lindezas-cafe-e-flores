@@ -15,6 +15,7 @@ import Privacidade from "./pages/Privacidade";
 import Cookies from "./pages/Cookies";
 import TermosDeUso from "./pages/TermosDeUso";
 import Auth from "./pages/Auth";
+import Cadastro from "./pages/Cadastro";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           {/* Public Landing Page */}
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/privacidade" element={<Privacidade />} />
           <Route path="/cookies" element={<Cookies />} />
           <Route path="/termos" element={<TermosDeUso />} />

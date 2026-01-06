@@ -6,19 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
+import { Loader2, Eye, EyeOff, UserPlus, ArrowLeft } from 'lucide-react';
 
 const emailSchema = z.string().trim().email('Email inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter no mínimo 6 caracteres');
 
-export default function Auth() {
+export default function Cadastro() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
   
-  const { signIn, isAuthenticated, isLoading } = useAuth();
+  const { signUp, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,7 +30,7 @@ export default function Auth() {
   }, [isAuthenticated, isLoading, navigate]);
 
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { email?: string; password?: string; confirmPassword?: string } = {};
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -39,6 +40,10 @@ export default function Auth() {
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
+    }
+    
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'As senhas não coincidem';
     }
     
     setErrors(newErrors);
@@ -55,26 +60,26 @@ export default function Auth() {
     setIsSubmitting(true);
     
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signUp(email, password);
       
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
+        if (error.message.includes('User already registered')) {
           toast({
-            title: 'Erro de autenticação',
-            description: 'Email ou senha incorretos.',
+            title: 'Email já cadastrado',
+            description: 'Este email já está em uso. Tente fazer login.',
             variant: 'destructive',
           });
         } else {
           toast({
             title: 'Erro',
-            description: 'Não foi possível fazer login. Tente novamente.',
+            description: 'Não foi possível criar a conta. Tente novamente.',
             variant: 'destructive',
           });
         }
       } else {
         toast({
-          title: 'Bem-vindo!',
-          description: 'Login realizado com sucesso.',
+          title: 'Conta criada!',
+          description: 'Sua conta foi criada com sucesso. Você já pode acessar o sistema.',
         });
         navigate('/dashboard');
       }
@@ -110,7 +115,7 @@ export default function Auth() {
         </Link>
       </div>
 
-      {/* Login Card */}
+      {/* Signup Card */}
       <div className="flex-1 flex items-center justify-center px-4 pb-12 relative z-10">
         <div className="w-full max-w-md">
           {/* Logo */}
@@ -121,7 +126,7 @@ export default function Auth() {
               </span>
             </Link>
             <p className="text-white/70 mt-3">
-              Entre na sua conta para continuar
+              Crie sua conta e comece seu teste grátis
             </p>
           </div>
 
@@ -183,6 +188,27 @@ export default function Auth() {
                 )}
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-slate-700">
+                  Confirmar Senha
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setErrors(prev => ({ ...prev, confirmPassword: undefined }));
+                  }}
+                  placeholder="••••••••"
+                  className={`h-12 ${errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : 'border-slate-200 focus-visible:ring-[#2563EB]'}`}
+                  disabled={isSubmitting}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+                )}
+              </div>
+
               <Button
                 type="submit"
                 className="w-full h-12 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-semibold text-base"
@@ -191,12 +217,12 @@ export default function Auth() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Entrando...
+                    Criando conta...
                   </>
                 ) : (
                   <>
-                    <LogIn className="mr-2 h-5 w-5" />
-                    Entrar
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Criar conta
                   </>
                 )}
               </Button>
@@ -204,9 +230,9 @@ export default function Auth() {
 
             <div className="mt-6 pt-6 border-t border-slate-100 text-center">
               <p className="text-sm text-slate-500">
-                Ainda não tem conta?{' '}
-                <Link to="/cadastro" className="text-[#2563EB] hover:text-[#1E40AF] font-medium">
-                  Criar conta
+                Já tem uma conta?{' '}
+                <Link to="/auth" className="text-[#2563EB] hover:text-[#1E40AF] font-medium">
+                  Faça login
                 </Link>
               </p>
             </div>
