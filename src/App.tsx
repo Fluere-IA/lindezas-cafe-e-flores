@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Caixa from "./pages/Caixa";
 import Cozinha from "./pages/Cozinha";
 import Configuracoes from "./pages/Configuracoes";
+import Assinatura from "./pages/Assinatura";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/caixa" element={<ProtectedRoute><Caixa /></ProtectedRoute>} />
           <Route path="/cozinha" element={<ProtectedRoute><Cozinha /></ProtectedRoute>} />
           <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
+          <Route path="/assinatura" element={<ProtectedRoute requiresSubscription={false}><Assinatura /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
