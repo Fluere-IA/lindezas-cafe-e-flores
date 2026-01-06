@@ -61,17 +61,27 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Custom Lindezas colors - from logo
+        // Custom Servire colors
+        "servire-blue": "hsl(var(--servire-blue))",
+        "servire-blue-dark": "hsl(var(--servire-blue-dark))",
+        "servire-blue-light": "hsl(var(--servire-blue-light))",
+        "servire-gold": "hsl(var(--servire-gold))",
+        "servire-gold-light": "hsl(var(--servire-gold-light))",
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        // Legacy compatibility aliases
         cream: "hsl(var(--cream))",
         forest: "hsl(var(--forest))",
         "forest-light": "hsl(var(--forest-light))",
         gold: "hsl(var(--gold))",
         "gold-light": "hsl(var(--gold-light))",
-        "flower-blue": "hsl(var(--flower-blue))",
-        latte: "hsl(var(--latte))",
-        "flower-pink": "hsl(var(--flower-pink))",
         espresso: "hsl(var(--espresso))",
-        // Prefixed versions for lindezas-* classes
+        latte: "hsl(var(--latte))",
+        "flower-blue": "hsl(var(--flower-blue))",
+        "flower-pink": "hsl(var(--flower-pink))",
+        // Legacy prefixed versions
         "lindezas-cream": "hsl(var(--cream))",
         "lindezas-forest": "hsl(var(--forest))",
         "lindezas-gold": "hsl(var(--gold))",
