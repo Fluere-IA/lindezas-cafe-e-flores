@@ -8,7 +8,7 @@ import {
 const faqs = [
   {
     question: "Como funciona o período de teste?",
-    answer: "Você pode experimentar o Servire gratuitamente por 14 dias, sem necessidade de cartão de crédito. Durante esse período, terá acesso a todas as funcionalidades do plano Pro para avaliar se o sistema atende às suas necessidades."
+    answer: "Você pode experimentar o Servire gratuitamente por 7 dias, sem necessidade de cartão de crédito. Durante esse período, terá acesso a todas as funcionalidades do plano Pro para avaliar se o sistema atende às suas necessidades."
   },
   {
     question: "Posso mudar de plano depois?",
@@ -36,7 +36,7 @@ const faqs = [
   },
   {
     question: "O Servire emite nota fiscal?",
-    answer: "Sim, emitimos nota fiscal para todas as assinaturas. A nota é enviada automaticamente para o email cadastrado após cada pagamento."
+    answer: "No momento ainda não emitimos nota fiscal, mas estamos trabalhando para disponibilizar essa funcionalidade em breve."
   }
 ];
 
