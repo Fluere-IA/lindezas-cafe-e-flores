@@ -58,7 +58,8 @@ export function CartSheet({
       <SheetTrigger asChild>
         <Button
           size="lg"
-          className="fixed bottom-4 right-4 left-4 h-14 text-base font-semibold shadow-elevated z-50 gap-3 bg-gradient-to-r from-primary to-forest-light hover:from-forest-light hover:to-primary transition-all duration-300"
+          className="fixed bottom-4 right-4 left-4 h-14 text-base font-semibold shadow-elevated z-50 gap-3 text-white transition-all duration-300"
+          style={{ background: 'linear-gradient(135deg, #2D5A27 0%, #3d7a35 100%)' }}
         >
           <ShoppingBag className="h-5 w-5" />
           <span className="font-display text-lg">Pedido</span>
@@ -228,9 +229,10 @@ export function CartSheet({
             disabled={items.length === 0 || !hasTableNumber}
             size="lg"
             className={cn(
-              'w-full h-12 text-base font-semibold gap-2 bg-gradient-to-r from-primary to-forest-light hover:from-forest-light hover:to-primary shadow-elevated transition-all duration-300 active:scale-[0.98]',
+              'w-full h-12 text-base font-semibold gap-2 text-white shadow-elevated transition-all duration-300 active:scale-[0.98]',
               (items.length === 0 || !hasTableNumber) && 'opacity-50'
             )}
+            style={{ background: 'linear-gradient(135deg, #2D5A27 0%, #3d7a35 100%)' }}
           >
             <Send className="h-4 w-4" />
             <span className="font-display">Enviar para Cozinha</span>
