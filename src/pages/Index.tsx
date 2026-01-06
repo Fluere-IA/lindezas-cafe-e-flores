@@ -6,6 +6,7 @@ import { ProductGrid } from '@/components/pos/ProductGrid';
 import { CartSheet } from '@/components/pos/CartSheet';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { Product } from '@/types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +21,7 @@ const Index = () => {
   
   const { data: products = [], isLoading } = useProducts();
   const cart = useCart();
+  const { currentOrganization } = useOrganization();
 
   const handleAddToCart = (product: Product) => {
     cart.addItem(product);
@@ -31,6 +33,11 @@ const Index = () => {
     
     if (!tableNumber.trim()) {
       toast.error('Informe o número da mesa');
+      return;
+    }
+
+    if (!currentOrganization?.id) {
+      toast.error('Selecione uma organização antes de criar pedidos');
       return;
     }
 
@@ -65,6 +72,7 @@ const Index = () => {
           status: 'pending',
           table_number: parsedTable,
           notes: orderNotes.trim() || null,
+          organization_id: currentOrganization.id,
         })
         .select()
         .single();
@@ -78,6 +86,7 @@ const Index = () => {
         quantity: item.quantity,
         unit_price: item.product.price,
         subtotal: item.product.price * item.quantity,
+        organization_id: currentOrganization.id,
       }));
 
       const { error: itemsError } = await supabase
