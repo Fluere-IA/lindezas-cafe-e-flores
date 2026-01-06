@@ -1,8 +1,6 @@
-import { useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const plans = [
   {
@@ -41,38 +39,11 @@ const plans = [
 ];
 
 export function PricingSection() {
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleSubscribe = async (priceId: string, planName: string) => {
-    setLoadingPlan(planName);
-    
-    try {
-      console.log("Creating checkout session for:", planName, priceId);
-      
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { 
-          priceId,
-          successUrl: `${window.location.origin}/app?checkout=success`,
-          cancelUrl: `${window.location.origin}/?checkout=cancelled`,
-        },
-      });
-
-      if (error) {
-        console.error("Checkout error:", error);
-        throw new Error(error.message || "Erro ao criar sessão de checkout");
-      }
-
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("URL de checkout não retornada");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Erro ao processar assinatura. Tente novamente.");
-    } finally {
-      setLoadingPlan(null);
-    }
+  const handleSubscribe = (planName: string) => {
+    // Redireciona para cadastro com o plano selecionado
+    navigate(`/cadastro?plan=${planName.toLowerCase()}`);
   };
 
   return (
@@ -139,19 +110,14 @@ export function PricingSection() {
               </ul>
 
               <Button
-                onClick={() => handleSubscribe(plan.priceId, plan.name)}
-                disabled={loadingPlan !== null}
+                onClick={() => handleSubscribe(plan.name)}
                 className={`w-full py-6 text-base font-semibold ${
                   plan.highlighted
                     ? "bg-white text-[#1E40AF] hover:bg-white/90"
                     : "bg-[#1E40AF] text-white hover:bg-[#1E40AF]/90"
                 }`}
               >
-                {loadingPlan === plan.name ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  plan.cta
-                )}
+                {plan.cta}
               </Button>
             </div>
           ))}
