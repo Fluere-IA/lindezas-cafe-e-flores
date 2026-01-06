@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { OrganizationSelector } from './OrganizationSelector';
+
 import logoLindezas from '@/assets/logo-lindezas.png';
 
 const navItems = [
@@ -116,9 +116,8 @@ export function DashboardHeader() {
           </DropdownMenu>
         </div>
         
-        {/* Organization Selector, Settings, User & Logout */}
+        {/* Settings, User & Logout */}
         <div className="flex items-center gap-2">
-          <OrganizationSelector />
           
           <p className="hidden lg:block text-sm font-medium text-white/80">
             {new Date().toLocaleDateString('pt-BR', {

@@ -66,7 +66,7 @@ export function CurrentStatusCard({ status, stats, isLoading }: CurrentStatusCar
               <Icon className="h-4 w-4" style={{ color: card.color }} />
             </div>
             
-            <p className="text-2xl font-semibold text-lindezas-forest">
+            <p className="text-2xl font-semibold" style={{ color: '#2D5A27' }}>
               {card.value}
             </p>
             
