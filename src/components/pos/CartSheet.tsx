@@ -122,12 +122,12 @@ export function CartSheet({
             <div className="pt-2 pb-1 animate-fade-in">
               <Textarea
                 value={notes}
-                onChange={(e) => onNotesChange(e.target.value.slice(0, 200))}
+                onChange={(e) => onNotesChange(e.target.value.slice(0, 500))}
                 className="min-h-[50px] text-sm border border-border bg-background resize-none"
-                maxLength={200}
+                maxLength={500}
               />
               <p className="text-[10px] text-muted-foreground text-right mt-1">
-                {notes.length}/200
+                {notes.length}/500
               </p>
             </div>
           )}
