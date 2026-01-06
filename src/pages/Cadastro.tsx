@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Eye, EyeOff, UserPlus, ArrowLeft, Building2, User, Mail, Phone, Lock } from 'lucide-react';
+import { Loader2, Eye, EyeOff, UserPlus, ArrowLeft, Building2, User, Lock } from 'lucide-react';
 
 const cadastroSchema = z.object({
   nomeResponsavel: z.string().trim().min(3, 'Nome deve ter no mínimo 3 caracteres').max(100),
@@ -93,6 +94,46 @@ export default function Cadastro() {
     return true;
   };
 
+  const createOrganization = async (userId: string) => {
+    // Generate slug from company name
+    const slug = formData.nomeEmpresa
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    const uniqueSlug = `${slug}-${Date.now().toString(36)}`;
+
+    // Create organization
+    const { data: org, error: orgError } = await supabase
+      .from('organizations')
+      .insert({
+        name: formData.nomeEmpresa,
+        slug: uniqueSlug,
+        phone: formData.telefone,
+        type: formData.tipoEstabelecimento,
+        owner_name: formData.nomeResponsavel,
+      })
+      .select()
+      .single();
+
+    if (orgError) throw orgError;
+
+    // Add user as owner of the organization
+    const { error: memberError } = await supabase
+      .from('organization_members')
+      .insert({
+        organization_id: org.id,
+        user_id: userId,
+        role: 'owner',
+      });
+
+    if (memberError) throw memberError;
+
+    return org.id;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -103,7 +144,7 @@ export default function Cadastro() {
     setIsSubmitting(true);
     
     try {
-      const { error } = await signUp(formData.email, formData.password);
+      const { error, data } = await signUp(formData.email, formData.password);
       
       if (error) {
         if (error.message.includes('User already registered')) {
@@ -119,10 +160,40 @@ export default function Cadastro() {
             variant: 'destructive',
           });
         }
-      } else {
+        return;
+      }
+
+      // Wait for session to be established
+      const userId = data?.user?.id;
+      if (!userId) {
+        toast({
+          title: 'Erro',
+          description: 'Erro ao obter dados do usuário. Tente fazer login.',
+          variant: 'destructive',
+        });
+        navigate('/auth');
+        return;
+      }
+
+      // Create organization with company data
+      try {
+        const orgId = await createOrganization(userId);
+        
+        // Store the organization id for auto-selection
+        localStorage.setItem('currentOrganizationId', orgId);
+        
+        toast({
+          title: 'Conta criada com sucesso!',
+          description: 'Bem-vindo ao Servire! Você tem 7 dias de teste grátis.',
+        });
+        
+        // Redirect to dashboard
+        navigate('/');
+      } catch (orgError: any) {
+        console.error('Error creating organization:', orgError);
         toast({
           title: 'Conta criada!',
-          description: 'Sua conta foi criada com sucesso. Você já pode acessar o sistema.',
+          description: 'Configure sua organização nas configurações.',
         });
         navigate('/selecionar-organizacao');
       }
@@ -133,25 +204,25 @@ export default function Cadastro() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1E40AF]">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      <div className="min-h-screen flex items-center justify-center bg-primary">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#1E40AF] relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-[hsl(var(--servire-blue-dark))] relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-20 w-96 h-96 bg-white rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary-foreground rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-20 w-96 h-96 bg-primary-foreground rounded-full blur-3xl" />
       </div>
 
       {/* Back to Home Link */}
       <div className="relative z-10 p-6">
         <Link 
           to="/" 
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm font-medium"
+          className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar ao início
@@ -164,33 +235,33 @@ export default function Cadastro() {
           {/* Logo */}
           <div className="text-center mb-6">
             <Link to="/" className="inline-block">
-              <span className="text-4xl font-bold text-white tracking-tight">
+              <span className="text-4xl font-bold text-primary-foreground tracking-tight">
                 Servire
               </span>
             </Link>
-            <p className="text-white/70 mt-2">
+            <p className="text-primary-foreground/70 mt-2">
               Crie sua conta e comece seu teste grátis de 7 dias
             </p>
             {selectedPlan && (
-              <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-white text-sm">
+              <span className="inline-block mt-2 px-3 py-1 bg-primary-foreground/20 rounded-full text-primary-foreground text-sm">
                 Plano selecionado: <strong className="capitalize">{selectedPlan}</strong>
               </span>
             )}
           </div>
 
           {/* Form Card */}
-          <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
+          <div className="bg-card rounded-2xl shadow-2xl p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Dados do Responsável */}
               <div className="space-y-4">
-                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                <div className="flex items-center gap-2 text-foreground font-medium">
                   <User className="h-4 w-4" />
                   <span>Dados do Responsável</span>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="nomeResponsavel" className="text-slate-700 text-sm">
+                    <Label htmlFor="nomeResponsavel" className="text-foreground text-sm">
                       Nome completo
                     </Label>
                     <Input
@@ -198,16 +269,16 @@ export default function Cadastro() {
                       value={formData.nomeResponsavel}
                       onChange={(e) => handleChange('nomeResponsavel', e.target.value)}
                       placeholder="Seu nome"
-                      className={`h-11 ${errors.nomeResponsavel ? 'border-red-500' : 'border-slate-200'}`}
+                      className={`h-11 ${errors.nomeResponsavel ? 'border-destructive' : 'border-input'}`}
                       disabled={isSubmitting}
                     />
                     {errors.nomeResponsavel && (
-                      <p className="text-xs text-red-500">{errors.nomeResponsavel}</p>
+                      <p className="text-xs text-destructive">{errors.nomeResponsavel}</p>
                     )}
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="telefone" className="text-slate-700 text-sm">
+                    <Label htmlFor="telefone" className="text-foreground text-sm">
                       Telefone/WhatsApp
                     </Label>
                     <Input
@@ -215,11 +286,11 @@ export default function Cadastro() {
                       value={formData.telefone}
                       onChange={(e) => handleChange('telefone', e.target.value)}
                       placeholder="(00) 00000-0000"
-                      className={`h-11 ${errors.telefone ? 'border-red-500' : 'border-slate-200'}`}
+                      className={`h-11 ${errors.telefone ? 'border-destructive' : 'border-input'}`}
                       disabled={isSubmitting}
                     />
                     {errors.telefone && (
-                      <p className="text-xs text-red-500">{errors.telefone}</p>
+                      <p className="text-xs text-destructive">{errors.telefone}</p>
                     )}
                   </div>
                 </div>
@@ -227,14 +298,14 @@ export default function Cadastro() {
 
               {/* Dados da Empresa */}
               <div className="space-y-4 pt-2">
-                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                <div className="flex items-center gap-2 text-foreground font-medium">
                   <Building2 className="h-4 w-4" />
                   <span>Dados da Empresa</span>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="nomeEmpresa" className="text-slate-700 text-sm">
+                    <Label htmlFor="nomeEmpresa" className="text-foreground text-sm">
                       Nome do estabelecimento
                     </Label>
                     <Input
@@ -242,16 +313,16 @@ export default function Cadastro() {
                       value={formData.nomeEmpresa}
                       onChange={(e) => handleChange('nomeEmpresa', e.target.value)}
                       placeholder="Nome do seu negócio"
-                      className={`h-11 ${errors.nomeEmpresa ? 'border-red-500' : 'border-slate-200'}`}
+                      className={`h-11 ${errors.nomeEmpresa ? 'border-destructive' : 'border-input'}`}
                       disabled={isSubmitting}
                     />
                     {errors.nomeEmpresa && (
-                      <p className="text-xs text-red-500">{errors.nomeEmpresa}</p>
+                      <p className="text-xs text-destructive">{errors.nomeEmpresa}</p>
                     )}
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="tipoEstabelecimento" className="text-slate-700 text-sm">
+                    <Label htmlFor="tipoEstabelecimento" className="text-foreground text-sm">
                       Tipo de estabelecimento
                     </Label>
                     <Select
@@ -260,7 +331,7 @@ export default function Cadastro() {
                       disabled={isSubmitting}
                     >
                       <SelectTrigger 
-                        className={`h-11 ${errors.tipoEstabelecimento ? 'border-red-500' : 'border-slate-200'}`}
+                        className={`h-11 ${errors.tipoEstabelecimento ? 'border-destructive' : 'border-input'}`}
                       >
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
@@ -273,7 +344,7 @@ export default function Cadastro() {
                       </SelectContent>
                     </Select>
                     {errors.tipoEstabelecimento && (
-                      <p className="text-xs text-red-500">{errors.tipoEstabelecimento}</p>
+                      <p className="text-xs text-destructive">{errors.tipoEstabelecimento}</p>
                     )}
                   </div>
                 </div>
@@ -281,13 +352,13 @@ export default function Cadastro() {
 
               {/* Dados de Acesso */}
               <div className="space-y-4 pt-2">
-                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                <div className="flex items-center gap-2 text-foreground font-medium">
                   <Lock className="h-4 w-4" />
                   <span>Dados de Acesso</span>
                 </div>
                 
                 <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-slate-700 text-sm">
+                  <Label htmlFor="email" className="text-foreground text-sm">
                     Email
                   </Label>
                   <Input
@@ -296,17 +367,17 @@ export default function Cadastro() {
                     value={formData.email}
                     onChange={(e) => handleChange('email', e.target.value)}
                     placeholder="seu@email.com"
-                    className={`h-11 ${errors.email ? 'border-red-500' : 'border-slate-200'}`}
+                    className={`h-11 ${errors.email ? 'border-destructive' : 'border-input'}`}
                     disabled={isSubmitting}
                   />
                   {errors.email && (
-                    <p className="text-xs text-red-500">{errors.email}</p>
+                    <p className="text-xs text-destructive">{errors.email}</p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-slate-700 text-sm">
+                    <Label htmlFor="password" className="text-foreground text-sm">
                       Senha
                     </Label>
                     <div className="relative">
@@ -316,24 +387,24 @@ export default function Cadastro() {
                         value={formData.password}
                         onChange={(e) => handleChange('password', e.target.value)}
                         placeholder="••••••••"
-                        className={`h-11 pr-10 ${errors.password ? 'border-red-500' : 'border-slate-200'}`}
+                        className={`h-11 pr-10 ${errors.password ? 'border-destructive' : 'border-input'}`}
                         disabled={isSubmitting}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                     {errors.password && (
-                      <p className="text-xs text-red-500">{errors.password}</p>
+                      <p className="text-xs text-destructive">{errors.password}</p>
                     )}
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="confirmPassword" className="text-slate-700 text-sm">
+                    <Label htmlFor="confirmPassword" className="text-foreground text-sm">
                       Confirmar senha
                     </Label>
                     <Input
@@ -342,11 +413,11 @@ export default function Cadastro() {
                       value={formData.confirmPassword}
                       onChange={(e) => handleChange('confirmPassword', e.target.value)}
                       placeholder="••••••••"
-                      className={`h-11 ${errors.confirmPassword ? 'border-red-500' : 'border-slate-200'}`}
+                      className={`h-11 ${errors.confirmPassword ? 'border-destructive' : 'border-input'}`}
                       disabled={isSubmitting}
                     />
                     {errors.confirmPassword && (
-                      <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+                      <p className="text-xs text-destructive">{errors.confirmPassword}</p>
                     )}
                   </div>
                 </div>
@@ -354,7 +425,7 @@ export default function Cadastro() {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-semibold text-base mt-4"
+                className="w-full h-12 bg-[hsl(var(--servire-blue-dark))] hover:bg-[hsl(var(--servire-blue))] text-primary-foreground font-semibold text-base mt-4"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -370,22 +441,22 @@ export default function Cadastro() {
                 )}
               </Button>
 
-              <p className="text-xs text-slate-500 text-center">
+              <p className="text-xs text-muted-foreground text-center">
                 Ao criar sua conta, você concorda com nossos{' '}
-                <Link to="/termos-de-uso" className="text-[#2563EB] hover:underline">
+                <Link to="/termos-de-uso" className="text-primary hover:underline">
                   Termos de Uso
                 </Link>{' '}
                 e{' '}
-                <Link to="/privacidade" className="text-[#2563EB] hover:underline">
+                <Link to="/privacidade" className="text-primary hover:underline">
                   Política de Privacidade
                 </Link>
               </p>
             </form>
 
-            <div className="mt-5 pt-5 border-t border-slate-100 text-center">
-              <p className="text-sm text-slate-500">
+            <div className="mt-5 pt-5 border-t border-border text-center">
+              <p className="text-sm text-muted-foreground">
                 Já tem uma conta?{' '}
-                <Link to="/auth" className="text-[#2563EB] hover:text-[#1E40AF] font-medium">
+                <Link to="/auth" className="text-primary hover:text-primary/80 font-medium">
                   Faça login
                 </Link>
               </p>
@@ -393,7 +464,7 @@ export default function Cadastro() {
           </div>
 
           {/* Footer text */}
-          <p className="mt-6 text-center text-sm text-white/50">
+          <p className="mt-6 text-center text-sm text-primary-foreground/50">
             © 2024 Servire. Todos os direitos reservados.
           </p>
         </div>
