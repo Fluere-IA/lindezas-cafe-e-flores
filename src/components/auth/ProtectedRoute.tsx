@@ -12,8 +12,11 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, requiredRole, requiresSubscription = true }: ProtectedRouteProps) {
   const { isAuthenticated, role, isLoading: authLoading } = useAuth();
-  const { subscribed, planName, isLoading: subLoading } = useSubscription();
+  const { subscribed, planName, isLoading: subLoading, isInTrial, trialDaysRemaining } = useSubscription();
   const location = useLocation();
+
+  // User has access if subscribed OR in trial period
+  const hasAccess = subscribed || isInTrial;
 
   const isLoading = authLoading || (isAuthenticated && subLoading);
 
@@ -32,15 +35,15 @@ export function ProtectedRoute({ children, requiredRole, requiresSubscription = 
     return <Navigate to="/auth" replace />;
   }
 
-  // Check subscription requirement (admins bypass subscription check)
-  if (requiresSubscription && !subscribed && role !== 'admin') {
+  // Check subscription requirement (admins bypass subscription check, trial users have access)
+  if (requiresSubscription && !hasAccess && role !== 'admin') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-lindezas-cream">
         <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
           <Lock className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Assinatura Necessária</h1>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Período de Teste Encerrado</h1>
           <p className="text-slate-600 mb-6">
-            Para acessar o painel, você precisa ter uma assinatura ativa.
+            Seu período de teste gratuito de 7 dias terminou. Escolha um plano para continuar usando o sistema.
           </p>
           <Button 
             onClick={() => window.location.href = '/#planos'}

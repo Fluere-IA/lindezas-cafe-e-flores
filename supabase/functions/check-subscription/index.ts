@@ -41,14 +41,28 @@ serve(async (req) => {
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    logStep("User authenticated", { userId: user.id, email: user.email, createdAt: user.created_at });
+
+    // Check trial status (7 days from account creation)
+    const TRIAL_DAYS = 7;
+    const userCreatedAt = new Date(user.created_at);
+    const trialEndDate = new Date(userCreatedAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const isInTrial = now < trialEndDate;
+    const trialDaysRemaining = isInTrial ? Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : 0;
+    logStep("Trial status checked", { isInTrial, trialDaysRemaining, trialEndDate: trialEndDate.toISOString() });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
     if (customers.data.length === 0) {
-      logStep("No customer found, user is not subscribed");
-      return new Response(JSON.stringify({ subscribed: false }), {
+      logStep("No customer found, checking trial status");
+      return new Response(JSON.stringify({ 
+        subscribed: false,
+        is_in_trial: isInTrial,
+        trial_days_remaining: trialDaysRemaining,
+        trial_end: trialEndDate.toISOString()
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -96,7 +110,10 @@ serve(async (req) => {
       subscribed: hasActiveSub,
       product_id: productId,
       plan_name: planName,
-      subscription_end: subscriptionEnd
+      subscription_end: subscriptionEnd,
+      is_in_trial: isInTrial,
+      trial_days_remaining: trialDaysRemaining,
+      trial_end: trialEndDate.toISOString()
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
