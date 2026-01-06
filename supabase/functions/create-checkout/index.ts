@@ -17,12 +17,39 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require authentication
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    logStep("Authentication required - no auth header");
+    return new Response(
+      JSON.stringify({ error: "Authentication required" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+    );
+  }
+
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: authHeader } } }
   );
 
   try {
+    // Validate user authentication
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      logStep("Invalid token", { error: claimsError?.message });
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    const userEmail = claimsData.claims.email as string | undefined;
+    logStep("User authenticated", { userId, email: userEmail });
+
     const { priceId, successUrl, cancelUrl } = await req.json();
     logStep("Creating checkout session", { priceId });
 
@@ -30,22 +57,24 @@ serve(async (req) => {
       throw new Error("Price ID is required");
     }
 
+    // Validate priceId against allowed values (whitelist)
+    const allowedPriceIds = [
+      Deno.env.get("STRIPE_PRICE_START"),
+      Deno.env.get("STRIPE_PRICE_PRO"),
+    ].filter(Boolean);
+    
+    // If we have configured price IDs, validate against them
+    if (allowedPriceIds.length > 0 && !allowedPriceIds.includes(priceId)) {
+      logStep("Invalid priceId", { priceId, allowed: allowedPriceIds });
+      throw new Error("Invalid price ID");
+    }
+
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
       throw new Error("Stripe secret key not configured");
     }
 
-    // Get user from auth header if available
-    const authHeader = req.headers.get("Authorization");
-    let userEmail: string | undefined;
     let customerId: string | undefined;
-
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data } = await supabaseClient.auth.getUser(token);
-      userEmail = data.user?.email;
-      logStep("User authenticated", { email: userEmail });
-    }
 
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
 
