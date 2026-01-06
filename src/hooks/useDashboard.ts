@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay, subDays, format } from 'date-fns';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 export interface DashboardStats {
   todaySales: number;
@@ -52,8 +53,10 @@ export interface PaymentMethodStats {
 }
 
 export function useDashboardStats() {
+  const { currentOrganization } = useOrganization();
+  
   return useQuery({
-    queryKey: ['dashboard-stats'],
+    queryKey: ['dashboard-stats', currentOrganization?.id],
     queryFn: async (): Promise<DashboardStats> => {
       const today = new Date();
       const startOfToday = startOfDay(today).toISOString();
@@ -65,20 +68,32 @@ export function useDashboardStats() {
       const endOfLastWeekDay = endOfDay(lastWeekDay).toISOString();
 
       // Get today's orders (paid status means completed)
-      const { data: todayOrders, error } = await supabase
+      let todayQuery = supabase
         .from('orders')
         .select('total, status')
         .gte('created_at', startOfToday)
         .lte('created_at', endOfToday);
+      
+      if (currentOrganization) {
+        todayQuery = todayQuery.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data: todayOrders, error } = await todayQuery;
 
       if (error) throw error;
 
       // Get last week same day orders
-      const { data: lastWeekOrders } = await supabase
+      let lastWeekQuery = supabase
         .from('orders')
         .select('total, status')
         .gte('created_at', startOfLastWeekDay)
         .lte('created_at', endOfLastWeekDay);
+      
+      if (currentOrganization) {
+        lastWeekQuery = lastWeekQuery.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data: lastWeekOrders } = await lastWeekQuery;
 
       const completedOrders = todayOrders?.filter(o => o.status === 'paid') || [];
       const pendingOrders = todayOrders?.filter(o => o.status === 'pending' || o.status === 'ready') || [];
@@ -110,19 +125,28 @@ export function useDashboardStats() {
       };
     },
     refetchInterval: 30000,
+    enabled: !!currentOrganization,
   });
 }
 
 export function useCurrentStatus() {
+  const { currentOrganization } = useOrganization();
+  
   return useQuery({
-    queryKey: ['current-status'],
+    queryKey: ['current-status', currentOrganization?.id],
     queryFn: async (): Promise<CurrentStatus> => {
       // Get all open orders (pending or ready)
-      const { data: openOrders, error } = await supabase
+      let query = supabase
         .from('orders')
         .select('order_number, table_number, status, total, paid_amount, created_at')
         .in('status', ['pending', 'ready'])
         .order('created_at', { ascending: true });
+      
+      if (currentOrganization) {
+        query = query.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data: openOrders, error } = await query;
 
       if (error) throw error;
 
@@ -166,20 +190,29 @@ export function useCurrentStatus() {
       };
     },
     refetchInterval: 10000,
+    enabled: !!currentOrganization,
   });
 }
 
 export function usePaymentMethodStats() {
+  const { currentOrganization } = useOrganization();
+  
   return useQuery({
-    queryKey: ['payment-method-stats'],
+    queryKey: ['payment-method-stats', currentOrganization?.id],
     queryFn: async (): Promise<PaymentMethodStats[]> => {
       const today = new Date();
       const startOfToday = startOfDay(today).toISOString();
       
-      const { data: payments, error } = await supabase
+      let query = supabase
         .from('payments')
         .select('payment_method, amount')
         .gte('created_at', startOfToday);
+      
+      if (currentOrganization) {
+        query = query.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data: payments, error } = await query;
 
       if (error) throw error;
 
@@ -202,17 +235,20 @@ export function usePaymentMethodStats() {
       }));
     },
     refetchInterval: 30000,
+    enabled: !!currentOrganization,
   });
 }
 
 export function useTopProducts() {
+  const { currentOrganization } = useOrganization();
+  
   return useQuery({
-    queryKey: ['top-products'],
+    queryKey: ['top-products', currentOrganization?.id],
     queryFn: async (): Promise<TopProduct[]> => {
       const today = new Date();
       const startOfToday = startOfDay(today).toISOString();
 
-      const { data: orderItems, error } = await supabase
+      let query = supabase
         .from('order_items')
         .select(`
           quantity,
@@ -221,6 +257,12 @@ export function useTopProducts() {
           products (name)
         `)
         .gte('created_at', startOfToday);
+      
+      if (currentOrganization) {
+        query = query.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data: orderItems, error } = await query;
 
       if (error) throw error;
 
@@ -246,20 +288,29 @@ export function useTopProducts() {
         .slice(0, 5);
     },
     refetchInterval: 30000,
+    enabled: !!currentOrganization,
   });
 }
 
 export function useDailySales() {
+  const { currentOrganization } = useOrganization();
+  
   return useQuery({
-    queryKey: ['daily-sales'],
+    queryKey: ['daily-sales', currentOrganization?.id],
     queryFn: async (): Promise<DailySales[]> => {
       const sevenDaysAgo = subDays(new Date(), 6);
       
-      const { data: orders, error } = await supabase
+      let query = supabase
         .from('orders')
         .select('total, created_at, status')
         .gte('created_at', startOfDay(sevenDaysAgo).toISOString())
         .eq('status', 'paid');
+      
+      if (currentOrganization) {
+        query = query.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data: orders, error } = await query;
 
       if (error) throw error;
 
@@ -285,18 +336,27 @@ export function useDailySales() {
         orders: data.orders,
       }));
     },
+    enabled: !!currentOrganization,
   });
 }
 
 export function useRecentOrders() {
+  const { currentOrganization } = useOrganization();
+  
   return useQuery({
-    queryKey: ['recent-orders'],
+    queryKey: ['recent-orders', currentOrganization?.id],
     queryFn: async (): Promise<RecentOrder[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(8);
+      
+      if (currentOrganization) {
+        query = query.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -311,5 +371,6 @@ export function useRecentOrders() {
       }));
     },
     refetchInterval: 10000,
+    enabled: !!currentOrganization,
   });
 }
