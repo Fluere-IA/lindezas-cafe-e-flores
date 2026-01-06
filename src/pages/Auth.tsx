@@ -24,7 +24,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/selecionar-organizacao');
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -76,7 +76,7 @@ export default function Auth() {
           title: 'Bem-vindo!',
           description: 'Login realizado com sucesso.',
         });
-        navigate('/dashboard');
+        navigate('/selecionar-organizacao');
       }
     } finally {
       setIsSubmitting(false);
