@@ -2,9 +2,22 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+// Allowed origins for CORS - prevents unauthorized sites from calling this endpoint
+const ALLOWED_ORIGINS = [
+  'https://lindezas.lovable.app',
+  'https://lindezas-cafe-e-flores.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:8080'
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) 
+    ? origin 
+    : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
 };
 
 const logStep = (step: string, details?: any) => {
@@ -13,6 +26,9 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -54,7 +70,8 @@ serve(async (req) => {
     logStep("Creating checkout session", { priceId });
 
     if (!priceId) {
-      throw new Error("Price ID is required");
+      logStep("ERROR: Price ID is required");
+      throw new Error("Missing required parameter");
     }
 
     // Validate priceId against allowed values (whitelist)
@@ -66,12 +83,13 @@ serve(async (req) => {
     // If we have configured price IDs, validate against them
     if (allowedPriceIds.length > 0 && !allowedPriceIds.includes(priceId)) {
       logStep("Invalid priceId", { priceId, allowed: allowedPriceIds });
-      throw new Error("Invalid price ID");
+      throw new Error("Invalid request");
     }
 
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
-      throw new Error("Stripe secret key not configured");
+      logStep("ERROR: Stripe secret key not configured");
+      throw new Error("Configuration error");
     }
 
     let customerId: string | undefined;
@@ -87,6 +105,11 @@ serve(async (req) => {
       }
     }
 
+    // Validate and use origin from allowlist for redirect URLs
+    const validOrigin = origin && ALLOWED_ORIGINS.includes(origin)
+      ? origin
+      : ALLOWED_ORIGINS[0];
+
     // Create Stripe checkout session for subscription
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -99,12 +122,12 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: successUrl || `${req.headers.get("origin")}/app?checkout=success`,
-      cancel_url: cancelUrl || `${req.headers.get("origin")}/?checkout=cancelled`,
+      success_url: successUrl || `${validOrigin}/app?checkout=success`,
+      cancel_url: cancelUrl || `${validOrigin}/?checkout=cancelled`,
       allow_promotion_codes: true,
     });
 
-    console.log("Checkout session created:", session.id);
+    logStep("Checkout session created", { sessionId: session.id });
 
     return new Response(
       JSON.stringify({ url: session.url }),
@@ -115,9 +138,11 @@ serve(async (req) => {
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error creating checkout session:", errorMessage);
+    logStep("ERROR creating checkout session", { message: errorMessage });
+    
+    // Return generic error message to client
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
