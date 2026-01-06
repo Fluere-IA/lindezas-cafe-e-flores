@@ -80,8 +80,8 @@ export function CartSheet({
         <SheetHeader className="px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2.5 font-display text-lg">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <ShoppingBag className="h-4 w-4 text-primary" />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(45, 90, 39, 0.1)' }}>
+                <ShoppingBag className="h-4 w-4" style={{ color: '#2D5A27' }} />
               </div>
               Pedido
               <span className="text-sm font-normal text-muted-foreground">
@@ -176,7 +176,8 @@ export function CartSheet({
                         vibrate();
                         onUpdateQuantity(item.product.id, item.quantity + 1);
                       }}
-                      className="w-7 h-7 rounded-md bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors active:scale-95"
+                      className="w-7 h-7 rounded-md flex items-center justify-center transition-colors active:scale-95"
+                      style={{ backgroundColor: 'rgba(45, 90, 39, 0.1)', color: '#2D5A27' }}
                     >
                       <Plus className="h-3 w-3" />
                     </button>
@@ -218,7 +219,7 @@ export function CartSheet({
                 </button>
               )}
             </div>
-            <span className="font-display text-2xl font-bold text-primary">
+            <span className="font-display text-2xl font-bold" style={{ color: '#2D5A27' }}>
               {formatPrice(total)}
             </span>
           </div>
