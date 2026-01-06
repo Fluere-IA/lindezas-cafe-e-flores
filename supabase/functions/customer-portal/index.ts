@@ -51,10 +51,22 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
-    const origin = req.headers.get("origin") || "https://lindezas.lovable.app";
+    // Validate origin against allowlist to prevent redirect attacks
+    const ALLOWED_ORIGINS = [
+      'https://lindezas.lovable.app',
+      'https://lindezas-cafe-e-flores.lovable.app',
+      'http://localhost:5173',
+      'http://localhost:8080'
+    ];
+    
+    const requestOrigin = req.headers.get("origin");
+    const validOrigin = requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)
+      ? requestOrigin
+      : "https://lindezas.lovable.app";
+    
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/assinatura`,
+      return_url: `${validOrigin}/assinatura`,
     });
     logStep("Customer portal session created", { sessionId: portalSession.id, url: portalSession.url });
 
