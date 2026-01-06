@@ -11,6 +11,9 @@ import Caixa from "./pages/Caixa";
 import Cozinha from "./pages/Cozinha";
 import Configuracoes from "./pages/Configuracoes";
 import Assinatura from "./pages/Assinatura";
+import Privacidade from "./pages/Privacidade";
+import Cookies from "./pages/Cookies";
+import TermosDeUso from "./pages/TermosDeUso";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +29,9 @@ const App = () => (
           {/* Public Landing Page */}
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/privacidade" element={<Privacidade />} />
+          <Route path="/cookies" element={<Cookies />} />
+          <Route path="/termos" element={<TermosDeUso />} />
           
           {/* Protected App Routes */}
           <Route path="/app" element={<ProtectedRoute><Index /></ProtectedRoute>} />

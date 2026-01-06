@@ -43,19 +43,19 @@ export function LandingFooter() {
             <h4 className="font-semibold text-white mb-4">Legal</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors text-sm">
+                <Link to="/termos" className="text-slate-400 hover:text-white transition-colors text-sm">
                   Termos de Uso
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors text-sm">
+                <Link to="/privacidade" className="text-slate-400 hover:text-white transition-colors text-sm">
                   Privacidade
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors text-sm">
+                <Link to="/cookies" className="text-slate-400 hover:text-white transition-colors text-sm">
                   Cookies
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
