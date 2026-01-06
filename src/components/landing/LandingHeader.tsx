@@ -33,16 +33,16 @@ export function LandingHeader() {
               Para quem é
             </a>
             <a 
-              href="#sobre" 
-              className="text-white/90 hover:text-white transition-colors text-sm font-medium"
-            >
-              Sobre
-            </a>
-            <a 
               href="#planos" 
               className="text-white/90 hover:text-white transition-colors text-sm font-medium"
             >
               Planos
+            </a>
+            <a 
+              href="#faq" 
+              className="text-white/90 hover:text-white transition-colors text-sm font-medium"
+            >
+              Perguntas
             </a>
           </nav>
 
