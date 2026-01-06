@@ -47,7 +47,7 @@ export function CurrentStatusCard({ status, stats, isLoading }: CurrentStatusCar
       label: 'Ticket Médio',
       value: formatCurrency(stats?.averageTicket || 0),
       icon: TrendingUp,
-      color: '#5B8DB8',
+      color: '#2D5A27',
     },
   ];
 
