@@ -13,6 +13,7 @@ import Cozinha from "./pages/Cozinha";
 import Configuracoes from "./pages/Configuracoes";
 import Assinatura from "./pages/Assinatura";
 import Organizacoes from "./pages/Organizacoes";
+import SelecionarOrganizacao from "./pages/SelecionarOrganizacao";
 import Privacidade from "./pages/Privacidade";
 import Cookies from "./pages/Cookies";
 import TermosDeUso from "./pages/TermosDeUso";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/termos" element={<TermosDeUso />} />
             
             {/* Protected App Routes */}
+            <Route path="/selecionar-organizacao" element={<ProtectedRoute><SelecionarOrganizacao /></ProtectedRoute>} />
             <Route path="/app" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/caixa" element={<ProtectedRoute><Caixa /></ProtectedRoute>} />

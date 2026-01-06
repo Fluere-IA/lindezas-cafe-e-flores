@@ -25,7 +25,7 @@ export default function Cadastro() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/selecionar-organizacao');
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -81,7 +81,7 @@ export default function Cadastro() {
           title: 'Conta criada!',
           description: 'Sua conta foi criada com sucesso. Você já pode acessar o sistema.',
         });
-        navigate('/dashboard');
+        navigate('/selecionar-organizacao');
       }
     } finally {
       setIsSubmitting(false);

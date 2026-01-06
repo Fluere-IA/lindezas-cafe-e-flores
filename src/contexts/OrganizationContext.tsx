@@ -46,12 +46,17 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
       setOrganizations(data || []);
       
-      // Auto-select first org if none selected
+      // Don't auto-select for master admins - let them choose
       if (data && data.length > 0 && !currentOrganization) {
         // Try to restore from localStorage
         const savedOrgId = localStorage.getItem('currentOrganizationId');
         const savedOrg = data.find(org => org.id === savedOrgId);
-        setCurrentOrganization(savedOrg || data[0]);
+        
+        // Only auto-select if we have a saved org or if user is not master admin
+        if (savedOrg) {
+          setCurrentOrganization(savedOrg);
+        }
+        // If master admin with no saved org, don't auto-select - they need to choose
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
