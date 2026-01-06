@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { OrganizationSelector } from './OrganizationSelector';
 import logoLindezas from '@/assets/logo-lindezas.png';
 
 const navItems = [
@@ -115,9 +116,11 @@ export function DashboardHeader() {
           </DropdownMenu>
         </div>
         
-        {/* Settings, User & Logout */}
+        {/* Organization Selector, Settings, User & Logout */}
         <div className="flex items-center gap-2">
-          <p className="hidden sm:block text-sm font-medium text-white/80">
+          <OrganizationSelector />
+          
+          <p className="hidden lg:block text-sm font-medium text-white/80">
             {new Date().toLocaleDateString('pt-BR', {
               weekday: 'long',
               day: 'numeric',
@@ -127,7 +130,7 @@ export function DashboardHeader() {
           
           {role && (
             <span className="hidden sm:inline-block text-xs bg-white/20 px-2 py-1 rounded-full">
-              {role === 'admin' ? 'Admin' : role === 'cashier' ? 'Caixa' : 'Cozinha'}
+              {role === 'admin' ? 'Admin Master' : role === 'cashier' ? 'Caixa' : 'Cozinha'}
             </span>
           )}
           
