@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Eye, EyeOff, Flower2 } from 'lucide-react';
-import logo from '@/assets/logo-lindezas.png';
+import { Loader2, Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
 
 const emailSchema = z.string().trim().email('Email inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter no mínimo 6 caracteres');
@@ -25,7 +24,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -77,7 +76,7 @@ export default function Auth() {
           title: 'Bem-vindo!',
           description: 'Login realizado com sucesso.',
         });
-        navigate('/');
+        navigate('/dashboard');
       }
     } finally {
       setIsSubmitting(false);
@@ -86,115 +85,139 @@ export default function Auth() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-lindezas-cream">
-        <Loader2 className="h-8 w-8 animate-spin text-lindezas-forest" />
+      <div className="min-h-screen flex items-center justify-center bg-[#1E40AF]">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-lindezas-cream p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <img 
-              src={logo} 
-              alt="Lindezas Café & Flores" 
-              className="h-16 w-auto"
-            />
-          </div>
-          <h1 className="text-2xl font-bold text-lindezas-forest">
-            Lindezas Café & Flores
-          </h1>
-          <p className="text-gray-500 mt-2">
-            Entre na sua conta
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-lindezas-forest">
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setErrors(prev => ({ ...prev, email: undefined }));
-              }}
-              placeholder="seu@email.com"
-              className={errors.email ? 'border-red-500' : ''}
-              disabled={isSubmitting}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-lindezas-forest">
-              Senha
-            </Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setErrors(prev => ({ ...prev, password: undefined }));
-                }}
-                placeholder="••••••••"
-                className={errors.password ? 'border-red-500 pr-10' : 'pr-10'}
-                disabled={isSubmitting}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password}</p>
-            )}
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full bg-lindezas-forest hover:bg-lindezas-forest/90 text-white"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Entrando...
-              </>
-            ) : (
-              <>
-                <Flower2 className="mr-2 h-4 w-4" />
-                Entrar
-              </>
-            )}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <p>Acesso restrito a funcionários</p>
-          <p className="mt-1">Contate o administrador para obter uma conta</p>
-        </div>
+    <div className="min-h-screen flex flex-col bg-[#1E40AF] relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-20 w-96 h-96 bg-white rounded-full blur-3xl" />
       </div>
 
-      <p className="mt-8 text-sm text-gray-500">
-        Sistema de Ponto de Venda
-      </p>
+      {/* Back to Home Link */}
+      <div className="relative z-10 p-6">
+        <Link 
+          to="/" 
+          className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm font-medium"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar ao início
+        </Link>
+      </div>
+
+      {/* Login Card */}
+      <div className="flex-1 flex items-center justify-center px-4 pb-12 relative z-10">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <Link to="/" className="inline-block">
+              <span className="text-4xl font-bold text-white tracking-tight">
+                Servire
+              </span>
+            </Link>
+            <p className="text-white/70 mt-3">
+              Entre na sua conta para continuar
+            </p>
+          </div>
+
+          {/* Form Card */}
+          <div className="bg-white rounded-2xl shadow-2xl p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-slate-700">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setErrors(prev => ({ ...prev, email: undefined }));
+                  }}
+                  placeholder="seu@email.com"
+                  className={`h-12 ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : 'border-slate-200 focus-visible:ring-[#2563EB]'}`}
+                  disabled={isSubmitting}
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-slate-700">
+                  Senha
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrors(prev => ({ ...prev, password: undefined }));
+                    }}
+                    placeholder="••••••••"
+                    className={`h-12 pr-12 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : 'border-slate-200 focus-visible:ring-[#2563EB]'}`}
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-red-500">{errors.password}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-semibold text-base"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Entrar
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-slate-100 text-center">
+              <p className="text-sm text-slate-500">
+                Ainda não tem conta?{' '}
+                <Link to="/#planos" className="text-[#2563EB] hover:text-[#1E40AF] font-medium">
+                  Comece seu teste grátis
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          {/* Footer text */}
+          <p className="mt-8 text-center text-sm text-white/50">
+            © 2024 Servire. Todos os direitos reservados.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
