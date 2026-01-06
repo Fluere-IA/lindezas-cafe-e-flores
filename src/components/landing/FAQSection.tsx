@@ -33,10 +33,6 @@ const faqs = [
   {
     question: "Posso cancelar a qualquer momento?",
     answer: "Sim, você pode cancelar sua assinatura a qualquer momento sem multas ou taxas adicionais. Você continuará tendo acesso até o final do período já pago."
-  },
-  {
-    question: "O Servire emite nota fiscal?",
-    answer: "No momento ainda não emitimos nota fiscal, mas estamos trabalhando para disponibilizar essa funcionalidade em breve."
   }
 ];
 
