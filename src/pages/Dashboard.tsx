@@ -3,6 +3,8 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { CurrentStatusCard } from '@/components/dashboard/CurrentStatusCard';
 import { SalesChart } from '@/components/dashboard/SalesChart';
 import { TopProducts } from '@/components/dashboard/TopProducts';
+import { TrialBanner } from '@/components/dashboard/TrialBanner';
+import { useSubscription } from '@/hooks/useSubscription';
 import { 
   useDashboardStats, 
   useCurrentStatus,
@@ -15,12 +17,17 @@ const Dashboard = () => {
   const { data: currentStatus, isLoading: statusLoading } = useCurrentStatus();
   const { data: topProducts, isLoading: topProductsLoading } = useTopProducts();
   const { data: dailySales, isLoading: dailySalesLoading } = useDailySales();
+  const { isInTrial, trialDaysRemaining, subscribed } = useSubscription();
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <DashboardHeader />
       
       <main className="flex-1 p-4 md:p-5 space-y-4 overflow-y-auto">
+        {/* Trial Banner */}
+        {isInTrial && !subscribed && (
+          <TrialBanner daysRemaining={trialDaysRemaining} />
+        )}
         {/* Main Status Cards */}
         <CurrentStatusCard 
           status={currentStatus} 
