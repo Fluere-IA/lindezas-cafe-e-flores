@@ -61,13 +61,13 @@
     --servire-gold: 38 92% 50%;
     --servire-gold-light: 38 80% 65%;
     
-    /* Legacy tokens for compatibility */
-    --cream: 220 25% 97%;
-    --forest: 217 91% 53%;
-    --forest-light: 217 91% 65%;
+    /* Legacy tokens for compatibility - Lindezas operational colors */
+    --cream: 43 50% 97%;
+    --forest: 120 38% 25%;
+    --forest-light: 120 30% 45%;
     --gold: 38 92% 50%;
     --gold-light: 38 80% 65%;
-    --espresso: 222 47% 15%;
+    --espresso: 20 35% 22%;
     --latte: 38 45% 60%;
     --flower-blue: 207 55% 62%;
     --flower-pink: 340 45% 65%;

@@ -41,7 +41,7 @@ const App = () => (
             
             {/* Protected App Routes */}
             <Route path="/selecionar-organizacao" element={<ProtectedRoute><SelecionarOrganizacao /></ProtectedRoute>} />
-            <Route path="/app" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/pedidos" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/caixa" element={<ProtectedRoute><Caixa /></ProtectedRoute>} />
             <Route path="/cozinha" element={<ProtectedRoute><Cozinha /></ProtectedRoute>} />
