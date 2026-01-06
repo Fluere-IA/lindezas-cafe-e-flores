@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Monitor, Smartphone, ChefHat } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function HeroSection() {
-  const scrollToPlans = () => {
-    const plansSection = document.getElementById("planos");
-    plansSection?.scrollIntoView({ behavior: "smooth" });
+  const navigate = useNavigate();
+  
+  const goToCadastro = () => {
+    navigate("/cadastro");
   };
 
   return (
@@ -30,7 +32,7 @@ export function HeroSection() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button
-                onClick={scrollToPlans}
+                onClick={goToCadastro}
                 size="lg"
                 className="bg-white text-[#1E40AF] hover:bg-white/90 font-semibold text-lg px-8 py-6"
               >
