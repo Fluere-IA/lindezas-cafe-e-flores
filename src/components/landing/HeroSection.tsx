@@ -24,7 +24,7 @@ export function HeroSection() {
               <span className="block text-white/90">quem serve.</span>
             </h1>
             <p className="text-lg md:text-xl text-white/80 mb-8 max-w-xl mx-auto lg:mx-0">
-              O sistema de gestão híbrido para Cafeterias, Floriculturas e Restaurantes. 
+              O sistema de gestão para Cafeterias e Restaurantes. 
               <span className="font-semibold text-white"> Comanda, KDS e Gestão</span> em um só lugar.
             </p>
             
