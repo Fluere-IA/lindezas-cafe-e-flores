@@ -65,26 +65,57 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
-      }}
-    />
-  );
+  // Build CSS custom properties safely without dangerouslySetInnerHTML
+  const cssVariables = React.useMemo(() => {
+    const lightVars: Record<string, string> = {};
+    const darkVars: Record<string, string> = {};
+
+    colorConfig.forEach(([key, itemConfig]) => {
+      const lightColor = itemConfig.theme?.light || itemConfig.color;
+      const darkColor = itemConfig.theme?.dark || itemConfig.color;
+
+      if (lightColor) {
+        lightVars[`--color-${key}`] = lightColor;
+      }
+      if (darkColor) {
+        darkVars[`--color-${key}`] = darkColor;
+      }
+    });
+
+    return { lightVars, darkVars };
+  }, [colorConfig]);
+
+  // Apply CSS variables via useEffect to handle theme-aware styling
+  React.useEffect(() => {
+    const chartElement = document.querySelector(`[data-chart="${id}"]`);
+    if (!chartElement) return;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const vars = isDark ? cssVariables.darkVars : cssVariables.lightVars;
+
+    Object.entries(vars).forEach(([key, value]) => {
+      (chartElement as HTMLElement).style.setProperty(key, value);
+    });
+
+    // Observer for theme changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDarkNow = document.documentElement.classList.contains('dark');
+          const currentVars = isDarkNow ? cssVariables.darkVars : cssVariables.lightVars;
+          Object.entries(currentVars).forEach(([key, value]) => {
+            (chartElement as HTMLElement).style.setProperty(key, value);
+          });
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+  }, [id, cssVariables]);
+
+  return null;
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
