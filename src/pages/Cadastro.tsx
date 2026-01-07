@@ -173,12 +173,27 @@ export default function Cadastro() {
         return;
       }
 
-      // Wait for session to be established
+      // Wait for session to be fully established
       const userId = data?.user?.id;
       if (!userId) {
         toast({
           title: 'Erro',
           description: 'Erro ao obter dados do usuário. Tente fazer login.',
+          variant: 'destructive',
+        });
+        navigate('/auth');
+        return;
+      }
+
+      // Wait for auth state to propagate - necessary for RLS policies
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Verify session is active
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        toast({
+          title: 'Erro de sessão',
+          description: 'Não foi possível estabelecer a sessão. Tente fazer login.',
           variant: 'destructive',
         });
         navigate('/auth');
