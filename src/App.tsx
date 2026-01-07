@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { RoleGuard } from "@/components/auth/RoleGuard";
+import { SuperAdminRoute } from "@/components/auth/SuperAdminRoute";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -25,6 +27,7 @@ const Organizacoes = lazy(() => import("./pages/Organizacoes"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Membros = lazy(() => import("./pages/Membros"));
 const Perfil = lazy(() => import("./pages/Perfil"));
+const SuperDashboard = lazy(() => import("./pages/SuperDashboard"));
 
 // Lazy loaded public pages
 const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
@@ -62,16 +65,18 @@ const App = () => (
                 <Route path="/cookies" element={<Cookies />} />
                 <Route path="/termos" element={<TermosDeUso />} />
                 
-                {/* Protected App Routes */}
+                {/* Super Admin Route */}
+                <Route path="/admin/super-dashboard" element={<SuperAdminRoute><SuperDashboard /></SuperAdminRoute>} />
                 
+                {/* Protected App Routes */}
                 <Route path="/onboarding" element={<ProtectedRoute requiresSubscription={false}><Onboarding /></ProtectedRoute>} />
                 <Route path="/pedidos" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/caixa" element={<ProtectedRoute><Caixa /></ProtectedRoute>} />
-                <Route path="/cozinha" element={<ProtectedRoute><Cozinha /></ProtectedRoute>} />
-                <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
+                <Route path="/cozinha" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin', 'kitchen']}><Cozinha /></RoleGuard></ProtectedRoute>} />
+                <Route path="/configuracoes" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin']}><Configuracoes /></RoleGuard></ProtectedRoute>} />
                 <Route path="/organizacoes" element={<ProtectedRoute><Organizacoes /></ProtectedRoute>} />
-                <Route path="/membros" element={<ProtectedRoute><Membros /></ProtectedRoute>} />
+                <Route path="/membros" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin']}><Membros /></RoleGuard></ProtectedRoute>} />
                 <Route path="/assinatura" element={<ProtectedRoute requiresSubscription={false}><Assinatura /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
                 
