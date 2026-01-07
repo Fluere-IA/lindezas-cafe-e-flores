@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
@@ -39,6 +39,8 @@ const tiposEstabelecimento = [
 export default function Cadastro() {
   const [searchParams] = useSearchParams();
   const selectedPlan = searchParams.get('plan');
+  // Track if we just completed signup to prevent redirect loop
+  const justSignedUp = useRef(false);
   
   const [formData, setFormData] = useState<CadastroFormData>({
     nomeResponsavel: '',
@@ -57,8 +59,9 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Only redirect if authenticated AND we didn't just sign up
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated && !justSignedUp.current) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, isLoading, navigate]);
@@ -220,6 +223,9 @@ export default function Cadastro() {
           title: 'Conta criada com sucesso!',
           description: 'Vamos configurar seu estabelecimento.',
         });
+        
+        // Mark that we just signed up to prevent redirect to dashboard
+        justSignedUp.current = true;
         
         // Redirect to onboarding
         navigate('/onboarding');
