@@ -189,11 +189,12 @@ export default function Cadastro() {
       }
 
       // Wait for auth state to propagate - necessary for RLS policies
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Increase delay to ensure session is fully established
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Verify session is active
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
+      // Force refresh session to ensure token is valid
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshData.session) {
         toast({
           title: 'Erro de sessão',
           description: 'Não foi possível estabelecer a sessão. Tente fazer login.',
@@ -202,6 +203,9 @@ export default function Cadastro() {
         navigate('/auth');
         return;
       }
+      
+      // Wait a bit more after refresh
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Create organization with company data
       try {
