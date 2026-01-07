@@ -29,8 +29,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const subscription = useSubscription();
 
   // Derive plan tier from plan name
+  // Note: isInTrial is a parallel state, not a tier - user can have Pro subscription AND be in trial
   const getPlanTier = (): PlanTier => {
-    if (subscription.isInTrial) return 'trial';
     if (!subscription.subscribed) return 'trial';
     
     const planName = subscription.planName?.toLowerCase() || '';
