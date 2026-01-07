@@ -251,7 +251,7 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
               .from('categories')
               .insert({
                 name: catName,
-                type: 'bebidas',
+                type: 'cafeteria',
                 organization_id: currentOrganization?.id,
               })
               .select()
