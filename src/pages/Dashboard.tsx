@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { TrendingUp, Trophy, Loader2 } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { CurrentStatusCard } from '@/components/dashboard/CurrentStatusCard';
@@ -17,19 +17,34 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { currentOrganization, isLoading: orgLoading } = useOrganization();
+  const location = useLocation();
+  const { currentOrganization, isLoading: orgLoading, refetchOrganizations } = useOrganization();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: currentStatus, isLoading: statusLoading } = useCurrentStatus();
   const { data: topProducts, isLoading: topProductsLoading } = useTopProducts();
   const { data: dailySales, isLoading: dailySalesLoading } = useDailySales();
   const { isInTrial, trialDaysRemaining, subscribed } = useSubscription();
+  const [hasCheckedOnboarding, setHasCheckedOnboarding] = useState(false);
 
   // Redirect to onboarding if not completed (null or false means not completed)
   useEffect(() => {
-    if (!orgLoading && currentOrganization && currentOrganization.onboarding_completed !== true) {
-      navigate('/onboarding');
-    }
-  }, [orgLoading, currentOrganization, navigate]);
+    if (orgLoading || hasCheckedOnboarding) return;
+
+    const checkOnboarding = async () => {
+      // If coming from onboarding (replace navigation), refetch to get updated state
+      if (location.state?.fromOnboarding) {
+        await refetchOrganizations();
+      }
+      
+      setHasCheckedOnboarding(true);
+      
+      if (currentOrganization && currentOrganization.onboarding_completed !== true) {
+        navigate('/onboarding', { replace: true });
+      }
+    };
+
+    checkOnboarding();
+  }, [orgLoading, currentOrganization, navigate, hasCheckedOnboarding, location.state, refetchOrganizations]);
 
   // Show loading while checking organization
   if (orgLoading) {
