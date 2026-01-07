@@ -204,14 +204,34 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
       if (error) throw error;
 
       if (data?.items && Array.isArray(data.items) && data.items.length > 0) {
+        // Fetch fresh categories from the database (including global ones)
+        const { data: freshCategories } = await supabase
+          .from('categories')
+          .select('*')
+          .or(`organization_id.eq.${currentOrganization?.id},organization_id.is.null`)
+          .order('name');
+        
+        const allCategories = freshCategories || categories;
+        
+        // Normalize function for better matching
+        const normalize = (str: string) => 
+          str.toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim();
+        
         // Create categories and products from OCR results
         const uniqueCategories = [...new Set(data.items.map((item: any) => item.category || 'Geral'))];
         const categoryMap: Record<string, string> = {};
 
         // Create categories
         for (const categoryName of uniqueCategories) {
-          const catName = categoryName as string;
-          const existingCat = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+          const catName = (categoryName as string).trim();
+          const normalizedCatName = normalize(catName);
+          
+          // Find existing category with fuzzy matching
+          const existingCat = allCategories.find(c => normalize(c.name) === normalizedCatName);
+          
           if (existingCat) {
             categoryMap[catName] = existingCat.id;
           } else {
