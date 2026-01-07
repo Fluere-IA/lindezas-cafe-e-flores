@@ -209,17 +209,17 @@
     color: hsl(var(--primary-foreground)) !important;
   }
 
-  /* Gold accent styling */
-  .accent-gold {
-    color: hsl(var(--gold));
+  /* Primary accent styling */
+  .accent-primary {
+    color: hsl(var(--primary));
   }
 
-  .bg-accent-gold {
-    background: var(--gradient-gold);
+  .bg-accent-primary {
+    background: hsl(var(--primary));
   }
 
-  /* Forest styling */
-  .bg-forest {
+  /* Gradient styling */
+  .bg-gradient-hero {
     background: var(--gradient-hero);
   }
 

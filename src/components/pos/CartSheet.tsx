@@ -66,7 +66,7 @@ export function CartSheet({
             <>
               <span className="mx-2 opacity-50">•</span>
               <span className="font-semibold">{formatPrice(total)}</span>
-              <span className="ml-auto bg-gold text-forest px-2.5 py-0.5 rounded-full text-sm font-bold">
+              <span className="ml-auto bg-primary-foreground text-primary px-2.5 py-0.5 rounded-full text-sm font-bold">
                 {itemCount}
               </span>
             </>
@@ -74,7 +74,7 @@ export function CartSheet({
         </Button>
       </SheetTrigger>
       
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0 flex flex-col border-t-4 border-gold/50">
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0 flex flex-col border-t-4 border-primary/50">
         {/* Compact Header */}
         <SheetHeader className="px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center justify-between">
@@ -91,11 +91,11 @@ export function CartSheet({
             {/* Table Number - Inline */}
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-medium text-muted-foreground">Mesa</span>
-              <Input
+                <Input
                 placeholder="Nº"
                 value={tableNumber}
                 onChange={(e) => onTableNumberChange(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                className="w-12 h-8 text-center font-bold text-sm border-2 border-gold/30 focus:border-gold bg-background rounded-lg placeholder:text-xs placeholder:font-normal"
+                className="w-12 h-8 text-center font-bold text-sm border-2 border-primary/30 focus:border-primary bg-background rounded-lg placeholder:text-xs placeholder:font-normal"
                 maxLength={2}
                 inputMode="numeric"
               />
@@ -110,9 +110,9 @@ export function CartSheet({
             className="w-full flex items-center justify-between text-sm py-1"
           >
             <span className="flex items-center gap-2 text-muted-foreground">
-              <FileText className="h-4 w-4 text-gold" />
+              <FileText className="h-4 w-4 text-primary" />
               Observações
-              {notes && <span className="text-[10px] bg-gold/20 text-gold px-1.5 py-0.5 rounded font-medium">Preenchido</span>}
+              {notes && <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">Preenchido</span>}
             </span>
             {showNotes ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
           </button>
@@ -151,7 +151,7 @@ export function CartSheet({
                 {/* Product Name + Total Price */}
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-medium text-sm leading-snug flex-1">{item.product.name}</p>
-                  <span className="font-bold text-sm text-gold whitespace-nowrap">
+                  <span className="font-bold text-sm text-primary whitespace-nowrap">
                     {formatPrice(item.product.price * item.quantity)}
                   </span>
                 </div>
@@ -203,7 +203,7 @@ export function CartSheet({
         </div>
 
         {/* Footer - Compact */}
-        <div className="border-t-2 border-gold/20 px-4 py-3 bg-gradient-to-t from-gold/5 to-transparent shrink-0 space-y-3">
+        <div className="border-t-2 border-primary/20 px-4 py-3 bg-gradient-to-t from-primary/5 to-transparent shrink-0 space-y-3">
           {/* Total & Clear */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -237,7 +237,7 @@ export function CartSheet({
           </Button>
           
           {!hasTableNumber && items.length > 0 && (
-            <p className="text-[11px] text-gold text-center font-medium">
+            <p className="text-[11px] text-primary text-center font-medium">
               ⚠️ Informe o número da mesa
             </p>
           )}
