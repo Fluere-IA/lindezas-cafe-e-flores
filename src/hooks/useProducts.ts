@@ -37,16 +37,12 @@ export function useCategories() {
   return useQuery({
     queryKey: ['categories', currentOrganization?.id],
     queryFn: async (): Promise<Category[]> => {
-      let query = supabase
+      // Fetch categories belonging to the org OR global categories (null org_id)
+      const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .or(`organization_id.eq.${currentOrganization?.id},organization_id.is.null`)
         .order('name');
-      
-      if (currentOrganization) {
-        query = query.eq('organization_id', currentOrganization.id);
-      }
-      
-      const { data, error } = await query;
       
       if (error) throw error;
       return data as Category[];
