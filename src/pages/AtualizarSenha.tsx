@@ -1,44 +1,57 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
+import { Loader2, Lock, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
 
-const emailSchema = z.string().trim().email('Email inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter no mínimo 6 caracteres');
 
-export default function Auth() {
-  const [email, setEmail] = useState('');
+export default function AtualizarSenha() {
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isReady, setIsReady] = useState(false);
+  const [errors, setErrors] = useState<{ password?: string; confirm?: string }>({});
   
-  const { signIn, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, isLoading, navigate]);
+    // Check for recovery session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsReady(true);
+      } else {
+        // Listen for password recovery event
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+          if (event === 'PASSWORD_RECOVERY') {
+            setIsReady(true);
+          }
+        });
+        
+        return () => subscription.unsubscribe();
+      }
+    };
+    
+    checkSession();
+  }, []);
 
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { password?: string; confirm?: string } = {};
     
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
+    const result = passwordSchema.safeParse(password);
+    if (!result.success) {
+      newErrors.password = result.error.errors[0].message;
     }
     
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
+    if (password !== confirmPassword) {
+      newErrors.confirm = 'As senhas não coincidem';
     }
     
     setErrors(newErrors);
@@ -48,33 +61,23 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
     
     setIsSubmitting(true);
     
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await supabase.auth.updateUser({ password });
       
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: 'Erro de autenticação',
-            description: 'Email ou senha incorretos.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Erro',
-            description: 'Não foi possível fazer login. Tente novamente.',
-            variant: 'destructive',
-          });
-        }
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível atualizar a senha. Tente novamente.',
+          variant: 'destructive',
+        });
       } else {
         toast({
-          title: 'Bem-vindo!',
-          description: 'Login realizado com sucesso.',
+          title: 'Senha atualizada!',
+          description: 'Sua senha foi alterada com sucesso.',
         });
         navigate('/dashboard');
       }
@@ -83,10 +86,35 @@ export default function Auth() {
     }
   };
 
-  if (isLoading) {
+  if (!isReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1E40AF]">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      <div className="min-h-screen flex flex-col bg-[#1E40AF] relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-20 w-96 h-96 bg-white rounded-full blur-3xl" />
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center px-4 relative z-10">
+          <div className="w-full max-w-md">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
+              <Loader2 className="h-12 w-12 animate-spin text-[#1E40AF] mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-slate-800 mb-2">
+                Verificando link...
+              </h2>
+              <p className="text-slate-500 text-sm">
+                Por favor, aguarde enquanto validamos seu acesso.
+              </p>
+              <div className="mt-6">
+                <Link 
+                  to="/auth" 
+                  className="text-sm text-[#2563EB] hover:text-[#1E40AF] font-medium"
+                >
+                  Voltar ao login
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -99,18 +127,18 @@ export default function Auth() {
         <div className="absolute bottom-10 right-20 w-96 h-96 bg-white rounded-full blur-3xl" />
       </div>
 
-      {/* Back to Home Link */}
+      {/* Back Link */}
       <div className="relative z-10 p-6">
         <Link 
-          to="/" 
+          to="/auth" 
           className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar ao início
+          Voltar ao login
         </Link>
       </div>
 
-      {/* Login Card */}
+      {/* Card */}
       <div className="flex-1 flex items-center justify-center px-4 pb-12 relative z-10">
         <div className="w-full max-w-md">
           {/* Logo */}
@@ -121,37 +149,26 @@ export default function Auth() {
               </span>
             </Link>
             <p className="text-white/70 mt-3">
-              Entre na sua conta para continuar
+              Definir nova senha
             </p>
           </div>
 
           {/* Form Card */}
           <div className="bg-white rounded-2xl shadow-2xl p-8">
+            <div className="text-center mb-6">
+              <Lock className="h-12 w-12 text-[#1E40AF] mx-auto mb-3" />
+              <h2 className="text-xl font-semibold text-slate-800">
+                Nova senha
+              </h2>
+              <p className="text-slate-500 text-sm mt-1">
+                Digite sua nova senha abaixo.
+              </p>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-700">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setErrors(prev => ({ ...prev, email: undefined }));
-                  }}
-                  placeholder="seu@email.com"
-                  className={`h-12 ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : 'border-slate-200 focus-visible:ring-[#2563EB]'}`}
-                  disabled={isSubmitting}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="password" className="text-slate-700">
-                  Senha
+                  Nova senha
                 </Label>
                 <div className="relative">
                   <Input
@@ -183,13 +200,25 @@ export default function Auth() {
                 )}
               </div>
 
-              <div className="text-right mb-4">
-                <Link 
-                  to="/recuperar-senha" 
-                  className="text-sm text-[#2563EB] hover:text-[#1E40AF] font-medium"
-                >
-                  Esqueceu a senha?
-                </Link>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-slate-700">
+                  Confirmar senha
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setErrors(prev => ({ ...prev, confirm: undefined }));
+                  }}
+                  placeholder="••••••••"
+                  className={`h-12 ${errors.confirm ? 'border-red-500 focus-visible:ring-red-500' : 'border-slate-200 focus-visible:ring-[#2563EB]'}`}
+                  disabled={isSubmitting}
+                />
+                {errors.confirm && (
+                  <p className="text-sm text-red-500">{errors.confirm}</p>
+                )}
               </div>
 
               <Button
@@ -200,25 +229,16 @@ export default function Auth() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Entrando...
+                    Salvando...
                   </>
                 ) : (
                   <>
-                    <LogIn className="mr-2 h-5 w-5" />
-                    Entrar
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Salvar nova senha
                   </>
                 )}
               </Button>
             </form>
-
-            <div className="mt-6 pt-6 border-t border-slate-100 text-center">
-              <p className="text-sm text-slate-500">
-                Ainda não tem conta?{' '}
-                <Link to="/cadastro" className="text-[#2563EB] hover:text-[#1E40AF] font-medium">
-                  Criar conta
-                </Link>
-              </p>
-            </div>
           </div>
 
           {/* Footer text */}
