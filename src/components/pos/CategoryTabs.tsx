@@ -31,13 +31,27 @@ function getCategoryIcon(name: string) {
 export function CategoryTabs({ activeFilter, onFilterChange }: CategoryTabsProps) {
   const { data: categories = [], isLoading } = useCategories();
 
-  // If no categories yet, show placeholder
-  if (isLoading || categories.length === 0) {
+  // Show loading placeholders
+  if (isLoading) {
     return (
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
         <div className="h-10 w-24 bg-muted animate-pulse rounded-full" />
         <div className="h-10 w-20 bg-muted animate-pulse rounded-full" />
         <div className="h-10 w-28 bg-muted animate-pulse rounded-full" />
+      </div>
+    );
+  }
+
+  // If no categories, show "Todos" tab only
+  if (categories.length === 0) {
+    return (
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+        <button
+          className="flex items-center gap-1.5 whitespace-nowrap px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 border-2 bg-primary text-primary-foreground border-primary shadow-md"
+        >
+          <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary-foreground" />
+          <span>Todos</span>
+        </button>
       </div>
     );
   }
