@@ -36,10 +36,14 @@ export function useSubscription() {
       if (error) {
         console.error('Error checking subscription:', error);
         
-        // If user doesn't exist anymore, sign out
-        if (error.message?.includes('user_not_found') || 
-            error.message?.includes('does not exist') ||
-            error.message?.includes('500')) {
+        // Check for 401 status or invalid session errors
+        const errorContext = error?.context;
+        const status = errorContext?.status || error?.status;
+        
+        if (status === 401 || 
+            error.message?.includes('INVALID_SESSION') ||
+            error.message?.includes('user_not_found') || 
+            error.message?.includes('does not exist')) {
           console.log('User session invalid, signing out...');
           await supabase.auth.signOut();
           localStorage.removeItem('currentOrganizationId');
@@ -48,6 +52,15 @@ export function useSubscription() {
         }
         
         setSubscriptionState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
+      
+      // Also check if the response itself indicates invalid session
+      if (data?.code === 'INVALID_SESSION') {
+        console.log('User session invalid (from response), signing out...');
+        await supabase.auth.signOut();
+        localStorage.removeItem('currentOrganizationId');
+        window.location.href = '/auth';
         return;
       }
 

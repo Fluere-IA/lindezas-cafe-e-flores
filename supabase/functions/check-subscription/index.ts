@@ -59,12 +59,25 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) {
       logStep("ERROR: Authentication failed", { message: userError.message });
-      throw new Error("Authentication failed");
+      // Return 401 for auth errors so frontend can handle logout
+      return new Response(JSON.stringify({ 
+        error: "Authentication failed", 
+        code: "INVALID_SESSION" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
     }
     const user = userData.user;
     if (!user?.email) {
       logStep("ERROR: User not authenticated or email not available");
-      throw new Error("Authentication failed");
+      return new Response(JSON.stringify({ 
+        error: "Authentication failed", 
+        code: "INVALID_SESSION" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
     }
     logStep("User authenticated", { userId: user.id, email: user.email, createdAt: user.created_at });
 
