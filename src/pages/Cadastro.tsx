@@ -194,11 +194,11 @@ export default function Cadastro() {
         
         toast({
           title: 'Conta criada com sucesso!',
-          description: 'Bem-vindo ao Servire! Você tem 7 dias de teste grátis.',
+          description: 'Vamos configurar seu estabelecimento.',
         });
         
-        // Redirect to dashboard
-        navigate('/');
+        // Redirect to onboarding
+        navigate('/onboarding');
       } catch (orgError: any) {
         console.error('Error creating organization:', orgError);
         toast({
