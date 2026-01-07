@@ -9,7 +9,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  Palette, 
   Check, 
   ChevronRight, 
   ChevronLeft,
@@ -40,16 +39,7 @@ const EXAMPLE_ITEMS: MenuItem[] = [
   { name: 'Suco Natural', price: '9.00', category: 'Bebidas' },
 ];
 
-const PRESET_COLORS = [
-  '#2563EB', // Blue
-  '#16A34A', // Green
-  '#9333EA', // Purple
-  '#DC2626', // Red
-  '#EA580C', // Orange
-  '#0891B2', // Cyan
-  '#4F46E5', // Indigo
-  '#DB2777', // Pink
-];
+const DEFAULT_THEME_COLOR = '#2563EB';
 
 const tiposEstabelecimento = [
   { value: 'cafeteria', label: 'Cafeteria' },
@@ -65,7 +55,7 @@ const tiposEstabelecimento = [
 export default function Onboarding() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentOrganization, refetchOrganizations, isLoading } = useOrganization();
+  const { currentOrganization, isLoading } = useOrganization();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Step 1: Company info
@@ -75,22 +65,14 @@ export default function Onboarding() {
   const [phone, setPhone] = useState('');
 
   const [step, setStep] = useState(1);
-  const [themeColor, setThemeColor] = useState('#2563EB');
-  const [customColor, setCustomColor] = useState('#2563EB');
   const [tableCount, setTableCount] = useState(10);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualItem, setManualItem] = useState<MenuItem>({ name: '', price: '', category: '' });
 
-  const totalSteps = 5;
-
-  // Redirect if no organization or already completed onboarding
-  React.useEffect(() => {
-    if (!isLoading && currentOrganization?.onboarding_completed) {
-      navigate('/dashboard');
-    }
-  }, [isLoading, currentOrganization, navigate]);
+  // 4 steps: Dados → Cardápio → Mesas → Revisão
+  const totalSteps = 4;
 
   // Show loading while fetching organization
   if (isLoading) {
@@ -120,23 +102,34 @@ export default function Onboarding() {
     );
   }
 
+  // If already completed onboarding, show message and redirect button
+  if (currentOrganization.onboarding_completed === true) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-6 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 mb-4">
+              <Check className="w-8 h-8 text-success" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Configuração já concluída!</h2>
+            <p className="text-muted-foreground mb-4">
+              Seu estabelecimento já está configurado.
+            </p>
+            <Button onClick={() => navigate('/dashboard', { replace: true })}>
+              Ir para o Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length <= 2) return numbers;
     if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
     if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
     return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
-  };
-
-  const handleColorSelect = (color: string) => {
-    setThemeColor(color);
-    setCustomColor(color);
-  };
-
-  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const color = e.target.value;
-    setCustomColor(color);
-    setThemeColor(color);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -248,7 +241,7 @@ export default function Onboarding() {
     setIsSubmitting(true);
 
     try {
-      // Update organization with all collected data
+      // Update organization with all collected data (using default theme color)
       const { error: orgError } = await supabase
         .from('organizations')
         .update({ 
@@ -256,7 +249,7 @@ export default function Onboarding() {
           type: companyType || null,
           owner_name: ownerName || null,
           phone: phone || null,
-          theme_color: themeColor,
+          theme_color: DEFAULT_THEME_COLOR,
           table_count: tableCount,
           onboarding_completed: true,
         })
@@ -326,19 +319,13 @@ export default function Onboarding() {
         if (prodError) throw prodError;
       }
 
-      // Refetch and wait for update before navigating
-      await refetchOrganizations();
-
       toast({
         title: 'Configuração concluída!',
         description: 'Seu estabelecimento está pronto para uso.',
       });
 
-      // Use replace to prevent back navigation to onboarding
-      // Small delay to ensure state is updated
-      setTimeout(() => {
-        navigate('/dashboard', { replace: true, state: { fromOnboarding: true } });
-      }, 100);
+      // Navigate directly - the state flag tells Dashboard not to redirect back
+      navigate('/dashboard', { replace: true, state: { fromOnboarding: true } });
     } catch (error) {
       console.error('Onboarding error:', error);
       toast({
@@ -412,93 +399,8 @@ export default function Onboarding() {
     </div>
   );
 
-  // Step 2: Theme Color
+  // Step 2: Menu (was step 3)
   const renderStep2 = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-          <Palette className="w-8 h-8 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground">Personalize seu Sistema</h2>
-        <p className="text-muted-foreground mt-2">Escolha a cor principal do seu estabelecimento</p>
-      </div>
-
-      <div className="space-y-4">
-        <Label>Cores pré-definidas</Label>
-        <div className="grid grid-cols-4 gap-3">
-          {PRESET_COLORS.map((color) => (
-            <button
-              key={color}
-              onClick={() => handleColorSelect(color)}
-              className={cn(
-                "w-full aspect-square rounded-xl border-2 transition-all",
-                themeColor === color
-                  ? "border-foreground scale-105 shadow-lg"
-                  : "border-transparent hover:scale-105"
-              )}
-              style={{ backgroundColor: color }}
-            >
-              {themeColor === color && (
-                <Check className="w-6 h-6 text-white mx-auto" />
-              )}
-            </button>
-          ))}
-        </div>
-
-        <div className="pt-4">
-          <Label>Cor personalizada</Label>
-          <div className="flex items-center gap-3 mt-2">
-            <div
-              className="w-12 h-12 rounded-xl border-2 border-border cursor-pointer overflow-hidden"
-              style={{ backgroundColor: customColor }}
-            >
-              <input
-                type="color"
-                value={customColor}
-                onChange={handleCustomColorChange}
-                className="w-full h-full opacity-0 cursor-pointer"
-              />
-            </div>
-            <Input
-              type="text"
-              value={customColor}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                  setCustomColor(val);
-                  if (val.length === 7) setThemeColor(val);
-                }
-              }}
-              placeholder="#2563EB"
-              className="w-32 font-mono"
-            />
-          </div>
-        </div>
-
-        {/* Preview */}
-        <div className="mt-6 p-4 rounded-xl border border-border bg-muted/30">
-          <Label className="text-xs text-muted-foreground">Prévia</Label>
-          <div className="mt-3 flex items-center gap-3">
-            <Button
-              className="text-white"
-              style={{ backgroundColor: themeColor }}
-            >
-              Botão Principal
-            </Button>
-            <div
-              className="h-10 px-4 rounded-lg flex items-center text-white font-medium"
-              style={{ backgroundColor: themeColor }}
-            >
-              Cabeçalho
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Step 3: Menu
-  const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
@@ -619,8 +521,8 @@ export default function Onboarding() {
     </div>
   );
 
-  // Step 4: Tables
-  const renderStep4 = () => (
+  // Step 3: Tables (was step 4)
+  const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
@@ -666,7 +568,6 @@ export default function Onboarding() {
               variant={tableCount === num ? 'default' : 'outline'}
               size="sm"
               onClick={() => setTableCount(num)}
-              style={tableCount === num ? { backgroundColor: themeColor } : {}}
             >
               {num} mesas
             </Button>
@@ -680,8 +581,7 @@ export default function Onboarding() {
             {Array.from({ length: Math.min(tableCount, 25) }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-square rounded-lg flex items-center justify-center text-xs font-medium text-white"
-                style={{ backgroundColor: themeColor }}
+                className="aspect-square rounded-lg bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground"
               >
                 {i + 1}
               </div>
@@ -697,8 +597,8 @@ export default function Onboarding() {
     </div>
   );
 
-  // Step 5: Summary
-  const renderStep5 = () => (
+  // Step 4: Summary (was step 5)
+  const renderStep4 = () => (
     <div className="space-y-6">
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 mb-4">
@@ -718,17 +618,6 @@ export default function Onboarding() {
                 {tiposEstabelecimento.find(t => t.value === companyType)?.label}
               </p>
             )}
-          </div>
-
-          <div className="border-t border-border pt-4 flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-lg"
-              style={{ backgroundColor: themeColor }}
-            />
-            <div>
-              <p className="text-sm text-muted-foreground">Cor do sistema</p>
-              <p className="font-medium">{themeColor}</p>
-            </div>
           </div>
           
           <div className="border-t border-border pt-4">
@@ -760,7 +649,7 @@ export default function Onboarding() {
         {/* Progress */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            {[1, 2, 3, 4, 5].map((s) => (
+            {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
                 className={cn(
@@ -791,7 +680,6 @@ export default function Onboarding() {
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
             {step === 4 && renderStep4()}
-            {step === 5 && renderStep5()}
 
             {/* Navigation */}
             <div className="flex gap-3 mt-8">
@@ -811,7 +699,6 @@ export default function Onboarding() {
                 <Button
                   className="flex-1"
                   onClick={() => setStep(step + 1)}
-                  style={{ backgroundColor: themeColor }}
                   disabled={step === 1 && !companyName.trim()}
                 >
                   Próximo
@@ -822,7 +709,6 @@ export default function Onboarding() {
                   className="flex-1"
                   onClick={handleFinish}
                   disabled={isSubmitting}
-                  style={{ backgroundColor: themeColor }}
                 >
                   {isSubmitting ? (
                     <>
