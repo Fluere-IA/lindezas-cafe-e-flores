@@ -18,8 +18,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
       comparison: stats?.lastWeekSales ? formatCurrency(stats.lastWeekSales) : null,
       growth: stats?.salesGrowth || 0,
       icon: DollarSign,
-      iconBg: '#2D5A27',
-      borderColor: 'border-lindezas-forest/30',
+      borderColor: 'border-primary/30',
     },
     {
       title: 'Pedidos Pagos',
@@ -27,8 +26,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
       comparison: stats?.lastWeekOrders?.toString() || null,
       growth: stats?.ordersGrowth || 0,
       icon: ShoppingBag,
-      iconBg: '#D4A84B',
-      borderColor: 'border-lindezas-gold/40',
+      borderColor: 'border-accent/40',
     },
     {
       title: 'Ticket Médio',
@@ -36,8 +34,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
       comparison: null,
       growth: 0,
       icon: TrendingUp,
-      iconBg: '#5B8DB8',
-      borderColor: 'border-flower-blue/30',
+      borderColor: 'border-muted/30',
     },
   ];
 
@@ -61,7 +58,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-                <p className="mt-1 font-display text-3xl font-bold text-lindezas-forest truncate">
+                <p className="mt-1 font-display text-3xl font-bold text-primary truncate">
                   {isLoading ? '...' : card.value}
                 </p>
                 
@@ -81,11 +78,8 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
                   </div>
                 )}
               </div>
-              <div 
-                className="rounded-xl p-3 shadow-md flex-shrink-0"
-                style={{ backgroundColor: card.iconBg }}
-              >
-                <Icon className="h-5 w-5 text-white" />
+              <div className="rounded-xl p-3 shadow-md flex-shrink-0 bg-primary">
+                <Icon className="h-5 w-5 text-primary-foreground" />
               </div>
             </div>
           </div>

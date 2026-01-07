@@ -81,7 +81,7 @@ function formatTimeDisplay(seconds: number): string {
 
 function getWaitingColor(seconds: number): string {
   const minutes = seconds / 60;
-  if (minutes < 5) return '#16a34a';
+  if (minutes < 5) return 'hsl(217, 91%, 53%)'; // primary blue
   if (minutes < 10) return '#eab308';
   if (minutes < 15) return '#f97316';
   return '#dc2626';
@@ -365,7 +365,7 @@ const Cozinha = () => {
             {isLoadingPending && (
               <div className="flex items-center justify-center py-24">
                 <div className="flex flex-col items-center gap-4">
-                  <Loader2 className="h-12 w-12 animate-spin text-lindezas-gold" />
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
                   <p className="text-muted-foreground font-medium">Carregando pedidos...</p>
                 </div>
               </div>
@@ -400,7 +400,7 @@ const Cozinha = () => {
             {isLoadingReady && (
               <div className="flex items-center justify-center py-24">
                 <div className="flex flex-col items-center gap-4">
-                  <Loader2 className="h-12 w-12 animate-spin text-green-600" />
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
                   <p className="text-muted-foreground font-medium">Carregando pedidos...</p>
                 </div>
               </div>

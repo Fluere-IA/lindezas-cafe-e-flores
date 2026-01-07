@@ -26,7 +26,6 @@ export function CurrentStatusCard({ status, stats, isLoading }: CurrentStatusCar
       label: 'Mesas Ocupadas',
       value: status?.activeTables.length || 0,
       icon: Users,
-      color: '#2D5A27',
       tables: status?.activeTables || [],
     },
     {
@@ -34,20 +33,17 @@ export function CurrentStatusCard({ status, stats, isLoading }: CurrentStatusCar
       value: formatCurrency(status?.totalOpenAmount || 0),
       subtext: 'a receber',
       icon: Wallet,
-      color: '#D4A84B',
     },
     {
       label: 'Vendas Hoje',
       value: formatCurrency(stats?.todaySales || 0),
       growth: stats?.salesGrowth,
       icon: DollarSign,
-      color: '#2D5A27',
     },
     {
       label: 'Ticket Médio',
       value: formatCurrency(stats?.averageTicket || 0),
       icon: TrendingUp,
-      color: '#2D5A27',
     },
   ];
 
@@ -63,10 +59,10 @@ export function CurrentStatusCard({ status, stats, isLoading }: CurrentStatusCar
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-muted-foreground">{card.label}</span>
-              <Icon className="h-4 w-4" style={{ color: card.color }} />
+              <Icon className="h-4 w-4 text-primary" />
             </div>
             
-            <p className="text-2xl font-semibold" style={{ color: '#2D5A27' }}>
+            <p className="text-2xl font-semibold text-primary">
               {card.value}
             </p>
             
@@ -85,8 +81,7 @@ export function CurrentStatusCard({ status, stats, isLoading }: CurrentStatusCar
                 {card.tables.slice(0, 6).map(table => (
                   <span 
                     key={table} 
-                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                    style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary text-primary-foreground"
                   >
                     {table}
                   </span>
