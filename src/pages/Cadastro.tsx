@@ -191,6 +191,15 @@ export default function Cadastro() {
         
         // Store the organization id for auto-selection
         localStorage.setItem('currentOrganizationId', orgId);
+
+        // Send welcome email (non-blocking)
+        supabase.functions.invoke('send-welcome-email', {
+          body: {
+            email: formData.email,
+            name: formData.nomeResponsavel,
+            companyName: formData.nomeEmpresa,
+          },
+        }).catch(err => console.error('Error sending welcome email:', err));
         
         toast({
           title: 'Conta criada com sucesso!',
