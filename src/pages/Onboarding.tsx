@@ -354,6 +354,9 @@ export default function Onboarding() {
         if (prodError) throw prodError;
       }
 
+      // Refetch organizations to update the name in context
+      await refetchOrganizations();
+
       toast({
         title: 'Configuração concluída!',
         description: 'Seu estabelecimento está pronto para uso.',
