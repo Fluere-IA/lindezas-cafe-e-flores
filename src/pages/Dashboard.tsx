@@ -31,20 +31,21 @@ const Dashboard = () => {
     if (orgLoading || hasCheckedOnboarding) return;
 
     const checkOnboarding = async () => {
-      // If coming from onboarding (replace navigation), refetch to get updated state
-      if (location.state?.fromOnboarding) {
-        await refetchOrganizations();
-      }
-      
       setHasCheckedOnboarding(true);
       
+      // If coming from onboarding, trust the navigation state - don't redirect back
+      if (location.state?.fromOnboarding) {
+        return;
+      }
+      
+      // For normal dashboard access, check if onboarding is needed
       if (currentOrganization && currentOrganization.onboarding_completed !== true) {
         navigate('/onboarding', { replace: true });
       }
     };
 
     checkOnboarding();
-  }, [orgLoading, currentOrganization, navigate, hasCheckedOnboarding, location.state, refetchOrganizations]);
+  }, [orgLoading, currentOrganization, navigate, hasCheckedOnboarding, location.state]);
 
   // Show loading while checking organization
   if (orgLoading) {

@@ -45,8 +45,7 @@ export function DashboardHeader() {
 
   return (
     <header 
-      className="text-white px-4 md:px-6 py-2.5"
-      style={{ background: '#2D5A27' }}
+      className="text-white px-4 md:px-6 py-2.5 bg-primary"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 md:gap-5">
@@ -66,12 +65,11 @@ export function DashboardHeader() {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors duration-150'
+                    'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors duration-150',
+                    isActive 
+                      ? 'bg-white text-primary' 
+                      : 'text-white/85 hover:bg-white/10'
                   )}
-                  style={{
-                    backgroundColor: isActive ? 'rgba(255,255,255,0.95)' : 'transparent',
-                    color: isActive ? '#2D5A27' : 'rgba(255,255,255,0.85)',
-                  }}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
@@ -101,11 +99,11 @@ export function DashboardHeader() {
                       className={cn(
                         'flex items-center gap-3 w-full cursor-pointer py-3 px-4 font-medium',
                         isActive 
-                          ? 'bg-lindezas-gold/20 text-lindezas-forest' 
-                          : 'text-lindezas-espresso hover:bg-lindezas-cream'
+                          ? 'bg-primary/10 text-primary' 
+                          : 'text-foreground hover:bg-muted'
                       )}
                     >
-                      <item.icon className="h-4 w-4" style={{ color: isActive ? '#2D5A27' : '#4A3728' }} />
+                      <item.icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
                       {item.label}
                     </Link>
                   </DropdownMenuItem>
