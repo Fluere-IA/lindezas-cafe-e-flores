@@ -197,16 +197,16 @@
     @apply px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200;
   }
 
-  /* Tabs active state styling for Cozinha */
+  /* Tabs active state styling */
   [data-state="active"].rounded-lg {
-    background: linear-gradient(135deg, #D4A84B 0%, #c49a42 100%) !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 12px -2px rgba(212, 168, 75, 0.4);
+    background: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+    box-shadow: 0 4px 12px -2px hsl(var(--primary) / 0.4);
   }
   
   [data-state="active"].rounded-lg svg,
   [data-state="active"].rounded-lg span {
-    color: #ffffff !important;
+    color: hsl(var(--primary-foreground)) !important;
   }
 
   /* Gold accent styling */
