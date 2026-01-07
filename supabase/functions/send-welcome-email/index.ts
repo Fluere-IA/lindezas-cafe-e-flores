@@ -39,7 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
     const displayCompany = companyName || "seu estabelecimento";
 
     const emailResponse = await resend.emails.send({
-      from: "Servire <onboarding@resend.dev>",
+      from: "Servire <noreply@servire.app.br>",
       to: [email],
       subject: "Bem-vindo ao Servire! 🎉",
       html: `
