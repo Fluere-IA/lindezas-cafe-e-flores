@@ -10,31 +10,33 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, ArrowLeft, Lock, Check, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
-// Password requirements
+// Password requirements - includes special character for Supabase security
 const PASSWORD_REQUIREMENTS = [
   { key: 'length', label: 'Mínimo 8 caracteres', test: (p: string) => p.length >= 8 },
   { key: 'uppercase', label: 'Uma letra maiúscula', test: (p: string) => /[A-Z]/.test(p) },
   { key: 'lowercase', label: 'Uma letra minúscula', test: (p: string) => /[a-z]/.test(p) },
   { key: 'number', label: 'Um número', test: (p: string) => /[0-9]/.test(p) },
+  { key: 'special', label: 'Um caractere especial (!@#$%)', test: (p: string) => /[!@#$%^&*(),.?":{}|<>_\-+=[\]\\;'/`~]/.test(p) },
 ];
 
 const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
   const passed = PASSWORD_REQUIREMENTS.filter(req => req.test(password)).length;
   if (password.length === 0) return { score: 0, label: '', color: 'bg-muted' };
-  if (passed <= 1) return { score: 25, label: 'Fraca', color: 'bg-destructive' };
-  if (passed === 2) return { score: 50, label: 'Razoável', color: 'bg-orange-500' };
-  if (passed === 3) return { score: 75, label: 'Boa', color: 'bg-yellow-500' };
+  if (passed <= 2) return { score: 20, label: 'Fraca', color: 'bg-destructive' };
+  if (passed === 3) return { score: 40, label: 'Razoável', color: 'bg-orange-500' };
+  if (passed === 4) return { score: 70, label: 'Boa', color: 'bg-yellow-500' };
   return { score: 100, label: 'Forte', color: 'bg-green-500' };
 };
 
-// Schema with stronger password requirements
+// Schema with stronger password requirements (including special character)
 const cadastroSchema = z.object({
   email: z.string().trim().email('Email inválido').max(255),
   password: z.string()
     .min(8, 'Senha deve ter no mínimo 8 caracteres')
     .regex(/[A-Z]/, 'Deve conter uma letra maiúscula')
     .regex(/[a-z]/, 'Deve conter uma letra minúscula')
-    .regex(/[0-9]/, 'Deve conter um número'),
+    .regex(/[0-9]/, 'Deve conter um número')
+    .regex(/[!@#$%^&*(),.?":{}|<>_\-+=[\]\\;'/`~]/, 'Deve conter um caractere especial'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem',
@@ -109,8 +111,8 @@ export default function Cadastro() {
           });
         } else if (error.message.includes('password') || error.message.includes('weak') || error.message.includes('leaked') || error.message.includes('compromised') || error.status === 422) {
           toast({
-            title: 'Senha muito fraca',
-            description: 'Use uma senha mais forte com letras, números e caracteres especiais.',
+            title: 'Senha não aceita',
+            description: 'Essa senha pode estar em uma lista de senhas vazadas. Tente uma senha mais única e complexa.',
             variant: 'destructive',
           });
         } else {
