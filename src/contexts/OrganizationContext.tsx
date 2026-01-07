@@ -16,7 +16,7 @@ interface OrganizationContextType {
   setCurrentOrganization: (org: Organization | null) => void;
   isMasterAdmin: boolean;
   isLoading: boolean;
-  refetchOrganizations: () => Promise<void>;
+  refetchOrganizations: () => Promise<Organization[]>;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -29,13 +29,14 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
   const isMasterAdmin = role === 'admin';
 
-  const fetchOrganizations = useCallback(async () => {
+  // Fetch with retry logic for newly created users
+  const fetchOrganizations = useCallback(async (retries = 3): Promise<Organization[]> => {
     if (!user) {
       setOrganizations([]);
       setCurrentOrganization(null);
       localStorage.removeItem('currentOrganizationId');
       setIsLoading(false);
-      return;
+      return [];
     }
 
     try {
@@ -74,6 +75,13 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         }
       }
       
+      // Retry logic for newly registered users
+      // The database trigger creates the org, but it might not be immediately visible
+      if (orgs.length === 0 && retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return fetchOrganizations(retries - 1);
+      }
+      
       setOrganizations(orgs);
       
       // Restore from localStorage if available and valid
@@ -89,9 +97,12 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
           localStorage.setItem('currentOrganizationId', orgs[0].id);
         }
       }
+      
+      return orgs;
     } catch (error) {
       console.error('Error fetching organizations:', error);
       setOrganizations([]);
+      return [];
     } finally {
       setIsLoading(false);
     }

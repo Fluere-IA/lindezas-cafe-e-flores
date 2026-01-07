@@ -5,11 +5,11 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Palette, 
-  Upload, 
   Check, 
   ChevronRight, 
   ChevronLeft,
@@ -20,7 +20,8 @@ import {
   Sparkles,
   FileText,
   LayoutGrid,
-  Minus
+  Minus,
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -50,11 +51,28 @@ const PRESET_COLORS = [
   '#DB2777', // Pink
 ];
 
+const tiposEstabelecimento = [
+  { value: 'cafeteria', label: 'Cafeteria' },
+  { value: 'restaurante', label: 'Restaurante' },
+  { value: 'lanchonete', label: 'Lanchonete' },
+  { value: 'padaria', label: 'Padaria' },
+  { value: 'bar', label: 'Bar' },
+  { value: 'pizzaria', label: 'Pizzaria' },
+  { value: 'food_truck', label: 'Food Truck' },
+  { value: 'outro', label: 'Outro' },
+];
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentOrganization, refetchOrganizations, isLoading } = useOrganization();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Step 1: Company info
+  const [companyName, setCompanyName] = useState('');
+  const [companyType, setCompanyType] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [phone, setPhone] = useState('');
 
   const [step, setStep] = useState(1);
   const [themeColor, setThemeColor] = useState('#2563EB');
@@ -65,7 +83,7 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualItem, setManualItem] = useState<MenuItem>({ name: '', price: '', category: '' });
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   // Redirect if no organization or already completed onboarding
   React.useEffect(() => {
@@ -101,6 +119,14 @@ export default function Onboarding() {
       </div>
     );
   }
+
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+  };
 
   const handleColorSelect = (color: string) => {
     setThemeColor(color);
@@ -222,10 +248,14 @@ export default function Onboarding() {
     setIsSubmitting(true);
 
     try {
-      // Update organization with theme color and table count
+      // Update organization with all collected data
       const { error: orgError } = await supabase
         .from('organizations')
         .update({ 
+          name: companyName || currentOrganization.name,
+          type: companyType || null,
+          owner_name: ownerName || null,
+          phone: phone || null,
           theme_color: themeColor,
           table_count: tableCount,
           onboarding_completed: true,
@@ -316,7 +346,69 @@ export default function Onboarding() {
     }
   };
 
+  // Step 1: Company Info
   const renderStep1 = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+          <Building2 className="w-8 h-8 text-primary" />
+        </div>
+        <h2 className="text-2xl font-bold text-foreground">Seu Estabelecimento</h2>
+        <p className="text-muted-foreground mt-2">Conte-nos sobre seu negócio</p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="companyName">Nome do estabelecimento *</Label>
+          <Input
+            id="companyName"
+            placeholder="Ex: Cafeteria do João"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="companyType">Tipo de estabelecimento</Label>
+          <Select value={companyType} onValueChange={setCompanyType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {tiposEstabelecimento.map((tipo) => (
+                <SelectItem key={tipo.value} value={tipo.value}>
+                  {tipo.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="ownerName">Nome do responsável</Label>
+          <Input
+            id="ownerName"
+            placeholder="Seu nome"
+            value={ownerName}
+            onChange={(e) => setOwnerName(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="phone">Telefone/WhatsApp</Label>
+          <Input
+            id="phone"
+            placeholder="(00) 00000-0000"
+            value={phone}
+            onChange={(e) => setPhone(formatPhone(e.target.value))}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  // Step 2: Theme Color
+  const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
@@ -400,7 +492,8 @@ export default function Onboarding() {
     </div>
   );
 
-  const renderStep2 = () => (
+  // Step 3: Menu
+  const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
@@ -447,13 +540,11 @@ export default function Onboarding() {
 
       {/* Manual Add */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
             <Plus className="w-4 h-4" />
             Adicionar item manualmente
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </div>
           <div className="grid grid-cols-3 gap-2">
             <Input
               placeholder="Nome do item"
@@ -523,7 +614,8 @@ export default function Onboarding() {
     </div>
   );
 
-  const renderStep3 = () => (
+  // Step 4: Tables
+  const renderStep4 = () => (
     <div className="space-y-6">
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
@@ -600,7 +692,8 @@ export default function Onboarding() {
     </div>
   );
 
-  const renderStep4 = () => (
+  // Step 5: Summary
+  const renderStep5 = () => (
     <div className="space-y-6">
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 mb-4">
@@ -612,7 +705,17 @@ export default function Onboarding() {
 
       <Card>
         <CardContent className="p-4 space-y-4">
-          <div className="flex items-center gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Estabelecimento</p>
+            <p className="font-medium">{companyName || 'Meu Negócio'}</p>
+            {companyType && (
+              <p className="text-sm text-muted-foreground">
+                {tiposEstabelecimento.find(t => t.value === companyType)?.label}
+              </p>
+            )}
+          </div>
+
+          <div className="border-t border-border pt-4 flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-lg"
               style={{ backgroundColor: themeColor }}
@@ -652,7 +755,7 @@ export default function Onboarding() {
         {/* Progress */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2, 3, 4, 5].map((s) => (
               <div
                 key={s}
                 className={cn(
@@ -683,6 +786,7 @@ export default function Onboarding() {
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
             {step === 4 && renderStep4()}
+            {step === 5 && renderStep5()}
 
             {/* Navigation */}
             <div className="flex gap-3 mt-8">
@@ -703,6 +807,7 @@ export default function Onboarding() {
                   className="flex-1"
                   onClick={() => setStep(step + 1)}
                   style={{ backgroundColor: themeColor }}
+                  disabled={step === 1 && !companyName.trim()}
                 >
                   Próximo
                   <ChevronRight className="w-4 h-4 ml-1" />
