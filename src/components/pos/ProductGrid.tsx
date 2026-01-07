@@ -1,5 +1,5 @@
 import { Product } from '@/types';
-import { ProductCard } from './ProductCard';
+import { ProductListItem } from './ProductListItem';
 import { Loader2, Coffee } from 'lucide-react';
 
 interface ProductGridProps {
@@ -33,7 +33,7 @@ export function ProductGrid({ products, filter, searchQuery, onAddToCart, isLoad
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <Loader2 className="h-10 w-10 animate-spin text-lindezas-gold" />
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground animate-pulse">Carregando produtos...</p>
       </div>
     );
@@ -52,14 +52,14 @@ export function ProductGrid({ products, filter, searchQuery, onAddToCart, isLoad
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="flex flex-col gap-2">
       {filteredProducts.map((product, index) => (
         <div
           key={product.id}
           className="animate-fade-in"
-          style={{ animationDelay: `${index * 30}ms` }}
+          style={{ animationDelay: `${index * 20}ms` }}
         >
-          <ProductCard product={product} onAdd={onAddToCart} />
+          <ProductListItem product={product} onAdd={onAddToCart} />
         </div>
       ))}
     </div>
