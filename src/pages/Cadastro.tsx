@@ -11,15 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, UserPlus, ArrowLeft, Building2, User, Lock } from 'lucide-react';
 
 const cadastroSchema = z.object({
-  nomeResponsavel: z.string().trim().min(3, 'Nome deve ter no mínimo 3 caracteres').max(100),
+  nomeResponsavel: z.string().trim().max(100).optional().or(z.literal('')),
   email: z.string().trim().email('Email inválido').max(255),
-  telefone: z.string().trim().min(10, 'Telefone inválido').max(15),
-  nomeEmpresa: z.string().trim().min(2, 'Nome da empresa deve ter no mínimo 2 caracteres').max(100),
-  tipoEstabelecimento: z.string().min(1, 'Selecione o tipo de estabelecimento'),
-  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres')
-    .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
-    .regex(/[a-z]/, 'Senha deve conter pelo menos uma letra minúscula')
-    .regex(/[0-9]/, 'Senha deve conter pelo menos um número'),
+  telefone: z.string().trim().max(15).optional().or(z.literal('')),
+  nomeEmpresa: z.string().trim().max(100).optional().or(z.literal('')),
+  tipoEstabelecimento: z.string().optional().or(z.literal('')),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem',
@@ -98,8 +95,11 @@ export default function Cadastro() {
   };
 
   const createOrganization = async (userId: string) => {
+    // Use defaults if fields are empty
+    const companyName = formData.nomeEmpresa || `Empresa ${Date.now().toString(36)}`;
+    
     // Generate slug from company name
-    const slug = formData.nomeEmpresa
+    const slug = companyName
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -112,11 +112,11 @@ export default function Cadastro() {
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .insert({
-        name: formData.nomeEmpresa,
+        name: companyName,
         slug: uniqueSlug,
-        phone: formData.telefone,
-        type: formData.tipoEstabelecimento,
-        owner_name: formData.nomeResponsavel,
+        phone: formData.telefone || null,
+        type: formData.tipoEstabelecimento || null,
+        owner_name: formData.nomeResponsavel || null,
       })
       .select()
       .single();
