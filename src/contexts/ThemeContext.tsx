@@ -1,6 +1,10 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from 'next-themes';
+import { ReactNode, createContext, useContext } from 'react';
 
 interface ThemeContextType {
+  theme: string | undefined;
+  setTheme: (theme: string) => void;
+  isDark: boolean;
   themeColor: string;
   isLoading: boolean;
 }
@@ -10,12 +14,36 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 // Default Servire blue color
 const DEFAULT_THEME_COLOR = '#2563EB';
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Temporarily disabled: always use default color
+function ThemeContextProvider({ children }: { children: ReactNode }) {
+  const { theme, setTheme, resolvedTheme } = useNextTheme();
+  
+  const value: ThemeContextType = {
+    theme,
+    setTheme,
+    isDark: resolvedTheme === 'dark',
+    themeColor: DEFAULT_THEME_COLOR,
+    isLoading: false,
+  };
+  
   return (
-    <ThemeContext.Provider value={{ themeColor: DEFAULT_THEME_COLOR, isLoading: false }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
+  );
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  return (
+    <NextThemesProvider 
+      attribute="class" 
+      defaultTheme="light" 
+      enableSystem
+      disableTransitionOnChange
+    >
+      <ThemeContextProvider>
+        {children}
+      </ThemeContextProvider>
+    </NextThemesProvider>
   );
 }
 

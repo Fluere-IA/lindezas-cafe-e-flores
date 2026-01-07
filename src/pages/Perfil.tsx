@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,6 +39,7 @@ export default function Perfil() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { planTier, planName, subscribed, isInTrial, trialDaysRemaining } = useSubscriptionContext();
+  const { isDark, setTheme } = useTheme();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -50,9 +52,6 @@ export default function Perfil() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
-  
-  // Theme state
-  const [isDarkMode, setIsDarkMode] = useState(false);
   
   const [isLoading, setIsLoading] = useState(true);
 
@@ -354,27 +353,23 @@ export default function Perfil() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      {isDarkMode ? (
-                        <Moon className="h-5 w-5 text-muted-foreground" />
+                      {isDark ? (
+                        <Moon className="h-5 w-5 text-primary" />
                       ) : (
                         <Sun className="h-5 w-5 text-amber-500" />
                       )}
                       <div>
                         <p className="font-medium">Modo Escuro</p>
                         <p className="text-sm text-muted-foreground">
-                          {isDarkMode ? 'Ativado' : 'Desativado'}
+                          {isDark ? 'Ativado' : 'Desativado'}
                         </p>
                       </div>
                     </div>
                     <Switch
-                      checked={isDarkMode}
-                      onCheckedChange={setIsDarkMode}
-                      disabled // TODO: Implement dark mode
+                      checked={isDark}
+                      onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Em breve: suporte completo ao modo escuro.
-                  </p>
                 </CardContent>
               </Card>
             </TabsContent>
