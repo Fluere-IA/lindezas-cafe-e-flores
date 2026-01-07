@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Plus, Search, Pencil, Trash2, Package, ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logError } from '@/lib/errorLogger';
@@ -40,6 +41,8 @@ const formatCurrency = (value: number) =>
 export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -141,14 +144,19 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
     }
   };
 
-  const handleDelete = async (product: Product) => {
-    if (!confirm(`Remover "${product.name}"?`)) return;
+  const openDeleteDialog = (product: Product) => {
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!productToDelete) return;
     
     try {
       const { error } = await supabase
         .from('products')
         .update({ is_active: false })
-        .eq('id', product.id);
+        .eq('id', productToDelete.id);
       if (error) throw error;
       
       toast.success('Produto removido');
@@ -157,6 +165,9 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
     } catch (error) {
       logError(error, 'Error deleting product');
       toast.error('Erro ao remover produto');
+    } finally {
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
     }
   };
 
@@ -332,7 +343,7 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditProduct(product)}>
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(product)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => openDeleteDialog(product)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -341,7 +352,7 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
         )}
       </div>
 
-      {/* Dialog */}
+      {/* Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -414,6 +425,24 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover produto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O produto "{productToDelete?.name}" será removido do cardápio.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
