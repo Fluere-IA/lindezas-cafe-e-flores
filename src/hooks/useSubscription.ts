@@ -35,6 +35,18 @@ export function useSubscription() {
       
       if (error) {
         console.error('Error checking subscription:', error);
+        
+        // If user doesn't exist anymore, sign out
+        if (error.message?.includes('user_not_found') || 
+            error.message?.includes('does not exist') ||
+            error.message?.includes('500')) {
+          console.log('User session invalid, signing out...');
+          await supabase.auth.signOut();
+          localStorage.removeItem('currentOrganizationId');
+          window.location.href = '/auth';
+          return;
+        }
+        
         setSubscriptionState(prev => ({ ...prev, isLoading: false }));
         return;
       }
