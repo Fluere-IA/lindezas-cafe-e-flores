@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { CategoryTabs, CategoryFilter } from '@/components/pos/CategoryTabs';
 import { SearchBar } from '@/components/pos/SearchBar';
 import { ProductGrid } from '@/components/pos/ProductGrid';
 import { CartSheet } from '@/components/pos/CartSheet';
-import { useProducts } from '@/hooks/useProducts';
+import { useProducts, useCategories } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { Product } from '@/types';
@@ -14,14 +14,22 @@ import { logError } from '@/lib/errorLogger';
 import { tableNumberSchema, orderItemSchema } from '@/lib/validation';
 
 const Index = () => {
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('bebidas');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [tableNumber, setTableNumber] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
   
   const { data: products = [], isLoading } = useProducts();
+  const { data: categories = [] } = useCategories();
   const cart = useCart();
   const { currentOrganization } = useOrganization();
+
+  // Auto-select first category when categories load
+  useEffect(() => {
+    if (categories.length > 0 && !categoryFilter) {
+      setCategoryFilter(categories[0].name.toLowerCase());
+    }
+  }, [categories, categoryFilter]);
 
   const handleAddToCart = (product: Product) => {
     cart.addItem(product);
