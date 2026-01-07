@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings, LogOut, Store } from 'lucide-react';
+import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings, LogOut, Store, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +13,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { PlanBadge } from '@/components/subscription/PlanBadge';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
 const navItems = [
   { path: '/dashboard', label: 'Visão Geral', icon: BarChart3 },
@@ -28,6 +30,7 @@ export function DashboardHeader() {
   const [open, setOpen] = useState(false);
   const { user, role, signOut } = useAuth();
   const { currentOrganization } = useOrganization();
+  const { isSuperAdmin } = useSuperAdmin();
   const { toast } = useToast();
 
   const handleSignOut = async () => {
@@ -49,11 +52,14 @@ export function DashboardHeader() {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 md:gap-5">
-          <div className="bg-white/10 rounded-lg p-2 backdrop-blur-sm flex items-center gap-2">
-            <Store className="h-5 w-5 text-white" />
-            <span className="text-sm font-semibold text-white truncate max-w-[120px] md:max-w-[180px]">
-              {currentOrganization?.name || 'Meu Negócio'}
-            </span>
+          <div className="flex items-center gap-2">
+            <div className="bg-white/10 rounded-lg p-2 backdrop-blur-sm flex items-center gap-2">
+              <Store className="h-5 w-5 text-white" />
+              <span className="text-sm font-semibold text-white truncate max-w-[120px] md:max-w-[180px]">
+                {currentOrganization?.name || 'Meu Negócio'}
+              </span>
+            </div>
+            <PlanBadge className="hidden sm:flex" />
           </div>
           
           {/* Desktop Navigation */}
@@ -128,6 +134,19 @@ export function DashboardHeader() {
             <span className="hidden sm:inline-block text-xs bg-white/20 px-2 py-1 rounded-full">
               {role === 'admin' ? 'Admin Master' : role === 'cashier' ? 'Caixa' : 'Cozinha'}
             </span>
+          )}
+          
+          {isSuperAdmin && (
+            <Link
+              to="/admin/super-dashboard"
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                currentPath.includes('/admin/') ? 'bg-purple-500/50' : 'hover:bg-white/10'
+              )}
+              title="Super Admin"
+            >
+              <Shield className="h-5 w-5 text-white" />
+            </Link>
           )}
           
           <Link
