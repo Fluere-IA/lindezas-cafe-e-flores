@@ -277,6 +277,7 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
           return {
             name: item.name,
             price: parseFloat(item.price) || 0,
+            description: item.description || null,
             category_id: categoryId,
             organization_id: currentOrganization?.id,
             is_active: true,

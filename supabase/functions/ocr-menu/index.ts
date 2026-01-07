@@ -42,10 +42,11 @@ serve(async (req) => {
 Return ONLY a valid JSON array with objects containing:
 - name: string (item name in Portuguese)
 - price: string (numeric price without currency symbol, use . as decimal separator)
-- category: string (guessed category like "Bebidas", "Salgados", "Doces", "Lanches", "Pratos", etc.)
+- category: string (guessed category like "Bebidas", "Salgados", "Doces", "Lanches", "Pratos", "Cafés", etc.)
+- description: string (brief appetizing description in Portuguese, max 60 chars, describing ingredients or taste)
 
 Example output:
-[{"name": "Café Expresso", "price": "5.00", "category": "Bebidas"}, {"name": "Pão de Queijo", "price": "4.50", "category": "Salgados"}]
+[{"name": "Café Expresso", "price": "5.00", "category": "Cafés", "description": "Café intenso e encorpado, puro sabor brasileiro"}, {"name": "Pão de Queijo", "price": "4.50", "category": "Salgados", "description": "Tradicional mineiro, crocante por fora e macio por dentro"}]
 
 If you cannot identify any items, return an empty array: []
 Do not include any explanation, only the JSON array.`
@@ -82,7 +83,7 @@ Do not include any explanation, only the JSON array.`
     console.log('AI response content:', content);
 
     // Parse the JSON response
-    let items: Array<{ name: string; price: string; category: string }> = [];
+    let items: Array<{ name: string; price: string; category: string; description: string }> = [];
     try {
       // Clean up the response (remove markdown code blocks if present)
       const cleanContent = content
@@ -109,11 +110,12 @@ Do not include any explanation, only the JSON array.`
             name: (obj.name as string).trim(),
             price: (obj.price as string).replace(/[^\d.]/g, '') || '0',
             category: typeof obj.category === 'string' ? obj.category.trim() : 'Geral',
+            description: typeof obj.description === 'string' ? obj.description.trim().slice(0, 100) : '',
           };
         });
       }
       
-      console.log('Parsed items with categories:', items.map(i => ({ name: i.name, category: i.category })));
+      console.log('Parsed items with categories:', items.map(i => ({ name: i.name, category: i.category, description: i.description })));
     } catch (parseError) {
       console.error('JSON parse error:', parseError, 'Content:', content);
       items = [];
