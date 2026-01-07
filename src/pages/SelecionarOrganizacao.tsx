@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Building2, ArrowRight, Plus, Settings, Loader2 } from 'lucide-react';
+import { Building2, ArrowRight, Plus, Settings, Loader2, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -9,7 +9,12 @@ import { useAuth } from '@/hooks/useAuth';
 export default function SelecionarOrganizacao() {
   const navigate = useNavigate();
   const { organizations, setCurrentOrganization, isMasterAdmin, isLoading } = useOrganization();
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   // If not master admin and has only one org, redirect directly
   useEffect(() => {
@@ -40,14 +45,25 @@ export default function SelecionarOrganizacao() {
           <Link to="/" className="text-2xl font-bold text-white">
             Servire
           </Link>
-          {isMasterAdmin && (
-            <Link to="/organizacoes">
-              <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
-                <Settings className="h-4 w-4 mr-2" />
-                Gerenciar
-              </Button>
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            {isMasterAdmin && (
+              <Link to="/organizacoes">
+                <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Gerenciar
+                </Button>
+              </Link>
+            )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleLogout}
+              className="text-white/80 hover:text-white hover:bg-white/10"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 
