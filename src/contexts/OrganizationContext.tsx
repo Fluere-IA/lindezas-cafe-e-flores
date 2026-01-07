@@ -40,27 +40,53 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Fetch organizations with onboarding status
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name, slug, created_at, onboarding_completed')
-        .order('name');
+      let orgs: Organization[] = [];
+      
+      // Master admins see all organizations
+      if (role === 'admin') {
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('id, name, slug, created_at, onboarding_completed')
+          .order('name');
 
-      if (error) throw error;
+        if (error) throw error;
+        orgs = data || [];
+      } else {
+        // Regular users only see organizations they belong to
+        const { data: memberOrgs, error: memberError } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id);
 
-      const orgs = data || [];
+        if (memberError) throw memberError;
+
+        if (memberOrgs && memberOrgs.length > 0) {
+          const orgIds = memberOrgs.map(m => m.organization_id);
+          const { data, error } = await supabase
+            .from('organizations')
+            .select('id, name, slug, created_at, onboarding_completed')
+            .in('id', orgIds)
+            .order('name');
+
+          if (error) throw error;
+          orgs = data || [];
+        }
+      }
+      
       setOrganizations(orgs);
       
-      // Restore from localStorage if available
+      // Restore from localStorage if available and valid
       if (orgs.length > 0 && !currentOrganization) {
         const savedOrgId = localStorage.getItem('currentOrganizationId');
         const savedOrg = orgs.find(org => org.id === savedOrgId);
         
         if (savedOrg) {
           setCurrentOrganization(savedOrg);
+        } else if (orgs.length === 1) {
+          // Auto-select if user has only one organization
+          setCurrentOrganization(orgs[0]);
+          localStorage.setItem('currentOrganizationId', orgs[0].id);
         }
-        // For master admins without saved org, don't auto-select
-        // For regular users with single org, the SelecionarOrganizacao page handles redirect
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
@@ -68,7 +94,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, currentOrganization]);
+  }, [user, role, currentOrganization]);
 
   // Fetch organizations when user changes
   useEffect(() => {
