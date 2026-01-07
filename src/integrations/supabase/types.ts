@@ -166,6 +166,50 @@ export type Database = {
           },
         ]
       }
+      organization_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          organization_id: string
+          role: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          organization_id: string
+          role?: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          organization_id?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invites_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -207,6 +251,7 @@ export type Database = {
           owner_name: string | null
           phone: string | null
           slug: string
+          table_count: number | null
           theme_color: string | null
           type: string | null
           updated_at: string
@@ -219,6 +264,7 @@ export type Database = {
           owner_name?: string | null
           phone?: string | null
           slug: string
+          table_count?: number | null
           theme_color?: string | null
           type?: string | null
           updated_at?: string
@@ -231,6 +277,7 @@ export type Database = {
           owner_name?: string | null
           phone?: string | null
           slug?: string
+          table_count?: number | null
           theme_color?: string | null
           type?: string | null
           updated_at?: string
