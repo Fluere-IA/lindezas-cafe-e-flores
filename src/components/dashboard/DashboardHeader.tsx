@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings, LogOut } from 'lucide-react';
+import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings, LogOut, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-
-import logoLindezas from '@/assets/logo-lindezas.png';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 const navItems = [
   { path: '/dashboard', label: 'Visão Geral', icon: BarChart3 },
@@ -28,6 +27,7 @@ export function DashboardHeader() {
   const currentPath = location.pathname;
   const [open, setOpen] = useState(false);
   const { user, role, signOut } = useAuth();
+  const { currentOrganization } = useOrganization();
   const { toast } = useToast();
 
   const handleSignOut = async () => {
@@ -50,12 +50,11 @@ export function DashboardHeader() {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 md:gap-5">
-          <div className="bg-white/10 rounded-lg p-1 backdrop-blur-sm">
-            <img 
-              src={logoLindezas} 
-              alt="Lindezas Café & Flores" 
-              className="h-8 md:h-10 w-auto object-contain"
-            />
+          <div className="bg-white/10 rounded-lg p-2 backdrop-blur-sm flex items-center gap-2">
+            <Store className="h-5 w-5 text-white" />
+            <span className="text-sm font-semibold text-white truncate max-w-[120px] md:max-w-[180px]">
+              {currentOrganization?.name || 'Meu Negócio'}
+            </span>
           </div>
           
           {/* Desktop Navigation */}
