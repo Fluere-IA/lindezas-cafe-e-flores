@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Search, Pencil, Trash2, Package } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Pencil, Trash2, Package, ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logError } from '@/lib/errorLogger';
 import { productSchema } from '@/lib/validation';
+import { cn } from '@/lib/utils';
 
 interface GerenciarProdutosProps {
   onBack: () => void;
@@ -46,7 +48,10 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
     category_id: '',
     stock: '100',
   });
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const { currentOrganization } = useOrganization();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products-admin'],
@@ -155,6 +160,97 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, envie uma imagem do cardápio.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('O arquivo deve ter no máximo 10MB.');
+      return;
+    }
+
+    setIsProcessingOCR(true);
+
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke('ocr-menu', {
+        body: { image: base64 },
+      });
+
+      if (error) throw error;
+
+      if (data?.items && Array.isArray(data.items) && data.items.length > 0) {
+        // Create categories and products from OCR results
+        const uniqueCategories = [...new Set(data.items.map((item: any) => item.category || 'Geral'))];
+        const categoryMap: Record<string, string> = {};
+
+        // Create categories
+        for (const categoryName of uniqueCategories) {
+          const catName = categoryName as string;
+          const existingCat = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+          if (existingCat) {
+            categoryMap[catName] = existingCat.id;
+          } else {
+            const { data: cat, error: catError } = await supabase
+              .from('categories')
+              .insert({
+                name: catName,
+                type: 'bebidas' as const,
+                organization_id: currentOrganization?.id,
+              })
+              .select()
+              .single();
+
+            if (!catError && cat) {
+              categoryMap[catName] = cat.id;
+            }
+          }
+        }
+
+        // Create products
+        const productsToInsert = data.items.map((item: any) => ({
+          name: item.name,
+          price: parseFloat(item.price) || 0,
+          category_id: categoryMap[item.category || 'Geral'] || null,
+          organization_id: currentOrganization?.id,
+          is_active: true,
+          stock: 100,
+        }));
+
+        const { error: prodError } = await supabase.from('products').insert(productsToInsert);
+        if (prodError) throw prodError;
+
+        queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+        queryClient.invalidateQueries({ queryKey: ['products'] });
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
+        queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
+
+        toast.success(`${data.items.length} itens importados do cardápio!`);
+      } else {
+        toast.error('Nenhum item encontrado. Tente uma imagem mais clara.');
+      }
+    } catch (error) {
+      logError(error, 'OCR Error');
+      toast.error('Erro ao processar imagem. Tente novamente.');
+    } finally {
+      setIsProcessingOCR(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -163,12 +259,42 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h2 className="text-lg font-semibold text-lindezas-forest">Cardápio</h2>
+          <h2 className="text-lg font-semibold text-foreground">Cardápio</h2>
           <p className="text-sm text-muted-foreground">{products.length} produtos</p>
         </div>
-        <Button onClick={openNewProduct} size="sm" className="bg-lindezas-forest hover:bg-lindezas-forest/90">
+        <Button onClick={openNewProduct} size="sm" className="bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4 mr-1" /> Novo
         </Button>
+      </div>
+
+      {/* Upload Menu */}
+      <div 
+        className={cn(
+          "border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer",
+          isProcessingOCR 
+            ? "border-primary bg-primary/5" 
+            : "border-border hover:border-primary/50 hover:bg-muted/30"
+        )}
+        onClick={() => !isProcessingOCR && fileInputRef.current?.click()}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        {isProcessingOCR ? (
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Analisando cardápio com IA...</p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2">
+            <ImageIcon className="w-5 h-5 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Enviar foto do cardápio (IA identifica itens)</p>
+          </div>
+        )}
       </div>
 
       {/* Search */}
@@ -198,10 +324,10 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
               className="flex items-center gap-3 p-3 bg-white rounded-xl border border-border/50"
             >
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-lindezas-forest truncate">{product.name}</p>
+                <p className="font-medium text-foreground truncate">{product.name}</p>
                 <p className="text-xs text-muted-foreground">{product.category?.name || 'Sem categoria'}</p>
               </div>
-              <p className="font-semibold text-lindezas-gold">{formatCurrency(product.price)}</p>
+              <p className="font-semibold text-primary">{formatCurrency(product.price)}</p>
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditProduct(product)}>
                   <Pencil className="h-4 w-4" />
@@ -281,7 +407,7 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
               <Button variant="outline" className="flex-1" onClick={() => setDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button className="flex-1 bg-lindezas-forest hover:bg-lindezas-forest/90" onClick={handleSave}>
+              <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={handleSave}>
                 Salvar
               </Button>
             </div>

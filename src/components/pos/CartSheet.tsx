@@ -58,8 +58,7 @@ export function CartSheet({
       <SheetTrigger asChild>
         <Button
           size="lg"
-          className="fixed bottom-4 right-4 left-4 h-14 text-base font-semibold shadow-elevated z-50 gap-3 text-white transition-all duration-300"
-          style={{ background: 'linear-gradient(135deg, #2D5A27 0%, #3d7a35 100%)' }}
+          className="fixed bottom-4 right-4 left-4 h-14 text-base font-semibold shadow-elevated z-50 gap-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300"
         >
           <ShoppingBag className="h-5 w-5" />
           <span className="font-display text-lg">Pedido</span>
@@ -80,9 +79,9 @@ export function CartSheet({
         <SheetHeader className="px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2.5 font-display text-lg">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(45, 90, 39, 0.1)' }}>
-                <ShoppingBag className="h-4 w-4" style={{ color: '#2D5A27' }} />
-              </div>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10">
+                    <ShoppingBag className="h-4 w-4 text-primary" />
+                  </div>
               Pedido
               <span className="text-sm font-normal text-muted-foreground">
                 ({itemCount} {itemCount === 1 ? 'item' : 'itens'})
@@ -176,8 +175,7 @@ export function CartSheet({
                         vibrate();
                         onUpdateQuantity(item.product.id, item.quantity + 1);
                       }}
-                      className="w-7 h-7 rounded-md flex items-center justify-center transition-colors active:scale-95"
-                      style={{ backgroundColor: 'rgba(45, 90, 39, 0.1)', color: '#2D5A27' }}
+                      className="w-7 h-7 rounded-md flex items-center justify-center transition-colors active:scale-95 bg-primary/10 text-primary"
                     >
                       <Plus className="h-3 w-3" />
                     </button>
@@ -219,7 +217,7 @@ export function CartSheet({
                 </button>
               )}
             </div>
-            <span className="font-display text-2xl font-bold" style={{ color: '#2D5A27' }}>
+            <span className="font-display text-2xl font-bold text-primary">
               {formatPrice(total)}
             </span>
           </div>
@@ -230,10 +228,9 @@ export function CartSheet({
             disabled={items.length === 0 || !hasTableNumber}
             size="lg"
             className={cn(
-              'w-full h-12 text-base font-semibold gap-2 text-white shadow-elevated transition-all duration-300 active:scale-[0.98]',
+              'w-full h-12 text-base font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-elevated transition-all duration-300 active:scale-[0.98]',
               (items.length === 0 || !hasTableNumber) && 'opacity-50'
             )}
-            style={{ background: 'linear-gradient(135deg, #2D5A27 0%, #3d7a35 100%)' }}
           >
             <Send className="h-4 w-4" />
             <span className="font-display">Enviar para Cozinha</span>
