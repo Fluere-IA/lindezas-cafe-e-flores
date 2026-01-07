@@ -9,6 +9,7 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 import { SuperAdminRoute } from "@/components/auth/SuperAdminRoute";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 
 // Eagerly loaded pages (landing & auth - needed immediately)
 import Landing from "./pages/Landing";
@@ -28,6 +29,7 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Membros = lazy(() => import("./pages/Membros"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const SuperDashboard = lazy(() => import("./pages/SuperDashboard"));
+const Estoque = lazy(() => import("./pages/Estoque"));
 
 // Lazy loaded public pages
 const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
@@ -49,7 +51,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <OrganizationProvider>
-        <ThemeProvider>
+        <SubscriptionProvider>
+          <ThemeProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -79,6 +82,7 @@ const App = () => (
                 <Route path="/membros" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin']}><Membros /></RoleGuard></ProtectedRoute>} />
                 <Route path="/assinatura" element={<ProtectedRoute requiresSubscription={false}><Assinatura /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+                <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
@@ -86,8 +90,9 @@ const App = () => (
             </Suspense>
           </BrowserRouter>
         </ThemeProvider>
-      </OrganizationProvider>
-    </TooltipProvider>
+      </SubscriptionProvider>
+    </OrganizationProvider>
+  </TooltipProvider>
   </QueryClientProvider>
 );
 

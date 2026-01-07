@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { Settings, Package, Tag, FileText, ChevronRight, Users, Palette } from 'lucide-react';
+import { Settings, Package, Tag, FileText, ChevronRight, Users, Palette, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GerenciarProdutos } from '@/components/config/GerenciarProdutos';
 import { GerenciarCategorias } from '@/components/config/GerenciarCategorias';
+import { PlanGuard } from '@/components/subscription/PlanGuard';
 
 type ConfigSection = 'produtos' | 'categorias' | 'relatorios' | null;
 
@@ -31,10 +32,17 @@ const Configuracoes = () => {
         return <GerenciarCategorias onBack={() => setActiveSection(null)} />;
       case 'relatorios':
         return (
-          <div className="text-center py-12">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-            <p className="text-muted-foreground">Em breve</p>
-          </div>
+          <PlanGuard 
+            requiredPlan="pro"
+            featureName="Relatórios Avançados"
+            description="Exporte dados detalhados e gere relatórios personalizados com o plano Pro."
+            inline
+          >
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-muted-foreground">Em breve</p>
+            </div>
+          </PlanGuard>
         );
       default:
         return (
