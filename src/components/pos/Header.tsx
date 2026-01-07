@@ -7,7 +7,7 @@ export function Header() {
   const { currentOrganization } = useOrganization();
 
   return (
-    <header className="text-white px-4 py-3 shadow-elevated" style={{ background: '#2D5A27' }}>
+    <header className="text-white px-4 py-3 shadow-elevated bg-primary">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-white/10 rounded-xl p-2 backdrop-blur-sm">
