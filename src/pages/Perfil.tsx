@@ -22,7 +22,6 @@ import { z } from 'zod';
 // Validation schemas
 const profileSchema = z.object({
   fullName: z.string().max(100, 'Nome deve ter no máximo 100 caracteres'),
-  avatarUrl: z.string().url('URL inválida').or(z.literal('')).optional(),
 });
 
 const passwordSchema = z.object({
@@ -42,7 +41,6 @@ export default function Perfil() {
   
   // Profile state
   const [fullName, setFullName] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   
   // Password state
@@ -76,7 +74,6 @@ export default function Perfil() {
   useEffect(() => {
     if (user) {
       setFullName(user.user_metadata?.full_name || '');
-      setAvatarUrl(user.user_metadata?.avatar_url || '');
       setIsLoading(false);
     }
   }, [user]);
@@ -94,7 +91,7 @@ export default function Perfil() {
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validation = profileSchema.safeParse({ fullName, avatarUrl });
+    const validation = profileSchema.safeParse({ fullName });
     if (!validation.success) {
       toast({
         title: 'Erro de validação',
@@ -110,7 +107,6 @@ export default function Perfil() {
       const { error } = await supabase.auth.updateUser({
         data: {
           full_name: fullName,
-          avatar_url: avatarUrl,
         },
       });
       
@@ -223,7 +219,6 @@ export default function Perfil() {
           {/* Avatar Preview */}
           <div className="flex items-center gap-4 mb-6 p-4 bg-card rounded-xl border">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={avatarUrl} alt={fullName || 'Usuário'} />
               <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
                 {getInitials(fullName)}
               </AvatarFallback>
@@ -301,22 +296,6 @@ export default function Perfil() {
                       </p>
                     </div>
 
-                    {/* Avatar URL */}
-                    <div className="space-y-2">
-                      <Label htmlFor="avatarUrl" className="flex items-center gap-2">
-                        <Image className="h-4 w-4 text-muted-foreground" />
-                        URL do Avatar
-                      </Label>
-                      <Input
-                        id="avatarUrl"
-                        type="url"
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        placeholder="https://exemplo.com/seu-avatar.jpg"
-                        className="h-12"
-                        disabled={isSubmittingProfile}
-                      />
-                    </div>
 
                     <Button
                       type="submit"
