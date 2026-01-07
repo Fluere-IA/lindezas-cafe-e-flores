@@ -22,7 +22,7 @@ const Cozinha = lazy(() => import("./pages/Cozinha"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const Assinatura = lazy(() => import("./pages/Assinatura"));
 const Organizacoes = lazy(() => import("./pages/Organizacoes"));
-const SelecionarOrganizacao = lazy(() => import("./pages/SelecionarOrganizacao"));
+
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Membros = lazy(() => import("./pages/Membros"));
 const Privacidade = lazy(() => import("./pages/Privacidade"));
@@ -57,7 +57,7 @@ const App = () => (
                 <Route path="/termos" element={<TermosDeUso />} />
                 
                 {/* Protected App Routes */}
-                <Route path="/selecionar-organizacao" element={<ProtectedRoute requiresSubscription={false}><SelecionarOrganizacao /></ProtectedRoute>} />
+                
                 <Route path="/onboarding" element={<ProtectedRoute requiresSubscription={false}><Onboarding /></ProtectedRoute>} />
                 <Route path="/pedidos" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
