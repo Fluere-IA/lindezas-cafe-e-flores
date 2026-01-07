@@ -7,13 +7,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Eye, EyeOff, ArrowLeft, Lock } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ArrowLeft, Lock, Check, X } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
-// Simplified schema - only email and password required
-// Organization is auto-created by database trigger
+// Password requirements
+const PASSWORD_REQUIREMENTS = [
+  { key: 'length', label: 'Mínimo 8 caracteres', test: (p: string) => p.length >= 8 },
+  { key: 'uppercase', label: 'Uma letra maiúscula', test: (p: string) => /[A-Z]/.test(p) },
+  { key: 'lowercase', label: 'Uma letra minúscula', test: (p: string) => /[a-z]/.test(p) },
+  { key: 'number', label: 'Um número', test: (p: string) => /[0-9]/.test(p) },
+];
+
+const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
+  const passed = PASSWORD_REQUIREMENTS.filter(req => req.test(password)).length;
+  if (password.length === 0) return { score: 0, label: '', color: 'bg-muted' };
+  if (passed <= 1) return { score: 25, label: 'Fraca', color: 'bg-destructive' };
+  if (passed === 2) return { score: 50, label: 'Razoável', color: 'bg-orange-500' };
+  if (passed === 3) return { score: 75, label: 'Boa', color: 'bg-yellow-500' };
+  return { score: 100, label: 'Forte', color: 'bg-green-500' };
+};
+
+// Schema with stronger password requirements
 const cadastroSchema = z.object({
   email: z.string().trim().email('Email inválido').max(255),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  password: z.string()
+    .min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .regex(/[A-Z]/, 'Deve conter uma letra maiúscula')
+    .regex(/[a-z]/, 'Deve conter uma letra minúscula')
+    .regex(/[0-9]/, 'Deve conter um número'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem',
@@ -204,7 +225,7 @@ export default function Cadastro() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="password" className="text-foreground text-sm">
                       Senha
@@ -231,6 +252,46 @@ export default function Cadastro() {
                       <p className="text-xs text-destructive">{errors.password}</p>
                     )}
                   </div>
+
+                  {/* Password Strength Meter */}
+                  {formData.password && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={getPasswordStrength(formData.password).score} 
+                          className="h-2 flex-1"
+                        />
+                        <span className={`text-xs font-medium ${
+                          getPasswordStrength(formData.password).score <= 25 ? 'text-destructive' :
+                          getPasswordStrength(formData.password).score <= 50 ? 'text-orange-500' :
+                          getPasswordStrength(formData.password).score <= 75 ? 'text-yellow-600' :
+                          'text-green-600'
+                        }`}>
+                          {getPasswordStrength(formData.password).label}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {PASSWORD_REQUIREMENTS.map((req) => {
+                          const passed = req.test(formData.password);
+                          return (
+                            <div 
+                              key={req.key} 
+                              className={`flex items-center gap-1.5 text-xs ${
+                                passed ? 'text-green-600' : 'text-muted-foreground'
+                              }`}
+                            >
+                              {passed ? (
+                                <Check className="h-3 w-3" />
+                              ) : (
+                                <X className="h-3 w-3" />
+                              )}
+                              {req.label}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-1.5">
                     <Label htmlFor="confirmPassword" className="text-foreground text-sm">
