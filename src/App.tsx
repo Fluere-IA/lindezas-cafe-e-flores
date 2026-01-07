@@ -30,6 +30,7 @@ const Membros = lazy(() => import("./pages/Membros"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const SuperDashboard = lazy(() => import("./pages/SuperDashboard"));
 const Estoque = lazy(() => import("./pages/Estoque"));
+const Relatorios = lazy(() => import("./pages/Relatorios"));
 
 // Lazy loaded public pages
 const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
@@ -83,6 +84,7 @@ const App = () => (
                 <Route path="/assinatura" element={<ProtectedRoute requiresSubscription={false}><Assinatura /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
                 <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
+                <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
