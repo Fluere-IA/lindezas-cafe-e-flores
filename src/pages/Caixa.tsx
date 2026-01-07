@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { 
   Hash, 
   Search, 
@@ -85,6 +86,8 @@ const Caixa = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'dinheiro' | 'cartao' | 'pix' | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [closedBillSummary, setClosedBillSummary] = useState<ClosedBillSummary | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<ItemWithOrder | null>(null);
   const queryClient = useQueryClient();
 
   const formatPrice = (price: number) =>
@@ -176,24 +179,29 @@ const Caixa = () => {
     setSelectedItems(newSelected);
   };
 
-  const handleDeleteItem = async (item: ItemWithOrder) => {
-    if (!confirm(`Remover "${item.product?.name}" do pedido?`)) return;
+  const openDeleteItemDialog = (item: ItemWithOrder) => {
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteItem = async () => {
+    if (!itemToDelete) return;
     
     try {
       // Delete the order item
       await supabase
         .from('order_items')
         .delete()
-        .eq('id', item.id);
+        .eq('id', itemToDelete.id);
 
       // Update the order total
-      const order = orders.find(o => o.id === item.orderId);
+      const order = orders.find(o => o.id === itemToDelete.orderId);
       if (order) {
-        const newTotal = Number(order.total) - Number(item.subtotal);
+        const newTotal = Number(order.total) - Number(itemToDelete.subtotal);
         await supabase
           .from('orders')
           .update({ total: Math.max(0, newTotal) })
-          .eq('id', item.orderId);
+          .eq('id', itemToDelete.orderId);
       }
 
       queryClient.invalidateQueries({ queryKey: ['table-orders'] });
@@ -201,6 +209,9 @@ const Caixa = () => {
     } catch (error) {
       logError(error, 'Error deleting item');
       toast.error('Erro ao remover item');
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -626,7 +637,7 @@ const Caixa = () => {
                         className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteItem(item);
+                          openDeleteItemDialog(item);
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -809,6 +820,24 @@ const Caixa = () => {
             )}
           </>
         )}
+
+        {/* Delete Item Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent className="max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover item?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Remover "{itemToDelete?.product?.name}" do pedido?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteItem} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
