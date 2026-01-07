@@ -16,7 +16,10 @@ const cadastroSchema = z.object({
   telefone: z.string().trim().min(10, 'Telefone inválido').max(15),
   nomeEmpresa: z.string().trim().min(2, 'Nome da empresa deve ter no mínimo 2 caracteres').max(100),
   tipoEstabelecimento: z.string().min(1, 'Selecione o tipo de estabelecimento'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
+    .regex(/[a-z]/, 'Senha deve conter pelo menos uma letra minúscula')
+    .regex(/[0-9]/, 'Senha deve conter pelo menos um número'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem',
@@ -153,10 +156,17 @@ export default function Cadastro() {
             description: 'Este email já está em uso. Tente fazer login.',
             variant: 'destructive',
           });
+        } else if (error.message.includes('password') || error.message.includes('weak') || error.message.includes('leaked') || error.message.includes('compromised') || error.status === 422) {
+          toast({
+            title: 'Senha muito fraca',
+            description: 'Use uma senha mais forte com letras, números e caracteres especiais.',
+            variant: 'destructive',
+          });
         } else {
+          console.error('Signup error:', error);
           toast({
             title: 'Erro',
-            description: 'Não foi possível criar a conta. Tente novamente.',
+            description: error.message || 'Não foi possível criar a conta. Tente novamente.',
             variant: 'destructive',
           });
         }
