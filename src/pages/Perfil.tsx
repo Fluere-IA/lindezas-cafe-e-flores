@@ -4,19 +4,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Loader2, User, Save, ArrowLeft, Mail, Image, 
-  Shield, CreditCard, Moon, Sun, Crown, Lock,
+  Shield, CreditCard, Crown, Lock,
   CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { z } from 'zod';
@@ -39,7 +37,6 @@ export default function Perfil() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { planTier, planName, subscribed, isInTrial, trialDaysRemaining } = useSubscriptionContext();
-  const { isDark, setTheme } = useTheme();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -342,36 +339,6 @@ export default function Perfil() {
                 </CardContent>
               </Card>
 
-              {/* Theme Toggle */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Aparência</CardTitle>
-                  <CardDescription>
-                    Personalize a interface do sistema
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {isDark ? (
-                        <Moon className="h-5 w-5 text-primary" />
-                      ) : (
-                        <Sun className="h-5 w-5 text-amber-500" />
-                      )}
-                      <div>
-                        <p className="font-medium">Modo Escuro</p>
-                        <p className="text-sm text-muted-foreground">
-                          {isDark ? 'Ativado' : 'Desativado'}
-                        </p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={isDark}
-                      onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
 
             {/* Tab: Assinatura */}
