@@ -10,8 +10,8 @@ const corsHeaders = {
 
 interface WelcomeEmailRequest {
   email: string;
-  name: string;
-  companyName: string;
+  name?: string;
+  companyName?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -24,20 +24,24 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, name, companyName }: WelcomeEmailRequest = await req.json();
     
-    console.log(`Sending welcome email to ${email} for ${companyName}`);
+    console.log(`Sending welcome email to ${email}`);
 
-    if (!email || !name || !companyName) {
-      console.error("Missing required fields");
+    if (!email) {
+      console.error("Missing email field");
       return new Response(
-        JSON.stringify({ error: "Email, name and company name are required" }),
+        JSON.stringify({ error: "Email is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
+    // Use defaults for optional fields
+    const displayName = name || "Usuário";
+    const displayCompany = companyName || "seu estabelecimento";
+
     const emailResponse = await resend.emails.send({
-      from: "Lindezas <onboarding@resend.dev>",
+      from: "Servire <onboarding@resend.dev>",
       to: [email],
-      subject: "Bem-vindo ao Lindezas! 🎉",
+      subject: "Bem-vindo ao Servire! 🎉",
       html: `
         <!DOCTYPE html>
         <html>
@@ -47,12 +51,12 @@ const handler = async (req: Request): Promise<Response> => {
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #8B5CF6; margin: 0;">Lindezas</h1>
+            <h1 style="color: #2563EB; margin: 0;">Servire</h1>
           </div>
           
-          <div style="background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-            <h2 style="margin: 0 0 10px 0; font-size: 24px;">Bem-vindo(a), ${name}! 🎉</h2>
-            <p style="margin: 0; opacity: 0.9;">Sua conta para ${companyName} foi criada com sucesso!</p>
+          <div style="background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+            <h2 style="margin: 0 0 10px 0; font-size: 24px;">Bem-vindo(a), ${displayName}! 🎉</h2>
+            <p style="margin: 0; opacity: 0.9;">Sua conta foi criada com sucesso!</p>
           </div>
           
           <div style="background: #f9fafb; padding: 25px; border-radius: 12px; margin-bottom: 30px;">
@@ -65,13 +69,17 @@ const handler = async (req: Request): Promise<Response> => {
             </ul>
           </div>
           
+          <div style="text-align: center; margin-bottom: 30px;">
+            <p style="color: #4b5563; margin-bottom: 15px;">Você tem <strong>7 dias de teste grátis</strong> para explorar todas as funcionalidades.</p>
+          </div>
+          
           <p style="color: #6b7280; font-size: 14px; text-align: center;">
             Se você não criou esta conta, pode ignorar este e-mail.
           </p>
           
           <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center;">
             <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-              © 2024 Lindezas. Todos os direitos reservados.
+              © ${new Date().getFullYear()} Servire. Todos os direitos reservados.
             </p>
           </div>
         </body>
