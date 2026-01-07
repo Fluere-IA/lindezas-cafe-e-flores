@@ -33,6 +33,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setOrganizations([]);
       setCurrentOrganization(null);
+      localStorage.removeItem('currentOrganizationId');
       setIsLoading(false);
       return;
     }
