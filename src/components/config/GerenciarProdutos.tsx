@@ -57,15 +57,17 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
   const { currentOrganization } = useOrganization();
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ['products-admin'],
+    queryKey: ['products-admin', currentOrganization?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
         .select('*, category:categories(name, type)')
+        .eq('is_active', true)
         .order('name');
       if (error) throw error;
       return data as Product[];
     },
+    enabled: !!currentOrganization,
   });
 
   const { data: categories = [] } = useQuery({
