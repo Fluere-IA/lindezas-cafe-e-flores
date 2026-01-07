@@ -204,14 +204,21 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
       if (error) throw error;
 
       if (data?.items && Array.isArray(data.items) && data.items.length > 0) {
+        console.log('OCR items received:', data.items);
+        
         // Fetch fresh categories from the database (including global ones)
-        const { data: freshCategories } = await supabase
+        const { data: freshCategories, error: catFetchError } = await supabase
           .from('categories')
           .select('*')
           .or(`organization_id.eq.${currentOrganization?.id},organization_id.is.null`)
           .order('name');
         
+        if (catFetchError) {
+          console.error('Error fetching categories:', catFetchError);
+        }
+        
         const allCategories = freshCategories || categories;
+        console.log('Available categories:', allCategories.map(c => c.name));
         
         // Normalize function for better matching
         const normalize = (str: string) => 
@@ -220,11 +227,13 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
             .replace(/[\u0300-\u036f]/g, '')
             .trim();
         
-        // Create categories and products from OCR results
+        // Extract unique categories from OCR results
         const uniqueCategories = [...new Set(data.items.map((item: any) => item.category || 'Geral'))];
+        console.log('OCR unique categories:', uniqueCategories);
+        
         const categoryMap: Record<string, string> = {};
 
-        // Create categories
+        // Create or find categories - process sequentially to avoid race conditions
         for (const categoryName of uniqueCategories) {
           const catName = (categoryName as string).trim();
           const normalizedCatName = normalize(catName);
@@ -233,36 +242,55 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
           const existingCat = allCategories.find(c => normalize(c.name) === normalizedCatName);
           
           if (existingCat) {
+            console.log(`Category "${catName}" found with ID: ${existingCat.id}`);
             categoryMap[catName] = existingCat.id;
           } else {
+            console.log(`Creating new category: "${catName}" for org: ${currentOrganization?.id}`);
+            
             const { data: cat, error: catError } = await supabase
               .from('categories')
               .insert({
                 name: catName,
-                type: 'bebidas' as const,
+                type: 'bebidas',
                 organization_id: currentOrganization?.id,
               })
               .select()
               .single();
 
-            if (!catError && cat) {
+            if (catError) {
+              console.error(`Error creating category "${catName}":`, catError);
+            } else if (cat) {
+              console.log(`Category "${catName}" created with ID: ${cat.id}`);
               categoryMap[catName] = cat.id;
             }
           }
         }
 
-        // Create products
-        const productsToInsert = data.items.map((item: any) => ({
-          name: item.name,
-          price: parseFloat(item.price) || 0,
-          category_id: categoryMap[item.category || 'Geral'] || null,
-          organization_id: currentOrganization?.id,
-          is_active: true,
-          stock: 100,
-        }));
+        console.log('Final category map:', categoryMap);
+
+        // Create products with their categories
+        const productsToInsert = data.items.map((item: any) => {
+          const itemCategory = item.category || 'Geral';
+          const categoryId = categoryMap[itemCategory] || null;
+          console.log(`Product "${item.name}" → category "${itemCategory}" → ID: ${categoryId}`);
+          
+          return {
+            name: item.name,
+            price: parseFloat(item.price) || 0,
+            category_id: categoryId,
+            organization_id: currentOrganization?.id,
+            is_active: true,
+            stock: 100,
+          };
+        });
+
+        console.log('Products to insert:', productsToInsert);
 
         const { error: prodError } = await supabase.from('products').insert(productsToInsert);
-        if (prodError) throw prodError;
+        if (prodError) {
+          console.error('Error inserting products:', prodError);
+          throw prodError;
+        }
 
         queryClient.invalidateQueries({ queryKey: ['products-admin'] });
         queryClient.invalidateQueries({ queryKey: ['products'] });

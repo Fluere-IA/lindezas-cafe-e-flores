@@ -79,6 +79,7 @@ Do not include any explanation, only the JSON array.`
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || '[]';
+    console.log('AI response content:', content);
 
     // Parse the JSON response
     let items: Array<{ name: string; price: string; category: string }> = [];
@@ -88,6 +89,8 @@ Do not include any explanation, only the JSON array.`
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
+      
+      console.log('Cleaned content:', cleanContent);
       
       const parsed = JSON.parse(cleanContent);
       
@@ -109,6 +112,8 @@ Do not include any explanation, only the JSON array.`
           };
         });
       }
+      
+      console.log('Parsed items with categories:', items.map(i => ({ name: i.name, category: i.category })));
     } catch (parseError) {
       console.error('JSON parse error:', parseError, 'Content:', content);
       items = [];
