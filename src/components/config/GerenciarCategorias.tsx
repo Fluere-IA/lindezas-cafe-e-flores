@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Plus, Pencil, Trash2, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logError } from '@/lib/errorLogger';
@@ -31,6 +32,8 @@ const categoryTypes = [
 
 export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', type: 'bebidas' });
   const queryClient = useQueryClient();
@@ -97,17 +100,22 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
     }
   };
 
-  const handleDelete = async (category: Category) => {
-    if (!confirm(`Remover "${category.name}"? Produtos desta categoria ficarão sem categoria.`)) return;
+  const openDeleteDialog = (category: Category) => {
+    setCategoryToDelete(category);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!categoryToDelete) return;
     
     try {
       // Remove category reference from products first
       await supabase
         .from('products')
         .update({ category_id: null })
-        .eq('category_id', category.id);
+        .eq('category_id', categoryToDelete.id);
       
-      const { error } = await supabase.from('categories').delete().eq('id', category.id);
+      const { error } = await supabase.from('categories').delete().eq('id', categoryToDelete.id);
       if (error) throw error;
       
       toast.success('Categoria removida');
@@ -116,6 +124,9 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
     } catch (error) {
       logError(error, 'Error deleting category');
       toast.error('Erro ao remover categoria');
+    } finally {
+      setDeleteDialogOpen(false);
+      setCategoryToDelete(null);
     }
   };
 
@@ -163,7 +174,7 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditCategory(category)}>
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(category)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => openDeleteDialog(category)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -214,6 +225,24 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover categoria?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Remover "{categoryToDelete?.name}"? Produtos desta categoria ficarão sem categoria.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

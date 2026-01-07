@@ -18,6 +18,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { 
   Users, 
@@ -72,6 +73,8 @@ export default function Membros() {
   const queryClient = useQueryClient();
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
   const [isInviting, setIsInviting] = useState(false);
@@ -207,22 +210,26 @@ export default function Membros() {
     }
   };
 
-  const removeMember = async (memberId: string, memberRole: string) => {
-    if (memberRole === 'owner') {
+  const openDeleteMemberDialog = (member: Member) => {
+    if (member.role === 'owner') {
       toast({
         title: 'Não é possível remover o proprietário',
         variant: 'destructive',
       });
       return;
     }
+    setMemberToDelete(member);
+    setDeleteDialogOpen(true);
+  };
 
-    if (!confirm('Tem certeza que deseja remover este membro?')) return;
+  const removeMember = async () => {
+    if (!memberToDelete) return;
 
     try {
       const { error } = await supabase
         .from('organization_members')
         .delete()
-        .eq('id', memberId);
+        .eq('id', memberToDelete.id);
 
       if (error) throw error;
 
@@ -237,6 +244,9 @@ export default function Membros() {
         title: 'Erro ao remover membro',
         variant: 'destructive',
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setMemberToDelete(null);
     }
   };
 
@@ -376,7 +386,7 @@ export default function Membros() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => removeMember(member.id, member.role)}
+                            onClick={() => openDeleteMemberDialog(member)}
                             className="text-destructive hover:text-destructive"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -434,6 +444,24 @@ export default function Membros() {
             )}
           </div>
         )}
+
+        {/* Delete Member Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent className="max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover membro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja remover este membro da equipe?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={removeMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
