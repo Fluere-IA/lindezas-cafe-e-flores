@@ -24,9 +24,9 @@ const Dashboard = () => {
   const { data: dailySales, isLoading: dailySalesLoading } = useDailySales();
   const { isInTrial, trialDaysRemaining, subscribed } = useSubscription();
 
-  // Redirect to onboarding if not completed
+  // Redirect to onboarding if not completed (null or false means not completed)
   useEffect(() => {
-    if (!orgLoading && currentOrganization && currentOrganization.onboarding_completed === false) {
+    if (!orgLoading && currentOrganization && currentOrganization.onboarding_completed !== true) {
       navigate('/onboarding');
     }
   }, [orgLoading, currentOrganization, navigate]);
