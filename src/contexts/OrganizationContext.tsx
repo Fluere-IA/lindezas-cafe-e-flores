@@ -84,20 +84,24 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       
       setOrganizations(orgs);
       
-      // Always update currentOrganization with fresh data if it exists
+      // Update currentOrganization with fresh data
       if (orgs.length > 0) {
         const savedOrgId = localStorage.getItem('currentOrganizationId');
-        const currentOrgId = currentOrganization?.id || savedOrgId;
-        const matchedOrg = orgs.find(org => org.id === currentOrgId);
         
-        if (matchedOrg) {
-          // Update with fresh data from the server
-          setCurrentOrganization(matchedOrg);
-        } else if (orgs.length === 1) {
-          // Auto-select if user has only one organization
-          setCurrentOrganization(orgs[0]);
-          localStorage.setItem('currentOrganizationId', orgs[0].id);
-        }
+        // Use functional update to avoid stale closure
+        setCurrentOrganization(prev => {
+          const currentOrgId = prev?.id || savedOrgId;
+          const matchedOrg = orgs.find(org => org.id === currentOrgId);
+          
+          if (matchedOrg) {
+            localStorage.setItem('currentOrganizationId', matchedOrg.id);
+            return matchedOrg;
+          } else if (orgs.length === 1) {
+            localStorage.setItem('currentOrganizationId', orgs[0].id);
+            return orgs[0];
+          }
+          return prev;
+        });
       }
       
       return orgs;
@@ -108,7 +112,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, role, currentOrganization]);
+  }, [user, role]);
 
   // Fetch organizations when user changes
   useEffect(() => {
