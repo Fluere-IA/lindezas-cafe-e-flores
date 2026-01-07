@@ -62,7 +62,7 @@ export default function Cadastro() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/selecionar-organizacao');
+      navigate('/dashboard');
     }
   }, [isAuthenticated, isLoading, navigate]);
 
