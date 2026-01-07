@@ -297,16 +297,45 @@ export default function Cadastro() {
                     <Label htmlFor="confirmPassword" className="text-foreground text-sm">
                       Confirmar senha
                     </Label>
-                    <Input
-                      id="confirmPassword"
-                      type={showPassword ? 'text' : 'password'}
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                      placeholder="••••••••"
-                      className={`h-11 ${errors.confirmPassword ? 'border-destructive' : 'border-input'}`}
-                      disabled={isSubmitting}
-                    />
-                    {errors.confirmPassword && (
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.confirmPassword}
+                        onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                        placeholder="••••••••"
+                        className={`h-11 pr-10 ${
+                          errors.confirmPassword 
+                            ? 'border-destructive' 
+                            : formData.confirmPassword && formData.password === formData.confirmPassword
+                            ? 'border-green-500'
+                            : 'border-input'
+                        }`}
+                        disabled={isSubmitting}
+                      />
+                      {formData.confirmPassword && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {formData.password === formData.confirmPassword ? (
+                            <Check className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <X className="h-4 w-4 text-destructive" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <X className="h-3 w-3" />
+                        As senhas não coincidem
+                      </p>
+                    )}
+                    {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <Check className="h-3 w-3" />
+                        Senhas coincidem
+                      </p>
+                    )}
+                    {errors.confirmPassword && !formData.confirmPassword && (
                       <p className="text-xs text-destructive">{errors.confirmPassword}</p>
                     )}
                   </div>
