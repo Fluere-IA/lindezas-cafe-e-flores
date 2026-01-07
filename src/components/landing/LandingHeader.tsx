@@ -1,10 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 export function LandingHeader() {
-  const scrollToPlans = () => {
-    const plansSection = document.getElementById("planos");
-    plansSection?.scrollIntoView({ behavior: "smooth" });
+  const navigate = useNavigate();
+
+  const goToCadastro = () => {
+    navigate("/cadastro");
   };
 
   return (
@@ -56,7 +57,7 @@ export function LandingHeader() {
               <Link to="/auth">Login</Link>
             </Button>
             <Button
-              onClick={scrollToPlans}
+              onClick={goToCadastro}
               className="bg-white text-[#1E40AF] hover:bg-white/90 font-semibold"
             >
               Comece agora
