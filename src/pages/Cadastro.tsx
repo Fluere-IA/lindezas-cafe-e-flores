@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, ArrowLeft, Lock, Check, X } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 
 // Password requirements - includes special character for Supabase security
 const PASSWORD_REQUIREMENTS = [
@@ -18,15 +17,6 @@ const PASSWORD_REQUIREMENTS = [
   { key: 'number', label: 'Um número', test: (p: string) => /[0-9]/.test(p) },
   { key: 'special', label: 'Um caractere especial (!@#$%)', test: (p: string) => /[!@#$%^&*(),.?":{}|<>_\-+=[\]\\;'/`~]/.test(p) },
 ];
-
-const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
-  const passed = PASSWORD_REQUIREMENTS.filter(req => req.test(password)).length;
-  if (password.length === 0) return { score: 0, label: '', color: 'bg-muted' };
-  if (passed <= 2) return { score: 20, label: 'Fraca', color: 'bg-destructive' };
-  if (passed === 3) return { score: 40, label: 'Razoável', color: 'bg-orange-500' };
-  if (passed === 4) return { score: 70, label: 'Boa', color: 'bg-yellow-500' };
-  return { score: 100, label: 'Forte', color: 'bg-green-500' };
-};
 
 // Schema with stronger password requirements (including special character)
 const cadastroSchema = z.object({
@@ -255,43 +245,23 @@ export default function Cadastro() {
                     )}
                   </div>
 
-                  {/* Password Strength Meter */}
+                  {/* Password Requirements - Simple inline list */}
                   {formData.password && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Progress 
-                          value={getPasswordStrength(formData.password).score} 
-                          className="h-2 flex-1"
-                        />
-                        <span className={`text-xs font-medium ${
-                          getPasswordStrength(formData.password).score <= 25 ? 'text-destructive' :
-                          getPasswordStrength(formData.password).score <= 50 ? 'text-orange-500' :
-                          getPasswordStrength(formData.password).score <= 75 ? 'text-yellow-600' :
-                          'text-green-600'
-                        }`}>
-                          {getPasswordStrength(formData.password).label}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {PASSWORD_REQUIREMENTS.map((req) => {
-                          const passed = req.test(formData.password);
-                          return (
-                            <div 
-                              key={req.key} 
-                              className={`flex items-center gap-1.5 text-xs ${
-                                passed ? 'text-green-600' : 'text-muted-foreground'
-                              }`}
-                            >
-                              {passed ? (
-                                <Check className="h-3 w-3" />
-                              ) : (
-                                <X className="h-3 w-3" />
-                              )}
-                              {req.label}
-                            </div>
-                          );
-                        })}
-                      </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                      {PASSWORD_REQUIREMENTS.map((req) => {
+                        const passed = req.test(formData.password);
+                        return (
+                          <span 
+                            key={req.key} 
+                            className={`text-xs flex items-center gap-1 ${
+                              passed ? 'text-success' : 'text-muted-foreground'
+                            }`}
+                          >
+                            {passed ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                            {req.label}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
 
