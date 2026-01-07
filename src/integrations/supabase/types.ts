@@ -418,6 +418,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_org_ids: { Args: { _user_id: string }; Returns: string[] }
       get_user_organizations: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
@@ -428,7 +429,15 @@ export type Database = {
       }
       is_authenticated: { Args: never; Returns: boolean }
       is_master_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_org_owner: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_belongs_to_org: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_belongs_to_org_safe: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
