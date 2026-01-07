@@ -1,61 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Building2, ArrowRight, Plus, Settings, Loader2, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useOrganization } from '@/contexts/OrganizationContext';
+import { useOrganization, Organization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-
-interface OrganizationWithOnboarding {
-  id: string;
-  name: string;
-  slug: string;
-  created_at: string;
-  onboarding_completed: boolean | null;
-}
 
 export default function SelecionarOrganizacao() {
   const navigate = useNavigate();
   const { organizations, setCurrentOrganization, isMasterAdmin, isLoading } = useOrganization();
   const { isLoading: authLoading, signOut } = useAuth();
-  const [orgsWithOnboarding, setOrgsWithOnboarding] = useState<OrganizationWithOnboarding[]>([]);
-  const [loadingOnboarding, setLoadingOnboarding] = useState(true);
 
   const handleLogout = async () => {
     await signOut();
     navigate('/');
   };
 
-  // Fetch organizations with onboarding status
-  useEffect(() => {
-    const fetchOrgsWithOnboarding = async () => {
-      if (organizations.length === 0) {
-        setOrgsWithOnboarding([]);
-        setLoadingOnboarding(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from('organizations')
-        .select('id, name, slug, created_at, onboarding_completed')
-        .in('id', organizations.map(o => o.id));
-
-      setOrgsWithOnboarding(data || []);
-      setLoadingOnboarding(false);
-    };
-
-    if (!isLoading && organizations.length > 0) {
-      fetchOrgsWithOnboarding();
-    } else if (!isLoading) {
-      setLoadingOnboarding(false);
-    }
-  }, [isLoading, organizations]);
-
   // If not master admin and has only one org, redirect directly (checking onboarding)
   useEffect(() => {
-    if (!isLoading && !authLoading && !loadingOnboarding && !isMasterAdmin && orgsWithOnboarding.length === 1) {
-      const org = orgsWithOnboarding[0];
+    if (!isLoading && !authLoading && !isMasterAdmin && organizations.length === 1) {
+      const org = organizations[0];
       setCurrentOrganization(org);
       
       // Check if onboarding is completed
@@ -65,9 +29,9 @@ export default function SelecionarOrganizacao() {
         navigate('/dashboard');
       }
     }
-  }, [isLoading, authLoading, loadingOnboarding, isMasterAdmin, orgsWithOnboarding, navigate, setCurrentOrganization]);
+  }, [isLoading, authLoading, isMasterAdmin, organizations, navigate, setCurrentOrganization]);
 
-  const handleSelectOrganization = (org: OrganizationWithOnboarding) => {
+  const handleSelectOrganization = (org: Organization) => {
     setCurrentOrganization(org);
     
     // Check if onboarding is completed
@@ -78,7 +42,7 @@ export default function SelecionarOrganizacao() {
     }
   };
 
-  if (isLoading || authLoading || loadingOnboarding) {
+  if (isLoading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-servire-blue-dark to-primary">
         <Loader2 className="h-8 w-8 animate-spin text-white" />
@@ -130,7 +94,7 @@ export default function SelecionarOrganizacao() {
             </p>
           </div>
 
-          {orgsWithOnboarding.length === 0 ? (
+          {organizations.length === 0 ? (
             <Card className="bg-white/10 border-white/20 backdrop-blur-sm">
               <CardContent className="p-8 text-center">
                 <Building2 className="h-12 w-12 text-white/50 mx-auto mb-4" />
@@ -154,7 +118,7 @@ export default function SelecionarOrganizacao() {
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {orgsWithOnboarding.map((org) => (
+              {organizations.map((org) => (
                 <Card 
                   key={org.id}
                   className="bg-white/10 border-white/20 backdrop-blur-sm hover:bg-white/20 transition-all cursor-pointer group"
@@ -179,7 +143,7 @@ export default function SelecionarOrganizacao() {
             </div>
           )}
 
-          {isMasterAdmin && orgsWithOnboarding.length > 0 && (
+          {isMasterAdmin && organizations.length > 0 && (
             <div className="mt-8 text-center">
               <Link to="/organizacoes">
                 <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10">

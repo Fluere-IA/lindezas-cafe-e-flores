@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -7,6 +7,7 @@ export interface Organization {
   name: string;
   slug: string;
   created_at: string;
+  onboarding_completed?: boolean | null;
 }
 
 interface OrganizationContextType {
@@ -28,7 +29,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
   const isMasterAdmin = role === 'admin';
 
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     if (!user) {
       setOrganizations([]);
       setCurrentOrganization(null);
@@ -37,45 +38,76 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      setIsLoading(true);
+      
+      // Fetch organizations with onboarding status
       const { data, error } = await supabase
         .from('organizations')
-        .select('*')
+        .select('id, name, slug, created_at, onboarding_completed')
         .order('name');
 
       if (error) throw error;
 
-      setOrganizations(data || []);
+      const orgs = data || [];
+      setOrganizations(orgs);
       
-      // Don't auto-select for master admins - let them choose
-      if (data && data.length > 0 && !currentOrganization) {
-        // Try to restore from localStorage
+      // Restore from localStorage if available
+      if (orgs.length > 0 && !currentOrganization) {
         const savedOrgId = localStorage.getItem('currentOrganizationId');
-        const savedOrg = data.find(org => org.id === savedOrgId);
+        const savedOrg = orgs.find(org => org.id === savedOrgId);
         
-        // Only auto-select if we have a saved org or if user is not master admin
         if (savedOrg) {
           setCurrentOrganization(savedOrg);
         }
-        // If master admin with no saved org, don't auto-select - they need to choose
+        // For master admins without saved org, don't auto-select
+        // For regular users with single org, the SelecionarOrganizacao page handles redirect
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
+      setOrganizations([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, currentOrganization]);
 
+  // Fetch organizations when user changes
   useEffect(() => {
     if (!authLoading) {
       fetchOrganizations();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, fetchOrganizations]);
 
+  // Persist current organization to localStorage
   useEffect(() => {
     if (currentOrganization) {
       localStorage.setItem('currentOrganizationId', currentOrganization.id);
     }
   }, [currentOrganization]);
+
+  // Subscribe to organization changes in real-time
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('org-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'organizations',
+        },
+        () => {
+          // Refetch when organizations change
+          fetchOrganizations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchOrganizations]);
 
   const value: OrganizationContextType = {
     organizations,
