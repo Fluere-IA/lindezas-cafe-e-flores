@@ -22,9 +22,13 @@ const Cozinha = lazy(() => import("./pages/Cozinha"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const Assinatura = lazy(() => import("./pages/Assinatura"));
 const Organizacoes = lazy(() => import("./pages/Organizacoes"));
-
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Membros = lazy(() => import("./pages/Membros"));
+const Perfil = lazy(() => import("./pages/Perfil"));
+
+// Lazy loaded public pages
+const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
+const AtualizarSenha = lazy(() => import("./pages/AtualizarSenha"));
 const Privacidade = lazy(() => import("./pages/Privacidade"));
 const Cookies = lazy(() => import("./pages/Cookies"));
 const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
@@ -52,6 +56,8 @@ const App = () => (
                 <Route path="/" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/cadastro" element={<Cadastro />} />
+                <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+                <Route path="/atualizar-senha" element={<AtualizarSenha />} />
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/cookies" element={<Cookies />} />
                 <Route path="/termos" element={<TermosDeUso />} />
@@ -67,6 +73,7 @@ const App = () => (
                 <Route path="/organizacoes" element={<ProtectedRoute><Organizacoes /></ProtectedRoute>} />
                 <Route path="/membros" element={<ProtectedRoute><Membros /></ProtectedRoute>} />
                 <Route path="/assinatura" element={<ProtectedRoute requiresSubscription={false}><Assinatura /></ProtectedRoute>} />
+                <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
