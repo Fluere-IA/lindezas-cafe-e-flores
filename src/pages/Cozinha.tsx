@@ -330,30 +330,22 @@ const Cozinha = () => {
         </div>
 
         <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 bg-white border border-lindezas-gold/30 shadow-md rounded-xl p-1.5">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 bg-white border border-border shadow-md rounded-xl p-1.5">
             <TabsTrigger 
               value="pending" 
-              className="gap-2 rounded-lg font-semibold transition-all shadow-sm"
-              style={{ 
-                backgroundColor: 'transparent',
-                color: '#4A3728'
-              }}
+              className="gap-2 rounded-lg font-semibold transition-all shadow-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               <Clock className="h-4 w-4" />
               <span>Pendentes</span>
               {pendingOrders.length > 0 && (
-                <Badge className="ml-1 border-0 bg-primary text-primary-foreground">
+                <Badge className="ml-1 border-0 bg-primary text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
                   {pendingOrders.length}
                 </Badge>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="ready" 
-              className="gap-2 rounded-lg font-semibold transition-all shadow-sm"
-              style={{ 
-                backgroundColor: 'transparent',
-                color: '#4A3728'
-              }}
+              className="gap-2 rounded-lg font-semibold transition-all shadow-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               <CheckCircle2 className="h-4 w-4" />
               <span>Feitos</span>
