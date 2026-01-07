@@ -84,13 +84,15 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       
       setOrganizations(orgs);
       
-      // Restore from localStorage if available and valid
-      if (orgs.length > 0 && !currentOrganization) {
+      // Always update currentOrganization with fresh data if it exists
+      if (orgs.length > 0) {
         const savedOrgId = localStorage.getItem('currentOrganizationId');
-        const savedOrg = orgs.find(org => org.id === savedOrgId);
+        const currentOrgId = currentOrganization?.id || savedOrgId;
+        const matchedOrg = orgs.find(org => org.id === currentOrgId);
         
-        if (savedOrg) {
-          setCurrentOrganization(savedOrg);
+        if (matchedOrg) {
+          // Update with fresh data from the server
+          setCurrentOrganization(matchedOrg);
         } else if (orgs.length === 1) {
           // Auto-select if user has only one organization
           setCurrentOrganization(orgs[0]);
