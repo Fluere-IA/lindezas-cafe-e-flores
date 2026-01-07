@@ -129,10 +129,10 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h2 className="text-lg font-semibold text-lindezas-forest">Categorias</h2>
+          <h2 className="text-lg font-semibold text-foreground">Categorias</h2>
           <p className="text-sm text-muted-foreground">{categories.length} categorias</p>
         </div>
-        <Button onClick={openNewCategory} size="sm" className="bg-lindezas-forest hover:bg-lindezas-forest/90">
+        <Button onClick={openNewCategory} size="sm" className="bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4 mr-1" /> Nova
         </Button>
       </div>
@@ -152,11 +152,11 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
               key={category.id}
               className="flex items-center gap-3 p-3 bg-white rounded-xl border border-border/50"
             >
-              <div className="p-2 rounded-lg bg-lindezas-cream">
-                <Tag className="h-4 w-4 text-lindezas-forest" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Tag className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-lindezas-forest">{category.name}</p>
+                <p className="font-medium text-foreground">{category.name}</p>
                 <p className="text-xs text-muted-foreground">{getTypeLabel(category.type)}</p>
               </div>
               <div className="flex gap-1">
@@ -207,7 +207,7 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
               <Button variant="outline" className="flex-1" onClick={() => setDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button className="flex-1 bg-lindezas-forest hover:bg-lindezas-forest/90" onClick={handleSave}>
+              <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={handleSave}>
                 Salvar
               </Button>
             </div>

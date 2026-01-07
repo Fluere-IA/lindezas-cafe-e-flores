@@ -172,23 +172,22 @@ const PendingOrdersGrid = ({
                     className="flex items-center gap-3 py-2 border-b border-lindezas-gold/20 last:border-0"
                   >
                     <span 
-                      className="font-bold text-lg min-w-[2.5rem] text-center rounded-lg py-1"
-                      style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}
+                      className="font-bold text-lg min-w-[2.5rem] text-center rounded-lg py-1 bg-primary text-primary-foreground"
                     >
                       {item.quantity}x
                     </span>
-                    <span className="font-medium text-base text-lindezas-forest">
+                    <span className="font-medium text-base text-foreground">
                       {item.product?.name}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <Button
-                onClick={() => onMarkReady(order)}
-                disabled={isProcessing}
-                size="lg"
-                className="w-full h-14 text-lg font-bold gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                <Button
+                  onClick={() => onMarkReady(order)}
+                  disabled={isProcessing}
+                  size="lg"
+                  className="w-full h-14 text-lg font-bold gap-2 bg-success hover:bg-success/90 text-success-foreground shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
                 style={{ color: '#ffffff' }}
               >
                 {isProcessing ? (
@@ -321,9 +320,9 @@ const Cozinha = () => {
       <main className="p-6">
         {/* Page Title */}
         <div className="mb-6">
-          <h1 className="text-3xl font-display font-bold text-lindezas-forest flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-lindezas-cream border-2 border-lindezas-gold/40 shadow-md">
-              <Package className="h-6 w-6" style={{ color: '#2D5A27' }} />
+          <h1 className="text-3xl font-display font-bold text-foreground flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-background border-2 border-border shadow-md">
+              <Package className="h-6 w-6 text-primary" />
             </div>
             Cozinha
           </h1>
@@ -343,7 +342,7 @@ const Cozinha = () => {
               <Clock className="h-4 w-4" />
               <span>Pendentes</span>
               {pendingOrders.length > 0 && (
-                <Badge className="ml-1 border-0" style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}>
+                <Badge className="ml-1 border-0 bg-primary text-primary-foreground">
                   {pendingOrders.length}
                 </Badge>
               )}
@@ -373,12 +372,12 @@ const Cozinha = () => {
             )}
 
             {!isLoadingPending && pendingOrders.length === 0 && (
-              <Card className="border-dashed border-2 border-lindezas-forest/30 max-w-md mx-auto mt-12 bg-white/80 backdrop-blur-sm">
+              <Card className="border-dashed border-2 border-primary/30 max-w-md mx-auto mt-12 bg-card">
                 <CardContent className="py-16 text-center">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-4 shadow-lg">
-                    <CheckCircle2 className="h-10 w-10 text-white" />
+                  <div className="w-20 h-20 mx-auto rounded-full bg-success flex items-center justify-center mb-4 shadow-lg">
+                    <CheckCircle2 className="h-10 w-10 text-success-foreground" />
                   </div>
-                  <p className="text-2xl font-display font-bold text-lindezas-forest">Tudo em dia!</p>
+                  <p className="text-2xl font-display font-bold text-foreground">Tudo em dia!</p>
                   <p className="text-muted-foreground mt-2">
                     Nenhum pedido pendente no momento
                   </p>
@@ -408,12 +407,12 @@ const Cozinha = () => {
             )}
 
             {!isLoadingReady && readyOrders.length === 0 && (
-              <Card className="border-dashed border-2 border-lindezas-gold/30 max-w-md mx-auto mt-12 bg-white/80 backdrop-blur-sm">
+              <Card className="border-dashed border-2 border-border max-w-md mx-auto mt-12 bg-card">
                 <CardContent className="py-16 text-center">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-lindezas-gold to-lindezas-gold/80 flex items-center justify-center mb-4 shadow-lg">
-                    <Package className="h-10 w-10" style={{ color: '#ffffff' }} />
+                  <div className="w-20 h-20 mx-auto rounded-full bg-primary flex items-center justify-center mb-4 shadow-lg">
+                    <Package className="h-10 w-10 text-primary-foreground" />
                   </div>
-                  <p className="text-2xl font-display font-bold text-lindezas-forest">Nenhum pedido entregue</p>
+                  <p className="text-2xl font-display font-bold text-foreground">Nenhum pedido entregue</p>
                   <p className="text-muted-foreground mt-2">
                     Os pedidos entregues aparecerão aqui
                   </p>
@@ -429,10 +428,10 @@ const Cozinha = () => {
                 >
                   <CardHeader className="pb-3 bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-2xl font-display font-bold text-lindezas-forest">
+                      <CardTitle className="text-2xl font-display font-bold text-foreground">
                         {order.table_number ? `Mesa ${order.table_number}` : 'Balcão'}
                       </CardTitle>
-                      <Badge className="border-0 shadow-md gap-1" style={{ backgroundColor: '#D4A84B', color: '#ffffff' }}>
+                      <Badge className="border-0 shadow-md gap-1 bg-accent text-accent-foreground">
                         <CheckCircle2 className="h-3 w-3" />
                         Entregue
                       </Badge>
@@ -461,10 +460,10 @@ const Cozinha = () => {
                           key={item.id}
                           className="flex items-center gap-3 py-2 border-b border-lindezas-gold/20 last:border-0"
                         >
-                          <span className="font-bold text-xl min-w-[2.5rem] text-center rounded-lg py-1" style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}>
+                          <span className="font-bold text-xl min-w-[2.5rem] text-center rounded-lg py-1 bg-primary text-primary-foreground">
                             {item.quantity}x
                           </span>
-                          <span className="font-medium text-base text-lindezas-forest">
+                          <span className="font-medium text-base text-foreground">
                             {item.product?.name}
                           </span>
                         </div>

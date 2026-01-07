@@ -402,9 +402,9 @@ const Caixa = () => {
       <main className="p-6 max-w-2xl mx-auto space-y-6">
         {/* Page Title */}
         <div className="mb-2">
-          <h1 className="text-3xl font-display font-bold text-lindezas-forest flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-lindezas-cream border-2 border-lindezas-gold/40 shadow-md">
-              <CreditCard className="h-6 w-6" style={{ color: '#2D5A27' }} />
+          <h1 className="text-3xl font-display font-bold text-foreground flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-background border-2 border-border shadow-md">
+              <CreditCard className="h-6 w-6 text-primary" />
             </div>
             Caixa
           </h1>
@@ -412,11 +412,11 @@ const Caixa = () => {
         </div>
 
         {/* Search */}
-        <Card className="border border-lindezas-gold/30 bg-white/90 backdrop-blur-sm shadow-lg overflow-hidden">
+        <Card className="border border-border bg-card shadow-lg overflow-hidden">
           <CardContent className="pt-5 pb-5">
             <div className="flex gap-3">
               <div className="relative flex-1">
-                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-lindezas-gold" />
+                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -424,14 +424,14 @@ const Caixa = () => {
                   value={tableNumber}
                   onChange={(e) => setTableNumber(e.target.value.replace(/\D/g, '').slice(0, 2))}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-12 h-14 text-xl font-semibold border-2 border-lindezas-gold/30 focus:border-lindezas-gold bg-lindezas-cream/50 rounded-xl text-lindezas-espresso placeholder:text-lindezas-espresso/40"
+                  className="pl-12 h-14 text-xl font-semibold border-2 border-border focus:border-primary bg-muted/30 rounded-xl text-foreground placeholder:text-muted-foreground"
                   maxLength={2}
                 />
               </div>
               <Button 
                 onClick={handleSearch} 
                 size="lg" 
-                className="h-14 px-8 bg-gradient-to-r from-lindezas-forest to-lindezas-forest/90 hover:from-lindezas-forest/90 hover:to-lindezas-forest text-white shadow-lg rounded-xl"
+                className="h-14 px-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg rounded-xl"
               >
                 <Search className="h-6 w-6" />
               </Button>
@@ -450,7 +450,7 @@ const Caixa = () => {
                   </div>
                   <CardTitle className="text-xl font-display font-bold text-green-800">Conta Fechada!</CardTitle>
                 </div>
-                <Badge className="bg-lindezas-forest text-white border-0 px-3 py-1 text-sm">
+                <Badge className="bg-primary text-primary-foreground border-0 px-3 py-1 text-sm">
                   Mesa {closedBillSummary.tableNumber}
                 </Badge>
               </div>
@@ -458,15 +458,15 @@ const Caixa = () => {
             <CardContent className="space-y-4 pt-4">
               {/* Items consumed */}
               <div>
-                <h4 className="text-sm font-semibold text-lindezas-forest mb-2 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-lindezas-gold"></span>
+                <h4 className="text-sm font-semibold text-primary mb-2 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                   Itens consumidos
                 </h4>
                 <div className="space-y-1.5 max-h-32 overflow-y-auto">
                   {closedBillSummary.items.map((item, index) => (
                     <div key={`${item.id}-${index}`} className="flex justify-between text-sm py-2 px-3 bg-white rounded-lg border border-green-200">
-                      <span className="text-lindezas-espresso font-medium">{item.quantity}x {item.product?.name}</span>
-                      <span className="font-bold text-lindezas-forest">{formatPrice(item.subtotal)}</span>
+                      <span className="text-foreground font-medium">{item.quantity}x {item.product?.name}</span>
+                      <span className="font-bold text-primary">{formatPrice(item.subtotal)}</span>
                     </div>
                   ))}
                 </div>

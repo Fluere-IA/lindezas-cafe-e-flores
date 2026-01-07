@@ -55,14 +55,18 @@ const tiposEstabelecimento = [
 export default function Onboarding() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentOrganization, isLoading } = useOrganization();
+  const { currentOrganization, isLoading, refetchOrganizations } = useOrganization();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Step 1: Company info
+  // Check if this is edit mode (onboarding already completed)
+  const isEditMode = currentOrganization?.onboarding_completed === true;
+
+  // Step 1: Company info - pre-fill with existing data
   const [companyName, setCompanyName] = useState('');
   const [companyType, setCompanyType] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [phone, setPhone] = useState('');
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const [step, setStep] = useState(1);
   const [tableCount, setTableCount] = useState(10);
@@ -71,8 +75,21 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualItem, setManualItem] = useState<MenuItem>({ name: '', price: '', category: '' });
 
-  // 4 steps: Dados → Cardápio → Mesas → Revisão
-  const totalSteps = 4;
+  // Pre-fill data from current organization when in edit mode
+  React.useEffect(() => {
+    if (currentOrganization && !hasInitialized) {
+      const org = currentOrganization as any;
+      setCompanyName(org.name || '');
+      setCompanyType(org.type || '');
+      setOwnerName(org.owner_name || '');
+      setPhone(org.phone || '');
+      setTableCount(org.table_count || 10);
+      setHasInitialized(true);
+    }
+  }, [currentOrganization, hasInitialized]);
+
+  // 4 steps for new setup, 1 step for edit mode (just company data)
+  const totalSteps = isEditMode ? 1 : 4;
 
   // Show loading while fetching organization
   if (isLoading) {
@@ -102,27 +119,45 @@ export default function Onboarding() {
     );
   }
 
-  // If already completed onboarding, show message and redirect button
-  if (currentOrganization.onboarding_completed === true) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="p-6 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 mb-4">
-              <Check className="w-8 h-8 text-success" />
-            </div>
-            <h2 className="text-xl font-bold mb-2">Configuração já concluída!</h2>
-            <p className="text-muted-foreground mb-4">
-              Seu estabelecimento já está configurado.
-            </p>
-            <Button onClick={() => navigate('/dashboard', { replace: true })}>
-              Ir para o Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Handle edit mode - show edit form instead of blocking
+  const handleSaveEdit = async () => {
+    if (!currentOrganization) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update({ 
+          name: companyName || currentOrganization.name,
+          type: companyType || null,
+          owner_name: ownerName || null,
+          phone: phone || null,
+          table_count: tableCount,
+        })
+        .eq('id', currentOrganization.id);
+
+      if (error) throw error;
+
+      await refetchOrganizations();
+
+      toast({
+        title: 'Dados atualizados!',
+        description: 'As configurações do seu estabelecimento foram salvas.',
+      });
+
+      navigate('/configuracoes', { replace: true });
+    } catch (error) {
+      console.error('Update error:', error);
+      toast({
+        title: 'Erro ao salvar',
+        description: 'Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -642,6 +677,48 @@ export default function Onboarding() {
       </p>
     </div>
   );
+
+  // Edit mode - simplified form
+  if (isEditMode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <Card className="shadow-xl">
+            <CardContent className="p-6">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                  <Building2 className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold text-foreground">Personalização</h2>
+                <p className="text-muted-foreground mt-2">Atualize os dados do seu estabelecimento</p>
+              </div>
+
+              {renderStep1()}
+
+              <div className="flex gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => navigate('/configuracoes')}
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleSaveEdit}
+                  disabled={isSubmitting || !companyName.trim()}
+                >
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Salvar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
