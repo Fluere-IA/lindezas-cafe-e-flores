@@ -1,11 +1,10 @@
 import { Product } from '@/types';
-import { CategoryFilter } from './CategoryTabs';
 import { ProductCard } from './ProductCard';
 import { Loader2, Coffee } from 'lucide-react';
 
 interface ProductGridProps {
   products: Product[];
-  filter: CategoryFilter;
+  filter: string;
   searchQuery: string;
   onAddToCart: (product: Product) => void;
   isLoading?: boolean;
@@ -13,9 +12,9 @@ interface ProductGridProps {
 
 export function ProductGrid({ products, filter, searchQuery, onAddToCart, isLoading }: ProductGridProps) {
   const filteredProducts = products.filter((product) => {
-    // Filter by category name
+    // Filter by category name (case insensitive)
     const categoryName = product.category?.name?.toLowerCase();
-    if (categoryName !== filter) {
+    if (filter && categoryName !== filter) {
       return false;
     }
     
