@@ -18,7 +18,9 @@ import {
   Loader2,
   ImageIcon,
   Sparkles,
-  FileText
+  FileText,
+  LayoutGrid,
+  Minus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -57,10 +59,13 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [themeColor, setThemeColor] = useState('#2563EB');
   const [customColor, setCustomColor] = useState('#2563EB');
+  const [tableCount, setTableCount] = useState(10);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualItem, setManualItem] = useState<MenuItem>({ name: '', price: '', category: '' });
+
+  const totalSteps = 4;
 
   const handleColorSelect = (color: string) => {
     setThemeColor(color);
@@ -182,11 +187,12 @@ export default function Onboarding() {
     setIsSubmitting(true);
 
     try {
-      // Update organization with theme color
+      // Update organization with theme color and table count
       const { error: orgError } = await supabase
         .from('organizations')
         .update({ 
           theme_color: themeColor,
+          table_count: tableCount,
           onboarding_completed: true,
         })
         .eq('id', currentOrganization.id);
@@ -485,6 +491,83 @@ export default function Onboarding() {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+          <LayoutGrid className="w-8 h-8 text-primary" />
+        </div>
+        <h2 className="text-2xl font-bold text-foreground">Configure suas Mesas</h2>
+        <p className="text-muted-foreground mt-2">Quantas mesas seu estabelecimento possui?</p>
+      </div>
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-center gap-6">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 rounded-full"
+            onClick={() => setTableCount(Math.max(1, tableCount - 1))}
+            disabled={tableCount <= 1}
+          >
+            <Minus className="w-5 h-5" />
+          </Button>
+          
+          <div className="text-center">
+            <p className="text-5xl font-bold text-foreground">{tableCount}</p>
+            <p className="text-sm text-muted-foreground mt-1">mesas</p>
+          </div>
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 rounded-full"
+            onClick={() => setTableCount(Math.min(99, tableCount + 1))}
+            disabled={tableCount >= 99}
+          >
+            <Plus className="w-5 h-5" />
+          </Button>
+        </div>
+
+        {/* Quick presets */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {[5, 10, 15, 20, 30].map((num) => (
+            <Button
+              key={num}
+              variant={tableCount === num ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTableCount(num)}
+              style={tableCount === num ? { backgroundColor: themeColor } : {}}
+            >
+              {num} mesas
+            </Button>
+          ))}
+        </div>
+
+        {/* Visual grid preview */}
+        <div className="p-4 rounded-xl border border-border bg-muted/30">
+          <Label className="text-xs text-muted-foreground mb-3 block">Prévia do layout</Label>
+          <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto">
+            {Array.from({ length: Math.min(tableCount, 25) }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-square rounded-lg flex items-center justify-center text-xs font-medium text-white"
+                style={{ backgroundColor: themeColor }}
+              >
+                {i + 1}
+              </div>
+            ))}
+            {tableCount > 25 && (
+              <div className="aspect-square rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                +{tableCount - 25}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep4 = () => (
+    <div className="space-y-6">
+      <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 mb-4">
           <Check className="w-8 h-8 text-success" />
         </div>
@@ -505,6 +588,11 @@ export default function Onboarding() {
             </div>
           </div>
           
+          <div className="border-t border-border pt-4">
+            <p className="text-sm text-muted-foreground">Mesas</p>
+            <p className="font-medium">{tableCount} mesas configuradas</p>
+          </div>
+
           <div className="border-t border-border pt-4">
             <p className="text-sm text-muted-foreground">Cardápio</p>
             <p className="font-medium">
@@ -529,11 +617,11 @@ export default function Onboarding() {
         {/* Progress */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            {[1, 2, 3].map((s) => (
+            {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors",
+                  "w-9 h-9 rounded-full flex items-center justify-center font-semibold transition-colors text-sm",
                   s === step
                     ? "bg-primary text-primary-foreground"
                     : s < step
@@ -541,14 +629,14 @@ export default function Onboarding() {
                     : "bg-muted text-muted-foreground"
                 )}
               >
-                {s < step ? <Check className="w-5 h-5" /> : s}
+                {s < step ? <Check className="w-4 h-4" /> : s}
               </div>
             ))}
           </div>
           <div className="h-1 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${((step - 1) / 2) * 100}%` }}
+              style={{ width: `${((step - 1) / (totalSteps - 1)) * 100}%` }}
             />
           </div>
         </div>
@@ -559,6 +647,7 @@ export default function Onboarding() {
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
+            {step === 4 && renderStep4()}
 
             {/* Navigation */}
             <div className="flex gap-3 mt-8">
@@ -574,7 +663,7 @@ export default function Onboarding() {
                 </Button>
               )}
               
-              {step < 3 ? (
+              {step < totalSteps ? (
                 <Button
                   className="flex-1"
                   onClick={() => setStep(step + 1)}
@@ -608,10 +697,10 @@ export default function Onboarding() {
         </Card>
 
         {/* Skip */}
-        {step < 3 && (
+        {step < totalSteps && (
           <p className="text-center mt-4 text-sm text-muted-foreground">
             <button
-              onClick={() => setStep(3)}
+              onClick={() => setStep(totalSteps)}
               className="hover:underline"
             >
               Pular configuração inicial

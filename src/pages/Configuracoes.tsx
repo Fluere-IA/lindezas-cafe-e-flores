@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { Settings, Package, Tag, FileText, ChevronRight } from 'lucide-react';
+import { Settings, Package, Tag, FileText, ChevronRight, Users, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GerenciarProdutos } from '@/components/config/GerenciarProdutos';
 import { GerenciarCategorias } from '@/components/config/GerenciarCategorias';
@@ -13,7 +14,13 @@ const menuItems = [
   { id: 'relatorios' as const, label: 'Relatórios', description: 'Exportar dados e relatórios', icon: FileText },
 ];
 
+const navigationItems = [
+  { path: '/membros', label: 'Equipe', description: 'Gerenciar membros e convites', icon: Users },
+  { path: '/onboarding', label: 'Personalização', description: 'Alterar cor e configurações iniciais', icon: Palette },
+];
+
 const Configuracoes = () => {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<ConfigSection>(null);
 
   const renderContent = () => {
@@ -31,40 +38,66 @@ const Configuracoes = () => {
         );
       default:
         return (
-          <div className="space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveSection(item.id)}
-                  className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-border/50 hover:border-lindezas-gold/50 transition-colors text-left"
-                >
-                  <div className="p-2.5 rounded-lg bg-lindezas-cream">
-                    <Icon className="h-5 w-5 text-lindezas-forest" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-lindezas-forest">{item.label}</p>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </button>
-              );
-            })}
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-sm font-medium text-muted-foreground px-1">Cardápio</h2>
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-border/50 hover:border-primary/50 transition-colors text-left"
+                  >
+                    <div className="p-2.5 rounded-lg bg-primary/10">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">{item.label}</p>
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-sm font-medium text-muted-foreground px-1">Organização</h2>
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-border/50 hover:border-primary/50 transition-colors text-left"
+                  >
+                    <div className="p-2.5 rounded-lg bg-primary/10">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">{item.label}</p>
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         );
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-lindezas-cream">
+    <div className="flex flex-col min-h-screen bg-background">
       <DashboardHeader />
       
       <main className="flex-1 p-4 md:p-5">
         {activeSection === null && (
           <div className="flex items-center gap-2.5 mb-4">
-            <Settings className="h-5 w-5 text-lindezas-forest/70" />
-            <h1 className="text-xl font-semibold text-lindezas-forest">Configurações</h1>
+            <Settings className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-semibold text-foreground">Configurações</h1>
           </div>
         )}
         
