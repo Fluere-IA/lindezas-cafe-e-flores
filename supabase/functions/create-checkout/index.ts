@@ -48,19 +48,18 @@ serve(async (req) => {
 
   try {
     // Validate user authentication
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
-      logStep("Invalid token", { error: claimsError?.message });
+    if (userError || !userData?.user) {
+      logStep("Invalid token", { error: userError?.message });
       return new Response(
         JSON.stringify({ error: "Invalid or expired token" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
     }
 
-    const userId = claimsData.claims.sub;
-    const userEmail = claimsData.claims.email as string | undefined;
+    const userId = userData.user.id;
+    const userEmail = userData.user.email;
     logStep("User authenticated", { userId, email: userEmail });
 
     const { priceId, successUrl, cancelUrl } = await req.json();
