@@ -2,20 +2,17 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-// Allowed origins for CORS - prevents unauthorized sites from calling this endpoint
-const ALLOWED_ORIGINS = [
-  'https://lindezas.lovable.app',
-  'https://lindezas-cafe-e-flores.lovable.app',
-  'http://localhost:5173',
-  'http://localhost:8080'
-];
+const isAllowedOrigin = (origin: string | null) => {
+  return origin && (
+    origin.includes('.lovableproject.com') ||
+    origin.includes('.lovable.app') ||
+    origin.includes('localhost')
+  );
+};
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) 
-    ? origin 
-    : ALLOWED_ORIGINS[0];
   return {
-    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Origin": isAllowedOrigin(origin) ? origin! : "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 };
@@ -81,9 +78,7 @@ serve(async (req) => {
     logStep("Found Stripe customer", { customerId });
 
     // Validate origin against allowlist for redirect URL
-    const validOrigin = origin && ALLOWED_ORIGINS.includes(origin)
-      ? origin
-      : ALLOWED_ORIGINS[0];
+    const validOrigin = isAllowedOrigin(origin) ? origin : 'https://lindezas.lovable.app';
     
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,

@@ -3,19 +3,16 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 // Allowed origins for CORS - prevents unauthorized sites from calling this endpoint
-const ALLOWED_ORIGINS = [
-  'https://lindezas.lovable.app',
-  'https://lindezas-cafe-e-flores.lovable.app',
-  'http://localhost:5173',
-  'http://localhost:8080'
-];
-
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) 
-    ? origin 
-    : ALLOWED_ORIGINS[0];
+  // Allow all Lovable preview and deployed origins
+  const isAllowedOrigin = origin && (
+    origin.includes('.lovableproject.com') ||
+    origin.includes('.lovable.app') ||
+    origin.includes('localhost')
+  );
+  
   return {
-    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Origin": isAllowedOrigin ? origin : "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 };
