@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings, LogOut, Store, Shield } from 'lucide-react';
+import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings, LogOut, Store, Shield, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -150,11 +150,23 @@ export function DashboardHeader() {
           )}
           
           <Link
+            to="/perfil"
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              currentPath === '/perfil' ? 'bg-white/20' : 'hover:bg-white/10'
+            )}
+            title="Minha Conta"
+          >
+            <User className="h-5 w-5 text-white" />
+          </Link>
+          
+          <Link
             to="/configuracoes"
             className={cn(
               'p-2 rounded-lg transition-colors',
               currentPath === '/configuracoes' ? 'bg-white/20' : 'hover:bg-white/10'
             )}
+            title="Configurações"
           >
             <Settings className="h-5 w-5 text-white" />
           </Link>
