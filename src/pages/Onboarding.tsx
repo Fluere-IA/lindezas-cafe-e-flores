@@ -326,6 +326,7 @@ export default function Onboarding() {
         if (prodError) throw prodError;
       }
 
+      // Refetch and wait for update before navigating
       await refetchOrganizations();
 
       toast({
@@ -333,7 +334,11 @@ export default function Onboarding() {
         description: 'Seu estabelecimento está pronto para uso.',
       });
 
-      navigate('/dashboard');
+      // Use replace to prevent back navigation to onboarding
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true, state: { fromOnboarding: true } });
+      }, 100);
     } catch (error) {
       console.error('Onboarding error:', error);
       toast({
