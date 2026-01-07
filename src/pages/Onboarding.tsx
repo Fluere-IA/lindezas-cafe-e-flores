@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -53,7 +53,7 @@ const PRESET_COLORS = [
 export default function Onboarding() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentOrganization, refetchOrganizations } = useOrganization();
+  const { currentOrganization, refetchOrganizations, isLoading } = useOrganization();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState(1);
@@ -66,6 +66,41 @@ export default function Onboarding() {
   const [manualItem, setManualItem] = useState<MenuItem>({ name: '', price: '', category: '' });
 
   const totalSteps = 4;
+
+  // Redirect if no organization or already completed onboarding
+  React.useEffect(() => {
+    if (!isLoading && currentOrganization?.onboarding_completed) {
+      navigate('/dashboard');
+    }
+  }, [isLoading, currentOrganization, navigate]);
+
+  // Show loading while fetching organization
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show error if no organization
+  if (!currentOrganization) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-xl font-bold mb-2">Organização não encontrada</h2>
+            <p className="text-muted-foreground mb-4">
+              Por favor, faça login novamente para continuar.
+            </p>
+            <Button onClick={() => navigate('/auth')}>
+              Ir para login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleColorSelect = (color: string) => {
     setThemeColor(color);
