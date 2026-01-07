@@ -214,7 +214,7 @@ export default function Cadastro() {
           title: 'Conta criada!',
           description: 'Configure sua organização nas configurações.',
         });
-        navigate('/selecionar-organizacao');
+        navigate('/dashboard');
       }
     } finally {
       setIsSubmitting(false);

@@ -76,7 +76,7 @@ export default function Auth() {
           title: 'Bem-vindo!',
           description: 'Login realizado com sucesso.',
         });
-        navigate('/selecionar-organizacao');
+        navigate('/dashboard');
       }
     } finally {
       setIsSubmitting(false);
