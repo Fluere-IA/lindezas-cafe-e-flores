@@ -155,16 +155,36 @@ export default function Membros() {
       }
 
       // Create invite
-      const { error } = await supabase
+      const { data: inviteData, error } = await supabase
         .from('organization_invites')
         .insert({
           organization_id: currentOrganization.id,
           email: inviteEmail.toLowerCase(),
           role: inviteRole,
           invited_by: user.id,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Send invite email via edge function
+      try {
+        const inviteUrl = `${window.location.origin}/auth?invite=${inviteData.id}`;
+        await supabase.functions.invoke('send-invite-email', {
+          body: {
+            to: inviteEmail.toLowerCase(),
+            inviterName: user.user_metadata?.full_name || 'Um administrador',
+            organizationName: currentOrganization.name,
+            role: inviteRole,
+            inviteUrl,
+          },
+        });
+        console.log('Invite email sent successfully');
+      } catch (emailError) {
+        console.error('Error sending invite email:', emailError);
+        // Don't fail the invite if email fails
+      }
 
       toast({
         title: 'Convite enviado!',
