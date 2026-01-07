@@ -203,9 +203,11 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          onboarding_completed: boolean | null
           owner_name: string | null
           phone: string | null
           slug: string
+          theme_color: string | null
           type: string | null
           updated_at: string
         }
@@ -213,9 +215,11 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          onboarding_completed?: boolean | null
           owner_name?: string | null
           phone?: string | null
           slug: string
+          theme_color?: string | null
           type?: string | null
           updated_at?: string
         }
@@ -223,9 +227,11 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          onboarding_completed?: boolean | null
           owner_name?: string | null
           phone?: string | null
           slug?: string
+          theme_color?: string | null
           type?: string | null
           updated_at?: string
         }
