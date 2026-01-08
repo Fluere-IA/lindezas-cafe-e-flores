@@ -150,7 +150,7 @@ const Assinatura = () => {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-amber-800">Desbloqueie mais recursos</p>
-                    <p className="text-sm text-amber-600">Faça upgrade para o Pro e tenha acesso a relatórios e estoque</p>
+                    <p className="text-sm text-amber-600">Faça upgrade para o Pro e tenha acesso a relatórios avançados e auditoria</p>
                   </div>
                 </CardContent>
               </Card>

@@ -164,8 +164,7 @@ function ReportsContent() {
               <h3 className="font-semibold">Sobre os Cálculos</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 O <strong>CMV (Custo de Mercadoria Vendida)</strong> está estimado em 35% da receita bruta, 
-                que é a média do setor de alimentação. Para um cálculo preciso, configure a ficha técnica 
-                dos seus produtos na seção de Estoque.
+                que é a média do setor de alimentação.
               </p>
               <p className="text-sm text-muted-foreground mt-2">
                 A <strong>Curva ABC</strong> classifica produtos: <span className="text-emerald-600 font-medium">A</span> (80% da receita), 

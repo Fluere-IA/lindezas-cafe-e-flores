@@ -1138,15 +1138,6 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
                   placeholder="0.00"
                 />
               </div>
-              <div>
-                <Label>Estoque</Label>
-                <Input
-                  type="number"
-                  value={productFormData.stock}
-                  onChange={(e) => setProductFormData({ ...productFormData, stock: e.target.value })}
-                  placeholder="100"
-                />
-              </div>
             </div>
 
             <div>
