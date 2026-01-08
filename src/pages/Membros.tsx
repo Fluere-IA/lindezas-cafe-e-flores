@@ -59,6 +59,7 @@ const roleLabels: Record<string, string> = {
   waiter: 'Garçom',
   cashier: 'Caixa',
   kitchen: 'Cozinha',
+  member: 'Membro',
 };
 
 const roleColors: Record<string, string> = {
@@ -79,6 +80,7 @@ export default function Membros() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState('waiter');
   const [invitePassword, setInvitePassword] = useState('');
   const [isInviting, setIsInviting] = useState(false);
@@ -233,6 +235,7 @@ export default function Membros() {
           role: inviteRole,
           inviteId: inviteData.id,
           tempPassword: invitePassword,
+          memberName: inviteName.trim() || undefined,
         },
       });
 
@@ -249,6 +252,7 @@ export default function Membros() {
       });
 
       setInviteEmail('');
+      setInviteName('');
       setInviteRole('waiter');
       setInvitePassword('');
       setInviteDialogOpen(false);
@@ -362,6 +366,17 @@ export default function Membros() {
               </DialogHeader>
 
               <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome do Membro</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Nome completo"
+                    value={inviteName}
+                    onChange={(e) => setInviteName(e.target.value)}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input

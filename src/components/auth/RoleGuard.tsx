@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 // Organization-level roles (from organization_members table)
-export type OrgRole = 'owner' | 'admin' | 'member' | 'cashier' | 'kitchen';
+export type OrgRole = 'owner' | 'admin' | 'member' | 'cashier' | 'kitchen' | 'waiter';
 
 interface RoleGuardProps {
   children: React.ReactNode;
