@@ -7,14 +7,14 @@ import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  Loader2, User, Save, ArrowLeft, Mail, Image, 
-  Shield, CreditCard, Crown, Lock,
+  Loader2, User, Save, ArrowLeft, Mail, 
+  Shield, CreditCard, Crown, Lock, Building2, Phone,
   CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { z } from 'zod';
@@ -34,7 +34,7 @@ const passwordSchema = z.object({
 
 export default function Perfil() {
   const { user } = useAuth();
-  const { currentOrganization } = useOrganization();
+  const { currentOrganization, refetchOrganizations } = useOrganization();
   const { planTier, planName, subscribed, isInTrial, trialDaysRemaining } = useSubscriptionContext();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -42,6 +42,11 @@ export default function Perfil() {
   // Profile state
   const [fullName, setFullName] = useState('');
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
+  
+  // Business state
+  const [businessName, setBusinessName] = useState('');
+  const [businessPhone, setBusinessPhone] = useState('');
+  const [isSubmittingBusiness, setIsSubmittingBusiness] = useState(false);
   
   // Password state
   const [newPassword, setNewPassword] = useState('');
@@ -77,6 +82,13 @@ export default function Perfil() {
       setIsLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (currentOrganization) {
+      setBusinessName(currentOrganization.name || '');
+      setBusinessPhone(currentOrganization.phone || '');
+    }
+  }, [currentOrganization]);
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -124,6 +136,56 @@ export default function Perfil() {
       }
     } finally {
       setIsSubmittingProfile(false);
+    }
+  };
+
+  const handleBusinessSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!currentOrganization?.id) {
+      toast({
+        title: 'Erro',
+        description: 'Nenhuma empresa selecionada.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!businessName.trim()) {
+      toast({
+        title: 'Erro de validação',
+        description: 'O nome do negócio é obrigatório.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setIsSubmittingBusiness(true);
+    
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update({
+          name: businessName.trim(),
+          phone: businessPhone.trim() || null,
+        })
+        .eq('id', currentOrganization.id);
+      
+      if (error) {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível atualizar os dados da empresa.',
+          variant: 'destructive',
+        });
+      } else {
+        await refetchOrganizations();
+        toast({
+          title: 'Empresa atualizada!',
+          description: 'Os dados foram salvos com sucesso.',
+        });
+      }
+    } finally {
+      setIsSubmittingBusiness(false);
     }
   };
 
@@ -233,10 +295,14 @@ export default function Perfil() {
 
           {/* Tabs */}
           <Tabs defaultValue="geral" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 h-12">
+            <TabsList className="grid w-full grid-cols-4 h-12">
               <TabsTrigger value="geral" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">Geral</span>
+              </TabsTrigger>
+              <TabsTrigger value="empresa" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Empresa</span>
               </TabsTrigger>
               <TabsTrigger value="assinatura" className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" />
@@ -296,7 +362,6 @@ export default function Perfil() {
                       </p>
                     </div>
 
-
                     <Button
                       type="submit"
                       className="w-full h-12"
@@ -317,8 +382,92 @@ export default function Perfil() {
                   </form>
                 </CardContent>
               </Card>
-
             </TabsContent>
+
+            {/* Tab: Empresa */}
+            <TabsContent value="empresa" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    Dados do Negócio
+                  </CardTitle>
+                  <CardDescription>
+                    Informações da empresa {currentOrganization?.name}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isOwnerOrAdmin ? (
+                    <form onSubmit={handleBusinessSubmit} className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="businessName" className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          Nome do Negócio
+                        </Label>
+                        <Input
+                          id="businessName"
+                          type="text"
+                          value={businessName}
+                          onChange={(e) => setBusinessName(e.target.value)}
+                          placeholder="Nome da sua empresa"
+                          className="h-12"
+                          disabled={isSubmittingBusiness}
+                          maxLength={100}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="businessPhone" className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          Telefone
+                        </Label>
+                        <Input
+                          id="businessPhone"
+                          type="tel"
+                          value={businessPhone}
+                          onChange={(e) => setBusinessPhone(e.target.value)}
+                          placeholder="(00) 00000-0000"
+                          className="h-12"
+                          disabled={isSubmittingBusiness}
+                          maxLength={20}
+                        />
+                      </div>
+
+                      <Button
+                        type="submit"
+                        className="w-full h-12"
+                        disabled={isSubmittingBusiness}
+                      >
+                        {isSubmittingBusiness ? (
+                          <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-5 w-5" />
+                            Salvar alterações
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  ) : (
+                    <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                      <div className="flex items-center gap-3">
+                        <Lock className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium text-foreground">Acesso restrito</p>
+                          <p className="text-sm text-muted-foreground">
+                            Apenas administradores podem editar os dados da empresa.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
 
             {/* Tab: Assinatura */}
             <TabsContent value="assinatura">
