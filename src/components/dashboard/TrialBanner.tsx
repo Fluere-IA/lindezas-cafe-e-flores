@@ -10,7 +10,7 @@ export function TrialBanner({ daysRemaining }: TrialBannerProps) {
   const navigate = useNavigate();
 
   const handleSubscribe = () => {
-    window.location.href = '/#planos';
+    navigate('/assinatura');
   };
 
   return (
