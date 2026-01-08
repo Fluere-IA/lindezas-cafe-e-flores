@@ -11,6 +11,7 @@ const corsHeaders = {
 interface SupportEmailRequest {
   userName: string;
   userEmail: string;
+  userPhone?: string;
   message: string;
   ownerEmail: string;
 }
@@ -21,9 +22,11 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { userName, userEmail, message, ownerEmail }: SupportEmailRequest = await req.json();
+    const { userName, userEmail, userPhone, message, ownerEmail }: SupportEmailRequest = await req.json();
 
     console.log("Sending support emails to:", { userEmail, ownerEmail });
+
+    const phoneInfo = userPhone ? `<p><strong>Telefone:</strong> ${userPhone}</p>` : '';
 
     // Email para o dono (você)
     const ownerEmailResponse = await resend.emails.send({
@@ -33,6 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
       html: `
         <h2>Nova mensagem de suporte</h2>
         <p><strong>De:</strong> ${userName} (${userEmail})</p>
+        ${phoneInfo}
         <hr />
         <p><strong>Mensagem:</strong></p>
         <p>${message.replace(/\n/g, '<br />')}</p>
