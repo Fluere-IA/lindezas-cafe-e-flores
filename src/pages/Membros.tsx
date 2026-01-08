@@ -293,6 +293,29 @@ export default function Membros() {
     }
   };
 
+  const deleteInvite = async (inviteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('organization_invites')
+        .delete()
+        .eq('id', inviteId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Convite removido do histórico',
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['organization-invites'] });
+    } catch (error) {
+      console.error('Delete invite error:', error);
+      toast({
+        title: 'Erro ao remover convite',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const openDeleteMemberDialog = (member: Member) => {
     if (member.role === 'owner') {
       toast({
@@ -638,6 +661,14 @@ export default function Membros() {
                             </p>
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteInvite(invite.id)}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -672,6 +703,14 @@ export default function Membros() {
                             </p>
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteInvite(invite.id)}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
