@@ -17,26 +17,24 @@ interface Feature {
 }
 
 const features: Feature[] = [
-  { name: "Vendas & Operação", start: "", pro: "", isCategory: true },
-  { name: "PDV (Frente de Caixa)", start: true, pro: true },
-  { name: "Comanda Digital e Mesas", start: true, pro: true },
-  { name: "Cardápio QR Code", start: true, pro: true },
-  { name: "KDS (Tela da Cozinha)", start: true, pro: true },
-  { name: "Relatório de Vendas do Dia", start: true, pro: true },
+  { name: "O Básico para Rodar", start: "", pro: "", isCategory: true },
+  { name: "PDV e Comanda Digital", start: true, pro: true },
+  { name: "KDS (Tela de Produção)", start: true, pro: true },
   
-  { name: "Gestão & Inteligência", start: "", pro: "", isCategory: true },
-  { name: "Dashboards de Lucro & DRE", start: false, pro: true, highlight: true },
-  { name: "Curva ABC de Produtos", start: false, pro: true, highlight: true },
-  { name: "IA para Descrição de Pratos", start: false, pro: true, highlight: true },
+  { name: "Controle & Segurança", start: "", pro: "", isCategory: true },
+  { name: "Usuários do Sistema", start: "Apenas 2", pro: "Ilimitados", highlight: true },
+  { name: "Permissões de Acesso (Gerente vs Garçom)", start: false, pro: true, highlight: true },
+  { name: "Auditoria de Cancelamentos", start: false, pro: true, highlight: true },
+  { name: "Histórico de Edições de Pedido", start: false, pro: true, highlight: true },
   
-  { name: "Equipe & Segurança", start: "", pro: "", isCategory: true },
-  { name: "Até 2 Usuários", start: true, pro: false },
-  { name: "Usuários Ilimitados", start: false, pro: true, highlight: true },
-  { name: "Permissões de Acesso", start: false, pro: true, highlight: true },
+  { name: "Inteligência de Lucro", start: "", pro: "", isCategory: true },
+  { name: "Relatório de Vendas Simples", start: true, pro: true },
+  { name: "Dashboard Financeiro (DRE)", start: false, pro: true, highlight: true },
+  { name: "Ranking de Produtos (Curva ABC)", start: false, pro: true, highlight: true },
+  { name: "Mapa de Calor (Horários de Pico)", start: false, pro: true, highlight: true },
   
   { name: "Suporte", start: "", pro: "", isCategory: true },
-  { name: "Suporte via Email", start: true, pro: true },
-  { name: "Suporte Prioritário WhatsApp", start: false, pro: true, highlight: true },
+  { name: "Canal Exclusivo WhatsApp", start: false, pro: true, highlight: true },
 ];
 
 function FeatureValue({ value }: { value: boolean | string }) {
