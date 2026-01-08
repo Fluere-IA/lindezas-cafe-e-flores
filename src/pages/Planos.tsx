@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Crown, Zap, Loader2, BadgeCheck } from 'lucide-react';
+import { ArrowLeft, Check, Crown, Zap, Loader2, BadgeCheck, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -56,12 +56,51 @@ const Planos = () => {
     return planTier === planId;
   };
 
-  const handleSubscribe = async (plan: typeof plans[0]) => {
+  const getPlanAction = (planId: string): 'current' | 'upgrade' | 'downgrade' | 'subscribe' => {
+    if (!subscribed) return 'subscribe';
+    if (isCurrentPlan(planId)) return 'current';
+    
+    const planOrder = ['start', 'pro'];
+    const currentIndex = planOrder.indexOf(planTier || '');
+    const targetIndex = planOrder.indexOf(planId);
+    
+    return targetIndex > currentIndex ? 'upgrade' : 'downgrade';
+  };
+
+  const handlePlanAction = async (plan: typeof plans[0]) => {
     if (!isAuthenticated) {
       navigate(`/cadastro?plan=${plan.id}`);
       return;
     }
 
+    const action = getPlanAction(plan.id);
+    
+    // For upgrade/downgrade, redirect to customer portal
+    if (action === 'upgrade' || action === 'downgrade') {
+      setLoadingPlan(plan.id);
+      try {
+        const { data, error } = await supabase.functions.invoke('customer-portal');
+
+        if (error) {
+          console.error('Error opening customer portal:', error);
+          toast.error('Erro ao abrir portal de gerenciamento');
+          return;
+        }
+
+        if (data?.url) {
+          window.open(data.url, '_blank');
+          toast.info('Use o portal para alterar seu plano');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('Erro ao processar solicitação');
+      } finally {
+        setLoadingPlan(null);
+      }
+      return;
+    }
+
+    // For new subscriptions
     setLoadingPlan(plan.id);
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
@@ -82,6 +121,30 @@ const Planos = () => {
       toast.error('Erro ao processar assinatura');
     } finally {
       setLoadingPlan(null);
+    }
+  };
+
+  const getButtonLabel = (plan: typeof plans[0]) => {
+    const action = getPlanAction(plan.id);
+    switch (action) {
+      case 'current':
+        return 'Plano Ativo';
+      case 'upgrade':
+        return (
+          <span className="flex items-center gap-1">
+            <ArrowUpRight className="h-4 w-4" />
+            Fazer Upgrade
+          </span>
+        );
+      case 'downgrade':
+        return (
+          <span className="flex items-center gap-1">
+            <ArrowDownRight className="h-4 w-4" />
+            Fazer Downgrade
+          </span>
+        );
+      default:
+        return `Assinar ${plan.name}`;
     }
   };
 
@@ -165,7 +228,7 @@ const Planos = () => {
                 </ul>
 
                 <Button
-                  onClick={() => handleSubscribe(plan)}
+                  onClick={() => handlePlanAction(plan)}
                   disabled={loadingPlan === plan.id || isCurrentPlan(plan.id)}
                   className={`w-full h-12 text-base font-semibold ${
                     isCurrentPlan(plan.id)
@@ -177,10 +240,8 @@ const Planos = () => {
                 >
                   {loadingPlan === plan.id ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : isCurrentPlan(plan.id) ? (
-                    "Plano Ativo"
                   ) : (
-                    `Assinar ${plan.name}`
+                    getButtonLabel(plan)
                   )}
                 </Button>
               </div>
