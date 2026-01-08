@@ -30,7 +30,8 @@ import {
   Trash2,
   Shield,
   User,
-  Loader2
+  Loader2,
+  Pencil
 } from 'lucide-react';
 
 interface Member {
@@ -78,7 +79,11 @@ export default function Membros() {
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
+  const [memberToEdit, setMemberToEdit] = useState<Member | null>(null);
+  const [editRole, setEditRole] = useState('');
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState('waiter');
@@ -332,6 +337,44 @@ export default function Membros() {
     }
   };
 
+  const openEditMemberDialog = (member: Member) => {
+    setMemberToEdit(member);
+    setEditRole(member.role);
+    setEditDialogOpen(true);
+  };
+
+  const updateMemberRole = async () => {
+    if (!memberToEdit || !editRole) return;
+
+    setIsUpdatingRole(true);
+
+    try {
+      const { error } = await supabase
+        .from('organization_members')
+        .update({ role: editRole })
+        .eq('id', memberToEdit.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Função atualizada!',
+        description: `O membro agora é ${roleLabels[editRole] || editRole}.`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['organization-members'] });
+      setEditDialogOpen(false);
+      setMemberToEdit(null);
+    } catch (error) {
+      console.error('Update role error:', error);
+      toast({
+        title: 'Erro ao atualizar função',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingRole(false);
+    }
+  };
+
   const isLoading = loadingMembers || loadingInvites;
 
   return (
@@ -501,14 +544,24 @@ export default function Membros() {
                         </div>
 
                         {member.role !== 'owner' && member.user_id !== user?.id && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openDeleteMemberDialog(member)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditMemberDialog(member)}
+                              className="text-muted-foreground hover:text-primary"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openDeleteMemberDialog(member)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         )}
                       </div>
                     ))}
@@ -580,6 +633,56 @@ export default function Membros() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Edit Member Role Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Editar Função</DialogTitle>
+              <DialogDescription>
+                Altere a função de {memberToEdit?.profile?.full_name || 'este membro'}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="editRole">Nova Função</Label>
+                <Select value={editRole} onValueChange={setEditRole}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="member">Garçom</SelectItem>
+                    <SelectItem value="cashier">Caixa</SelectItem>
+                    <SelectItem value="kitchen">Cozinha</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setEditDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={updateMemberRole}
+                  disabled={isUpdatingRole || editRole === memberToEdit?.role}
+                >
+                  {isUpdatingRole ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'Salvar'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
