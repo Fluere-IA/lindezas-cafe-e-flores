@@ -18,7 +18,8 @@ export function ProtectedRoute({ children, requiredRole, requiresSubscription = 
   // User has access if subscribed OR in trial period
   const hasAccess = subscribed || isInTrial;
 
-  const isLoading = authLoading || (isAuthenticated && subLoading);
+  // Wait for auth to load first, then wait for subscription if authenticated and subscription is required
+  const isLoading = authLoading || (isAuthenticated && requiresSubscription && subLoading);
 
   if (isLoading) {
     return (
