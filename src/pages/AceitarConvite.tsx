@@ -132,9 +132,13 @@ export default function AceitarConvite() {
         },
       });
 
-      // Check if user already exists
-      if (signUpError?.message?.includes('already registered') || 
-          (signUpData.user && signUpData.user.identities?.length === 0)) {
+      console.log('SignUp response:', { signUpData, signUpError });
+
+      // Check if user already exists - only check explicit error message
+      const userAlreadyExists = signUpError?.message?.toLowerCase().includes('already registered') ||
+                                signUpError?.message?.toLowerCase().includes('user already registered');
+
+      if (userAlreadyExists) {
         // User exists, try to sign in with the provided password
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: invite.email,
@@ -143,7 +147,7 @@ export default function AceitarConvite() {
 
         if (signInError) {
           // If password is wrong, show a more helpful message
-          throw new Error('Senha incorreta. Se você já possui conta, use sua senha atual. Caso contrário, verifique a senha enviada no e-mail de convite.');
+          throw new Error('Usuário já existe. Marque a opção "Já possuo uma conta" e use sua senha atual.');
         }
 
         userId = signInData.user.id;
@@ -153,11 +157,25 @@ export default function AceitarConvite() {
           data: { full_name: fullName.trim() },
         });
       } else if (signUpError) {
+        // Other signup errors
+        console.error('SignUp error:', signUpError);
         throw new Error(signUpError.message);
       } else if (!signUpData.user) {
         throw new Error('Erro ao criar conta.');
       } else {
+        // New user created successfully
         userId = signUpData.user.id;
+        
+        // For new users, we need to sign them in after signup
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: invite.email,
+          password: password,
+        });
+        
+        if (signInError) {
+          console.error('Auto sign-in error:', signInError);
+          // Continue anyway, user was created
+        }
       }
 
       // Map display role to database role
