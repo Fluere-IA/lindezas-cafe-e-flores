@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Calendar, CheckCircle, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Calendar, CheckCircle, ExternalLink, Loader2, Crown, Zap, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ const Assinatura = () => {
   const navigate = useNavigate();
   const { subscribed, planName, subscriptionEnd, isLoading, refreshSubscription } = useSubscription();
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleManageSubscription = async () => {
     setIsOpeningPortal(true);
@@ -35,6 +36,13 @@ const Assinatura = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshSubscription();
+    setIsRefreshing(false);
+    toast.success('Status atualizado');
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -44,15 +52,17 @@ const Assinatura = () => {
     });
   };
 
+  const isPro = planName?.toLowerCase().includes('pro');
+
   if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen bg-background">
-        <header className="sticky top-0 z-10 bg-primary text-primary-foreground p-4">
+        <header className="sticky top-0 z-10 bg-card border-b border-border p-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/app')} className="text-primary-foreground hover:bg-white/10">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">Minha Assinatura</h1>
+            <h1 className="text-lg font-semibold">Assinatura</h1>
           </div>
         </header>
         <main className="flex-1 p-4 flex items-center justify-center">
@@ -64,12 +74,22 @@ const Assinatura = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <header className="sticky top-0 z-10 bg-primary text-primary-foreground p-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/app')} className="text-primary-foreground hover:bg-white/10">
-            <ArrowLeft className="h-5 w-5" />
+      <header className="sticky top-0 z-10 bg-card border-b border-border p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-semibold">Assinatura</h1>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
-          <h1 className="text-lg font-semibold">Minha Assinatura</h1>
         </div>
       </header>
 
@@ -77,80 +97,84 @@ const Assinatura = () => {
         {subscribed ? (
           <>
             {/* Current Plan Card */}
-            <Card className="border-primary/20">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-primary flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Plano Atual
-                  </CardTitle>
-                  <Badge className="bg-success/10 text-success hover:bg-success/10">
+            <Card className="overflow-hidden border-0 shadow-md">
+              <div className={`p-6 ${isPro ? 'bg-gradient-to-br from-amber-500 to-orange-500' : 'bg-gradient-to-br from-primary to-primary/80'} text-white`}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                    {isPro ? <Crown className="h-6 w-6" /> : <Zap className="h-6 w-6" />}
+                  </div>
+                  <Badge className="bg-white/20 text-white hover:bg-white/30 border-0">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Ativo
                   </Badge>
                 </div>
-                <CardDescription>Sua assinatura está ativa</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-primary/5 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Plano</p>
-                  <p className="text-xl font-bold text-primary">{planName || 'Servire'}</p>
-                </div>
-                
+                <p className="text-white/80 text-sm mb-1">Plano atual</p>
+                <h2 className="text-2xl font-bold">{planName || 'Servire'}</h2>
+              </div>
+              
+              <CardContent className="p-4 bg-card">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span>Próxima cobrança: {formatDate(subscriptionEnd)}</span>
+                  <span>Próxima cobrança em {formatDate(subscriptionEnd)}</span>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Manage Subscription */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Gerenciar Assinatura</CardTitle>
-                <CardDescription>
-                  Altere seu plano, método de pagamento ou cancele sua assinatura
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={handleManageSubscription} 
-                  disabled={isOpeningPortal}
-                  className="w-full bg-primary hover:bg-primary/90"
-                >
-                  {isOpeningPortal ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                  )}
-                  Abrir Portal de Pagamentos
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Quick Actions */}
+            <div className="space-y-3">
+              <Button 
+                onClick={handleManageSubscription} 
+                disabled={isOpeningPortal}
+                className="w-full h-14 text-base"
+                size="lg"
+              >
+                {isOpeningPortal ? (
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                ) : (
+                  <ExternalLink className="h-5 w-5 mr-2" />
+                )}
+                Gerenciar no Portal de Pagamentos
+              </Button>
 
-            {/* Refresh Status */}
-            <Button 
-              variant="outline" 
-              onClick={refreshSubscription}
-              className="w-full"
-            >
-              Atualizar Status da Assinatura
-            </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Altere método de pagamento, upgrade de plano ou cancele
+              </p>
+            </div>
+
+            {/* Features Hint */}
+            {!isPro && (
+              <Card className="border-dashed border-2 border-amber-300 bg-amber-50">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="p-2 rounded-lg bg-amber-100">
+                    <Sparkles className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-amber-800">Desbloqueie mais recursos</p>
+                    <p className="text-sm text-amber-600">Faça upgrade para o Pro e tenha acesso a relatórios e estoque</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         ) : (
           /* No Subscription */
-          <Card className="border-orange-200 bg-orange-50">
-            <CardHeader>
-              <CardTitle className="text-orange-700">Sem Assinatura Ativa</CardTitle>
-              <CardDescription className="text-orange-600">
-                Você não possui uma assinatura ativa. Assine para ter acesso completo ao sistema.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <Card className="border-0 shadow-md overflow-hidden">
+            <div className="p-6 bg-gradient-to-br from-muted to-muted/50">
+              <div className="p-3 rounded-xl bg-background/50 w-fit mb-4">
+                <Sparkles className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground mb-2">Sem Assinatura</h2>
+              <p className="text-muted-foreground text-sm">
+                Assine um plano para ter acesso completo a todas as funcionalidades
+              </p>
+            </div>
+            <CardContent className="p-4">
               <Button 
                 onClick={() => navigate('/')} 
-                className="w-full bg-primary hover:bg-primary/90"
+                className="w-full h-12"
+                size="lg"
               >
+                <Sparkles className="h-4 w-4 mr-2" />
                 Ver Planos Disponíveis
               </Button>
             </CardContent>

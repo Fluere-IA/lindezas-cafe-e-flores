@@ -8,7 +8,6 @@ type ConfigSection = 'cardapio' | null;
 
 const menuItems = [
   { path: '/membros', label: 'Equipe', description: 'Gerenciar membros e convites', icon: UsersRound },
-  { path: '/assinatura', label: 'Assinatura', description: 'Gerenciar plano e pagamentos', icon: Sparkles },
 ];
 
 const proItems = [
