@@ -32,6 +32,7 @@ const SuperDashboard = lazy(() => import("./pages/SuperDashboard"));
 const Estoque = lazy(() => import("./pages/Estoque"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Planos = lazy(() => import("./pages/Planos"));
+const CheckoutSucesso = lazy(() => import("./pages/CheckoutSucesso"));
 
 // Lazy loaded public pages
 const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="/membros" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin']}><Membros /></RoleGuard></ProtectedRoute>} />
                 <Route path="/assinatura" element={<ProtectedRoute requiresSubscription={false}><Assinatura /></ProtectedRoute>} />
                 <Route path="/planos" element={<ProtectedRoute requiresSubscription={false}><Planos /></ProtectedRoute>} />
+                <Route path="/checkout/sucesso" element={<ProtectedRoute requiresSubscription={false}><CheckoutSucesso /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
                 <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
                 <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />

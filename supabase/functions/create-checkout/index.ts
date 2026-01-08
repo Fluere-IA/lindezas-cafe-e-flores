@@ -116,8 +116,8 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: successUrl || `${validOrigin}/app?checkout=success`,
-      cancel_url: cancelUrl || `${validOrigin}/?checkout=cancelled`,
+      success_url: successUrl || `${validOrigin}/checkout/sucesso`,
+      cancel_url: cancelUrl || `${validOrigin}/planos?checkout=cancelled`,
       allow_promotion_codes: true,
     });
 
