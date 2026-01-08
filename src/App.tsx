@@ -29,7 +29,7 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Membros = lazy(() => import("./pages/Membros"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const SuperDashboard = lazy(() => import("./pages/SuperDashboard"));
-const Estoque = lazy(() => import("./pages/Estoque"));
+
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Auditoria = lazy(() => import("./pages/Auditoria"));
 const Planos = lazy(() => import("./pages/Planos"));
@@ -88,7 +88,7 @@ const App = () => (
                 <Route path="/planos" element={<ProtectedRoute requiresSubscription={false}><Planos /></ProtectedRoute>} />
                 <Route path="/checkout/sucesso" element={<ProtectedRoute requiresSubscription={false}><CheckoutSucesso /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
-                <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
+                
                 <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
                 <Route path="/auditoria" element={<ProtectedRoute><Auditoria /></ProtectedRoute>} />
                 

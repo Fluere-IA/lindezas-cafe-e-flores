@@ -38,7 +38,7 @@ export default function TermosDeUso() {
               incluindo cafeterias, floriculturas e restaurantes. O serviço oferece:
             </p>
             <ul className="list-disc pl-6 text-slate-600 space-y-2">
-              <li>Gestão de produtos e estoque</li>
+              <li>Gestão de produtos e cardápio</li>
               <li>Sistema de ponto de venda (PDV)</li>
               <li>Gestão de pedidos e mesas</li>
               <li>Relatórios e análises</li>
