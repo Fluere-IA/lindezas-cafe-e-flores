@@ -32,6 +32,7 @@ export default function AceitarConvite() {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'loading' | 'login' | 'success' | 'error'>('loading');
   
+  const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState(tempPassword || '');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -104,10 +105,10 @@ export default function AceitarConvite() {
   };
 
   const handleAcceptInvite = async () => {
-    if (!invite || !password) {
+    if (!invite || !password || !fullName.trim()) {
       toast({
-        title: 'Senha obrigatória',
-        description: 'Digite a senha para continuar.',
+        title: 'Campos obrigatórios',
+        description: 'Preencha seu nome e senha para continuar.',
         variant: 'destructive',
       });
       return;
@@ -131,6 +132,9 @@ export default function AceitarConvite() {
           password: password,
           options: {
             emailRedirectTo: `${window.location.origin}/dashboard`,
+            data: {
+              full_name: fullName.trim(),
+            },
           },
         });
 
@@ -145,6 +149,11 @@ export default function AceitarConvite() {
         userId = signUpData.user.id;
       } else {
         userId = signInData.user.id;
+        
+        // Update user metadata with full name if it's a returning user
+        await supabase.auth.updateUser({
+          data: { full_name: fullName.trim() },
+        });
       }
 
       // Add user to organization
@@ -181,9 +190,14 @@ export default function AceitarConvite() {
         description: `Você agora faz parte de ${invite.organization_name}.`,
       });
 
-      // Redirect to dashboard after a short delay
+      // Redirect to profile page with password change recommendation
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/perfil', { 
+          state: { 
+            showPasswordChangeAlert: true,
+            fromInvite: true,
+          } 
+        });
       }, 2000);
     } catch (err: any) {
       console.error('Error accepting invite:', err);
@@ -266,6 +280,17 @@ export default function AceitarConvite() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="fullName">Seu Nome Completo</Label>
+            <Input
+              id="fullName"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Digite seu nome completo"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label>Email</Label>
             <Input
               type="email"
@@ -303,7 +328,7 @@ export default function AceitarConvite() {
           <Button
             className="w-full"
             onClick={handleAcceptInvite}
-            disabled={isProcessing || !password}
+            disabled={isProcessing || !password || !fullName.trim()}
           >
             {isProcessing ? (
               <>

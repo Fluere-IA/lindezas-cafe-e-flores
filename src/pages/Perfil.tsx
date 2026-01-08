@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -11,12 +11,13 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Loader2, User, Save, ArrowLeft, Mail, 
   Shield, CreditCard, Crown, Lock, Building2, Phone, LayoutGrid,
-  CheckCircle2, AlertCircle, Sparkles, ChevronRight
+  CheckCircle2, AlertCircle, Sparkles, ChevronRight, AlertTriangle, X
 } from 'lucide-react';
 import { z } from 'zod';
 
@@ -59,6 +60,11 @@ export default function Perfil() {
   const { planTier, planName, subscribed, isInTrial, trialDaysRemaining } = useSubscriptionContext();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if coming from invite with password change recommendation
+  const showPasswordChangeAlert = location.state?.showPasswordChangeAlert || false;
+  const [showPasswordAlert, setShowPasswordAlert] = useState(showPasswordChangeAlert);
   
   // Profile state
   const [fullName, setFullName] = useState('');
@@ -301,6 +307,25 @@ export default function Perfil() {
       {/* Content */}
       <main className="container mx-auto px-4 py-6">
         <div className="max-w-2xl mx-auto space-y-6">
+          
+          {/* Password Change Alert */}
+          {showPasswordAlert && (
+            <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800 dark:text-amber-200">Altere sua senha</AlertTitle>
+              <AlertDescription className="text-amber-700 dark:text-amber-300">
+                Você entrou com uma senha temporária. Recomendamos que altere sua senha na aba <strong>Segurança</strong> para maior proteção da sua conta.
+              </AlertDescription>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-6 w-6 text-amber-600 hover:text-amber-800"
+                onClick={() => setShowPasswordAlert(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </Alert>
+          )}
           
           {/* Profile Card */}
           <Card className="overflow-hidden border-0 shadow-sm">
