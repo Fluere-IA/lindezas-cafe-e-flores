@@ -17,21 +17,19 @@ interface Feature {
 }
 
 const features: Feature[] = [
-  { name: "O Básico para Rodar", start: "", pro: "", isCategory: true },
-  { name: "PDV e Comanda Digital", start: true, pro: true },
-  { name: "KDS (Tela de Produção)", start: true, pro: true },
-  
-  { name: "Controle & Segurança", start: "", pro: "", isCategory: true },
+  { name: "Operação & Equipe", start: "", pro: "", isCategory: true },
   { name: "Usuários do Sistema", start: "Ilimitados", pro: "Ilimitados" },
-  { name: "Permissões de Acesso (Gerente vs Garçom)", start: false, pro: true, highlight: true },
-  { name: "Auditoria de Cancelamentos", start: false, pro: true, highlight: true },
-  { name: "Histórico de Edições de Pedido", start: false, pro: true, highlight: true },
+  { name: "Níveis de Acesso (Cargos)", start: true, pro: true },
+  { name: "PDV e KDS (Cozinha)", start: true, pro: true },
   
-  { name: "Inteligência de Lucro", start: "", pro: "", isCategory: true },
-  { name: "Relatório de Vendas Simples", start: true, pro: true },
-  { name: "Dashboard Financeiro (DRE)", start: false, pro: true, highlight: true },
-  { name: "Ranking de Produtos (Curva ABC)", start: false, pro: true, highlight: true },
-  { name: "Mapa de Calor (Horários de Pico)", start: false, pro: true, highlight: true },
+  { name: "Segurança Avançada", start: "", pro: "", isCategory: true },
+  { name: "Auditoria de Cancelamentos", start: false, pro: true, highlight: true },
+  { name: "Histórico de Alterações de Pedido", start: false, pro: true, highlight: true },
+  
+  { name: "Inteligência Financeira", start: "", pro: "", isCategory: true },
+  { name: "Relatório de Vendas (Faturamento)", start: true, pro: true },
+  { name: "DRE Gerencial (Lucro Líquido)", start: false, pro: true, highlight: true },
+  { name: "Exportação p/ Contador", start: false, pro: true, highlight: true },
   
   { name: "Suporte", start: "", pro: "", isCategory: true },
   { name: "Canal Exclusivo WhatsApp", start: false, pro: true, highlight: true },
@@ -72,7 +70,7 @@ export function PlanComparison() {
                 <TableHead className="text-center text-foreground font-semibold py-4">
                   <div className="flex flex-col items-center gap-1">
                     <span>Start</span>
-                    <span className="text-sm font-normal text-muted-foreground">R$ 99,90/mês</span>
+                    <span className="text-sm font-normal text-muted-foreground">R$ 47,90/mês</span>
                   </div>
                 </TableHead>
                 <TableHead className="text-center py-4 bg-primary/5 border-l-2 border-r-2 border-primary/20">
@@ -84,7 +82,7 @@ export function PlanComparison() {
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                       Recomendado
                     </span>
-                    <span className="text-sm font-normal text-muted-foreground">R$ 149,90/mês</span>
+                    <span className="text-sm font-normal text-muted-foreground">R$ 89,90/mês</span>
                   </div>
                 </TableHead>
               </TableRow>

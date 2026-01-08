@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Rocket, Shield, DollarSign, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -6,29 +6,30 @@ const plans = [
   {
     name: "Start",
     priceId: "price_1SmdeyHx3U4iTNTbnzINv2Rl",
-    price: "99,90",
-    description: "Para quem quer modernizar o atendimento e eliminar o papel.",
+    price: "47,90",
+    description: "Operação completa para toda sua equipe.",
     features: [
-      "Comanda Digital & Mesas",
-      "Frente de Caixa (PDV) Ágil",
-      "KDS (Tela de Cozinha Digital)",
-      "Equipe Ilimitada",
-      "Relatórios Básicos",
+      { text: "Usuários Ilimitados", bold: true },
+      { text: "Gestão de Cargos (Gerente, Caixa, Garçom)", bold: true },
+      { text: "Frente de Caixa (PDV) e Comanda", bold: false },
+      { text: "KDS (Tela de Cozinha)", bold: false },
+      { text: "Apenas Relatórios Básicos de Venda", bold: false, warning: true },
     ],
     highlighted: false,
-    cta: "Assinar Start",
+    cta: "Começar Grátis",
   },
   {
     name: "Pro",
     priceId: "price_1Sn9TrHx3U4iTNTblXPO4bsJ",
-    price: "149,90",
-    description: "Para quem busca controle total, segurança e mais lucro.",
+    price: "89,90",
+    description: "Auditoria, lucro real e contabilidade.",
     features: [
-      "Tudo do Start, mais:",
-      "Segurança Anti-Fraude (Auditoria)",
-      "Relatórios de Lucro (DRE e Curva ABC)",
-      "Mapa de Calor (Horários de Pico)",
-      "Suporte VIP (WhatsApp Direto)",
+      { text: "Tudo do Start, mais:", bold: true, rocket: true },
+      { text: "Auditoria Anti-Roubo (Rastreio de Cancelamentos)", bold: true, shield: true },
+      { text: "DRE e Lucro Real (Saiba quanto sobrou no bolso)", bold: true, money: true },
+      { text: "Curva ABC (Ranking de Produtos)", bold: false },
+      { text: "Exportação para Contador", bold: false },
+      { text: "Suporte Prioritário", bold: false },
     ],
     highlighted: true,
     cta: "Assinar Pro",
@@ -96,11 +97,29 @@ export function PricingSection() {
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
-                      plan.highlighted ? "text-green-300" : "text-green-500"
-                    }`} />
-                    <span className={`text-sm ${plan.highlighted ? "text-white/90" : "text-slate-600"}`}>
-                      {feature}
+                    {feature.warning ? (
+                      <AlertTriangle className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+                        plan.highlighted ? "text-amber-300" : "text-amber-500"
+                      }`} />
+                    ) : feature.rocket ? (
+                      <Rocket className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+                        plan.highlighted ? "text-blue-300" : "text-blue-500"
+                      }`} />
+                    ) : feature.shield ? (
+                      <Shield className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+                        plan.highlighted ? "text-green-300" : "text-green-500"
+                      }`} />
+                    ) : feature.money ? (
+                      <DollarSign className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+                        plan.highlighted ? "text-emerald-300" : "text-emerald-500"
+                      }`} />
+                    ) : (
+                      <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+                        plan.highlighted ? "text-green-300" : "text-green-500"
+                      }`} />
+                    )}
+                    <span className={`text-sm ${plan.highlighted ? "text-white/90" : "text-slate-600"} ${feature.bold ? "font-semibold" : ""}`}>
+                      {feature.text}
                     </span>
                   </li>
                 ))}
