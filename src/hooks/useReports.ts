@@ -229,22 +229,19 @@ export function useReports() {
     enabled: !!currentOrganization?.id,
   });
 
-  // Fetch Audit data (canceled/voided orders)
+  // Fetch Audit data from dedicated audit_logs table
   const auditQuery = useQuery({
     queryKey: ['reports-audit', currentOrganization?.id, dateRange.start, dateRange.end],
     queryFn: async (): Promise<AuditEvent[] | null> => {
       if (!currentOrganization?.id) return null;
 
-      // For now, we track canceled orders as audit events
-      // In a full implementation, you'd have a dedicated audit_logs table
-      const { data: orders, error } = await supabase
-        .from('orders')
-        .select('id, order_number, status, updated_at, notes')
+      const { data: logs, error } = await supabase
+        .from('audit_logs')
+        .select('id, order_number, event_type, description, user_email, created_at')
         .eq('organization_id', currentOrganization.id)
-        .eq('status', 'cancelled')
-        .gte('updated_at', dateRange.start.toISOString())
-        .lte('updated_at', dateRange.end.toISOString())
-        .order('updated_at', { ascending: false })
+        .gte('created_at', dateRange.start.toISOString())
+        .lte('created_at', dateRange.end.toISOString())
+        .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) {
@@ -252,13 +249,23 @@ export function useReports() {
         return null;
       }
 
-      return orders?.map((order) => ({
-        id: order.id,
-        type: 'cancel' as const,
-        description: order.notes || 'Pedido cancelado',
-        user: 'Sistema',
-        timestamp: new Date(order.updated_at),
-        orderId: String(order.order_number),
+      // Map event_type from DB enum to our UI type
+      const typeMap: Record<string, 'cancel' | 'edit' | 'delete' | 'void'> = {
+        'cancel': 'cancel',
+        'edit': 'edit',
+        'void': 'void',
+        'delete': 'delete',
+        'status_change': 'edit',
+        'item_removed': 'delete',
+      };
+
+      return logs?.map((log) => ({
+        id: log.id,
+        type: typeMap[log.event_type] || 'edit',
+        description: log.description,
+        user: log.user_email || 'Sistema',
+        timestamp: new Date(log.created_at),
+        orderId: log.order_number ? String(log.order_number) : undefined,
       })) || [];
     },
     enabled: !!currentOrganization?.id,

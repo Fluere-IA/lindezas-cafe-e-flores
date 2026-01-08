@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          created_at: string
+          description: string
+          event_type: Database["public"]["Enums"]["audit_event_type"]
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          order_id: string | null
+          order_number: number | null
+          organization_id: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          event_type: Database["public"]["Enums"]["audit_event_type"]
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          order_id?: string | null
+          order_number?: number | null
+          organization_id: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          event_type?: Database["public"]["Enums"]["audit_event_type"]
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          order_id?: string | null
+          order_number?: number | null
+          organization_id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -450,6 +507,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "cashier" | "kitchen"
+      audit_event_type:
+        | "cancel"
+        | "edit"
+        | "void"
+        | "delete"
+        | "status_change"
+        | "item_removed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -578,6 +642,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "cashier", "kitchen"],
+      audit_event_type: [
+        "cancel",
+        "edit",
+        "void",
+        "delete",
+        "status_change",
+        "item_removed",
+      ],
     },
   },
 } as const
