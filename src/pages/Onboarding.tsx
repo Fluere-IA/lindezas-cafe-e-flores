@@ -171,11 +171,14 @@ export default function Onboarding() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
+    // Validate file type - accept images and PDFs
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+    
+    if (!isImage && !isPdf) {
       toast({
         title: 'Tipo de arquivo inválido',
-        description: 'Por favor, envie uma imagem do cardápio.',
+        description: 'Por favor, envie uma imagem ou PDF do cardápio.',
         variant: 'destructive',
       });
       return;
@@ -202,9 +205,12 @@ export default function Onboarding() {
         reader.readAsDataURL(file);
       });
 
-      // Call OCR edge function
+      // Call OCR edge function with file type
       const { data, error } = await supabase.functions.invoke('ocr-menu', {
-        body: { image: base64 },
+        body: { 
+          image: base64,
+          fileType: isPdf ? 'pdf' : 'image'
+        },
       });
 
       if (error) throw error;
@@ -225,7 +231,7 @@ export default function Onboarding() {
     } catch (error) {
       console.error('OCR Error:', error);
       toast({
-        title: 'Erro ao processar imagem',
+        title: 'Erro ao processar arquivo',
         description: 'Tente novamente ou adicione os itens manualmente.',
         variant: 'destructive',
       });
@@ -461,7 +467,7 @@ export default function Onboarding() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={handleFileUpload}
           className="hidden"
         />
@@ -476,7 +482,7 @@ export default function Onboarding() {
               <ImageIcon className="w-7 h-7 text-muted-foreground" />
             </div>
             <div>
-              <p className="font-medium text-foreground">Enviar foto do cardápio</p>
+              <p className="font-medium text-foreground">Enviar foto ou PDF do cardápio</p>
               <p className="text-sm text-muted-foreground">A IA identificará os itens automaticamente</p>
             </div>
           </div>
