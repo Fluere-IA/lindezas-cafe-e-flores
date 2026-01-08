@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 // Email do proprietário - altere para o seu email
-const OWNER_EMAIL = 'suporte@servire.app.br';
+const OWNER_EMAIL = 'leo.fluere@gmail.com';
 
 export function SupportChat() {
   const [isOpen, setIsOpen] = useState(false);
