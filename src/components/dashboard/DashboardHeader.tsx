@@ -13,7 +13,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { PlanBadge } from '@/components/subscription/PlanBadge';
+
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
 const navItems = [
