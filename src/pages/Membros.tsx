@@ -223,24 +223,25 @@ export default function Membros() {
 
       if (error) throw error;
 
-      // Send invite email via edge function
-      try {
-        const inviteUrl = `${window.location.origin}/aceitar-convite?id=${inviteData.id}&senha=${encodeURIComponent(invitePassword)}`;
-        await supabase.functions.invoke('send-invite-email', {
-          body: {
-            to: inviteEmail.toLowerCase(),
-            inviterName: user.user_metadata?.full_name || 'Um administrador',
-            organizationName: currentOrganization.name,
-            role: inviteRole,
-            inviteUrl,
-            tempPassword: invitePassword,
-          },
-        });
-        console.log('Invite email sent successfully');
-      } catch (emailError) {
-        console.error('Error sending invite email:', emailError);
-        // Don't fail the invite if email fails
+      // Create user and add to org via edge function
+      const { data: inviteResult, error: inviteError } = await supabase.functions.invoke('send-invite-email', {
+        body: {
+          to: inviteEmail.toLowerCase(),
+          inviterName: user.user_metadata?.full_name || 'Um administrador',
+          organizationName: currentOrganization.name,
+          organizationId: currentOrganization.id,
+          role: inviteRole,
+          inviteId: inviteData.id,
+          tempPassword: invitePassword,
+        },
+      });
+
+      if (inviteError) {
+        console.error('Error processing invite:', inviteError);
+        throw new Error('Erro ao processar convite');
       }
+
+      console.log('Invite processed successfully:', inviteResult);
 
       toast({
         title: 'Convite enviado!',
