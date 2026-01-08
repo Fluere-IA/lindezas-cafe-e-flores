@@ -6,6 +6,7 @@ const isAllowedOrigin = (origin: string | null) => {
   return origin && (
     origin.includes('.lovableproject.com') ||
     origin.includes('.lovable.app') ||
+    origin.includes('servire.app.br') ||
     origin.includes('localhost')
   );
 };
@@ -102,7 +103,7 @@ serve(async (req) => {
     }
 
     // Validate and use origin from allowlist for redirect URLs
-    const validOrigin = isAllowedOrigin(origin) ? origin : 'https://lindezas.lovable.app';
+    const validOrigin = isAllowedOrigin(origin) ? origin : 'https://servire.app.br';
 
     // Create Stripe checkout session for subscription
     const session = await stripe.checkout.sessions.create({
