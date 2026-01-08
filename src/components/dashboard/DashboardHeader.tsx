@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { VipSupportButton } from '@/components/subscription/VipSupportButton';
 
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
@@ -125,6 +126,12 @@ export function DashboardHeader() {
               month: 'short',
             }).replace('.', '')}
           </p>
+          
+          {/* VIP Support Button for Pro users */}
+          <VipSupportButton 
+            variant="ghost" 
+            className="hidden sm:flex text-white hover:bg-white/10 border-white/20"
+          />
           
           {role && (
             <span className="hidden sm:inline-block text-xs bg-white/20 px-2 py-1 rounded-full">
