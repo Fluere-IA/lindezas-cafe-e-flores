@@ -11,7 +11,7 @@ const plans = [
   {
     id: 'start',
     name: "Start",
-    priceId: "price_1SnHsGHx3U4iTNTbpI0twuKq",
+    priceId: "price_1SnI4HHMyb0hj0n72D4sZjWE",
     price: "47,90",
     description: "Operação completa para toda sua equipe.",
     features: [
@@ -27,7 +27,7 @@ const plans = [
   {
     id: 'pro',
     name: "Pro",
-    priceId: "price_1SnHtVHx3U4iTNTbJWheQ49X",
+    priceId: "price_1SnI5SHMyb0hj0n7XZ4n1heP",
     price: "89,90",
     description: "Auditoria, lucro real e contabilidade.",
     features: [
