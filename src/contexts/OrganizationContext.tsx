@@ -7,6 +7,8 @@ export interface Organization {
   name: string;
   slug: string;
   phone?: string | null;
+  type?: string | null;
+  table_count?: number | null;
   created_at: string;
   onboarding_completed?: boolean | null;
 }
@@ -49,7 +51,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       if (role === 'admin') {
         const { data, error } = await supabase
           .from('organizations')
-          .select('id, name, slug, phone, created_at, onboarding_completed')
+          .select('id, name, slug, phone, type, table_count, created_at, onboarding_completed')
           .order('name');
 
         if (error) throw error;
@@ -67,7 +69,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
           const orgIds = memberOrgs.map(m => m.organization_id);
           const { data, error } = await supabase
             .from('organizations')
-            .select('id, name, slug, phone, created_at, onboarding_completed')
+            .select('id, name, slug, phone, type, table_count, created_at, onboarding_completed')
             .in('id', orgIds)
             .order('name');
 

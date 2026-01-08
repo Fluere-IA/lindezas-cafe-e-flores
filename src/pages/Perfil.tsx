@@ -10,13 +10,25 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Loader2, User, Save, ArrowLeft, Mail, 
-  Shield, CreditCard, Crown, Lock, Building2, Phone,
+  Shield, CreditCard, Crown, Lock, Building2, Phone, LayoutGrid,
   CheckCircle2, AlertCircle
 } from 'lucide-react';
+
+const tiposEstabelecimento = [
+  { value: 'cafeteria', label: 'Cafeteria' },
+  { value: 'restaurante', label: 'Restaurante' },
+  { value: 'lanchonete', label: 'Lanchonete' },
+  { value: 'padaria', label: 'Padaria' },
+  { value: 'bar', label: 'Bar' },
+  { value: 'pizzaria', label: 'Pizzaria' },
+  { value: 'food_truck', label: 'Food Truck' },
+  { value: 'outro', label: 'Outro' },
+];
 import { z } from 'zod';
 
 // Validation schemas
@@ -46,6 +58,8 @@ export default function Perfil() {
   // Business state
   const [businessName, setBusinessName] = useState('');
   const [businessPhone, setBusinessPhone] = useState('');
+  const [businessType, setBusinessType] = useState('');
+  const [tableCount, setTableCount] = useState(10);
   const [isSubmittingBusiness, setIsSubmittingBusiness] = useState(false);
   
   // Password state
@@ -87,6 +101,8 @@ export default function Perfil() {
     if (currentOrganization) {
       setBusinessName(currentOrganization.name || '');
       setBusinessPhone(currentOrganization.phone || '');
+      setBusinessType(currentOrganization.type || '');
+      setTableCount(currentOrganization.table_count || 10);
     }
   }, [currentOrganization]);
 
@@ -168,6 +184,8 @@ export default function Perfil() {
         .update({
           name: businessName.trim(),
           phone: businessPhone.trim() || null,
+          type: businessType || null,
+          table_count: tableCount,
         })
         .eq('id', currentOrganization.id);
       
@@ -417,6 +435,25 @@ export default function Perfil() {
                       </div>
 
                       <div className="space-y-2">
+                        <Label htmlFor="businessType" className="flex items-center gap-2">
+                          <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+                          Tipo de Estabelecimento
+                        </Label>
+                        <Select value={businessType} onValueChange={setBusinessType} disabled={isSubmittingBusiness}>
+                          <SelectTrigger className="h-12">
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {tiposEstabelecimento.map((tipo) => (
+                              <SelectItem key={tipo.value} value={tipo.value}>
+                                {tipo.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
                         <Label htmlFor="businessPhone" className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-muted-foreground" />
                           Telefone
@@ -430,6 +467,23 @@ export default function Perfil() {
                           className="h-12"
                           disabled={isSubmittingBusiness}
                           maxLength={20}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="tableCount" className="flex items-center gap-2">
+                          <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+                          Número de Mesas
+                        </Label>
+                        <Input
+                          id="tableCount"
+                          type="number"
+                          value={tableCount}
+                          onChange={(e) => setTableCount(parseInt(e.target.value) || 1)}
+                          min={1}
+                          max={100}
+                          className="h-12"
+                          disabled={isSubmittingBusiness}
                         />
                       </div>
 
