@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Search, Pencil, Trash2, Package, ImageIcon, Loader2, Tag, ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Pencil, Trash2, Package, ImageIcon, Loader2, Tag, ChevronDown, ChevronRight, GripVertical, FileText, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -390,6 +390,8 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
   const [overCategoryId, setOverCategoryId] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<{ file: File; preview: string } | null>(null);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { currentOrganization } = useOrganization();
@@ -779,8 +781,8 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
     }
   };
 
-  // OCR Handler - Process file (image or PDF)
-  const processMenuFile = async (file: File) => {
+  // Prepare file for preview
+  const prepareFilePreview = async (file: File) => {
     const isImage = file.type.startsWith('image/');
     const isPDF = file.type === 'application/pdf';
 
@@ -794,6 +796,39 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
       return;
     }
 
+    // Create preview URL
+    const preview = isImage ? URL.createObjectURL(file) : '';
+    setPreviewFile({ file, preview });
+    setPreviewDialogOpen(true);
+  };
+
+  // Cancel preview
+  const cancelPreview = () => {
+    if (previewFile?.preview) {
+      URL.revokeObjectURL(previewFile.preview);
+    }
+    setPreviewFile(null);
+    setPreviewDialogOpen(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Confirm and process file
+  const confirmAndProcessFile = async () => {
+    if (!previewFile) return;
+    
+    setPreviewDialogOpen(false);
+    const file = previewFile.file;
+    
+    // Cleanup preview
+    if (previewFile.preview) {
+      URL.revokeObjectURL(previewFile.preview);
+    }
+    setPreviewFile(null);
+
+    // Process the file
+    const isPDF = file.type === 'application/pdf';
     setIsProcessingOCR(true);
 
     try {
@@ -889,7 +924,7 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    await processMenuFile(file);
+    await prepareFilePreview(file);
   };
 
   // Handle paste from clipboard
@@ -902,7 +937,7 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
         e.preventDefault();
         const file = item.getAsFile();
         if (file) {
-          await processMenuFile(file);
+          await prepareFilePreview(file);
         }
         break;
       }
@@ -916,7 +951,7 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
     
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      await processMenuFile(file);
+      await prepareFilePreview(file);
     }
   };
 
@@ -1231,6 +1266,63 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={(open) => !open && cancelPreview()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {previewFile?.file.type === 'application/pdf' ? (
+                <FileText className="h-5 w-5 text-primary" />
+              ) : (
+                <ImageIcon className="h-5 w-5 text-primary" />
+              )}
+              Confirmar importação
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Preview */}
+            <div className="border rounded-lg overflow-hidden bg-muted/30">
+              {previewFile?.file.type === 'application/pdf' ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-3">
+                  <FileText className="h-16 w-16 text-primary/50" />
+                  <div className="text-center">
+                    <p className="font-medium text-foreground">{previewFile.file.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(previewFile.file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
+              ) : previewFile?.preview ? (
+                <div className="relative">
+                  <img 
+                    src={previewFile.preview} 
+                    alt="Preview do cardápio" 
+                    className="w-full max-h-64 object-contain"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-2">
+                    <p className="text-white text-xs truncate">{previewFile.file.name}</p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <p className="text-sm text-muted-foreground text-center">
+              A IA irá analisar o arquivo e importar automaticamente os produtos encontrados.
+            </p>
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={cancelPreview}>
+                Cancelar
+              </Button>
+              <Button className="flex-1" onClick={confirmAndProcessFile}>
+                Importar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
