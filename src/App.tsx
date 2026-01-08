@@ -10,6 +10,7 @@ import { SuperAdminRoute } from "@/components/auth/SuperAdminRoute";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { SupportChat } from "@/components/support/SupportChat";
 
 // Eagerly loaded pages (landing & auth - needed immediately)
 import Landing from "./pages/Landing";
@@ -96,6 +97,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <SupportChat />
           </BrowserRouter>
         </ThemeProvider>
       </SubscriptionProvider>
