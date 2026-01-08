@@ -150,8 +150,8 @@ export default function Membros() {
     enabled: !!currentOrganization?.id,
   });
 
-  // Fetch pending invites
-  const { data: invites = [], isLoading: loadingInvites } = useQuery({
+  // Fetch all invites (including accepted for validation)
+  const { data: allInvites = [], isLoading: loadingInvites } = useQuery({
     queryKey: ['organization-invites', currentOrganization?.id],
     queryFn: async () => {
       if (!currentOrganization?.id) return [];
@@ -160,7 +160,6 @@ export default function Membros() {
         .from('organization_invites')
         .select('*')
         .eq('organization_id', currentOrganization.id)
-        .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -168,6 +167,9 @@ export default function Membros() {
     },
     enabled: !!currentOrganization?.id,
   });
+
+  // Filter pending invites for display
+  const invites = allInvites.filter(i => i.status === 'pending');
 
   const handleInvite = async () => {
     if (!currentOrganization?.id || !user?.id || !inviteEmail || !invitePassword) return;
@@ -195,22 +197,15 @@ export default function Membros() {
     setIsInviting(true);
 
     try {
-      // Check if already a member or invited
-      const existingMember = members.find(m => m.user_id === inviteEmail);
-      if (existingMember) {
-        toast({
-          title: 'Usuário já é membro',
-          description: 'Este usuário já faz parte da organização.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const existingInvite = invites.find(i => i.email.toLowerCase() === inviteEmail.toLowerCase());
+      // Check if email already has an invite (pending or accepted)
+      const existingInvite = allInvites.find(i => i.email.toLowerCase() === inviteEmail.toLowerCase());
       if (existingInvite) {
+        const isPending = existingInvite.status === 'pending';
         toast({
-          title: 'Convite já enviado',
-          description: 'Já existe um convite pendente para este email.',
+          title: isPending ? 'Convite já enviado' : 'Usuário já foi convidado',
+          description: isPending 
+            ? 'Já existe um convite pendente para este email.'
+            : 'Este email já foi convidado anteriormente.',
           variant: 'destructive',
         });
         return;
