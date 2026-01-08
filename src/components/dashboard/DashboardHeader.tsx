@@ -146,17 +146,6 @@ export function DashboardHeader() {
           )}
           
           <Link
-            to="/perfil"
-            className={cn(
-              'p-2 rounded-lg transition-colors',
-              currentPath === '/perfil' ? 'bg-white/20' : 'hover:bg-white/10'
-            )}
-            title="Minha Conta"
-          >
-            <User className="h-5 w-5 text-white" />
-          </Link>
-          
-          <Link
             to="/configuracoes"
             className={cn(
               'p-2 rounded-lg transition-colors',
@@ -165,6 +154,17 @@ export function DashboardHeader() {
             title="Configurações"
           >
             <Settings className="h-5 w-5 text-white" />
+          </Link>
+          
+          <Link
+            to="/perfil"
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              currentPath === '/perfil' ? 'bg-white/20' : 'hover:bg-white/10'
+            )}
+            title="Minha Conta"
+          >
+            <User className="h-5 w-5 text-white" />
           </Link>
           
           <Button
