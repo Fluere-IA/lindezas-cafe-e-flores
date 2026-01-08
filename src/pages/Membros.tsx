@@ -80,13 +80,27 @@ export default function Membros() {
   const [invitePassword, setInvitePassword] = useState('');
   const [isInviting, setIsInviting] = useState(false);
 
-  // Generate a random password
+  // Generate a random password with special characters
   const generatePassword = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
+    const numbers = '23456789';
+    const specials = '@#$%&*!';
+    
     let password = '';
-    for (let i = 0; i < 8; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    // Add 5 letters
+    for (let i = 0; i < 5; i++) {
+      password += letters.charAt(Math.floor(Math.random() * letters.length));
     }
+    // Add 2 numbers
+    for (let i = 0; i < 2; i++) {
+      password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    }
+    // Add 1 special character
+    password += specials.charAt(Math.floor(Math.random() * specials.length));
+    
+    // Shuffle the password
+    password = password.split('').sort(() => Math.random() - 0.5).join('');
+    
     setInvitePassword(password);
   };
 
