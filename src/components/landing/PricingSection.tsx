@@ -21,8 +21,8 @@ const plans = [
   },
   {
     name: "Pro",
-    priceId: "price_1SmdhEHx3U4iTNTbmtjNQ6c2",
-    price: "197,90",
+    priceId: "price_1Sn9TrHx3U4iTNTblXPO4bsJ",
+    price: "149,90",
     description: "Para negócios em crescimento",
     features: [
       "Tudo do Start +",

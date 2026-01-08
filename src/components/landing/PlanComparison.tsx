@@ -85,7 +85,7 @@ export function PlanComparison() {
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                       Recomendado
                     </span>
-                    <span className="text-sm font-normal text-muted-foreground">R$ 197,90/mês</span>
+                    <span className="text-sm font-normal text-muted-foreground">R$ 149,90/mês</span>
                   </div>
                 </TableHead>
               </TableRow>
