@@ -452,14 +452,14 @@ const Caixa = () => {
 
         {/* Closed Bill Summary */}
         {closedBillSummary && (
-          <Card className="border-2 border-green-400 bg-gradient-to-br from-green-50 to-green-100/50 shadow-xl overflow-hidden">
-            <CardHeader className="pb-3 bg-gradient-to-r from-green-500/20 to-green-400/10">
+          <Card className="border-2 border-success bg-gradient-to-br from-success/10 to-success/5 shadow-xl overflow-hidden">
+            <CardHeader className="pb-3 bg-success/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-gradient-to-br from-green-500 to-green-600 shadow-lg">
-                    <CheckCircle2 className="h-6 w-6 text-white" />
+                  <div className="p-2 rounded-full bg-success shadow-lg">
+                    <CheckCircle2 className="h-6 w-6 text-success-foreground" />
                   </div>
-                  <CardTitle className="text-xl font-display font-bold text-green-800">Conta Fechada!</CardTitle>
+                  <CardTitle className="text-xl font-display font-bold text-foreground">Conta Fechada!</CardTitle>
                 </div>
                 <Badge className="bg-primary text-primary-foreground border-0 px-3 py-1 text-sm">
                   Mesa {closedBillSummary.tableNumber}
@@ -470,12 +470,12 @@ const Caixa = () => {
               {/* Items consumed */}
               <div>
                 <h4 className="text-sm font-semibold text-primary mb-2 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
                   Itens consumidos
                 </h4>
                 <div className="space-y-1.5 max-h-32 overflow-y-auto">
                   {closedBillSummary.items.map((item, index) => (
-                    <div key={`${item.id}-${index}`} className="flex justify-between text-sm py-2 px-3 bg-white rounded-lg border border-green-200">
+                    <div key={`${item.id}-${index}`} className="flex justify-between text-sm py-2 px-3 bg-card rounded-lg border border-border">
                       <span className="text-foreground font-medium">{item.quantity}x {item.product?.name}</span>
                       <span className="font-bold text-primary">{formatPrice(item.subtotal)}</span>
                     </div>
@@ -483,42 +483,42 @@ const Caixa = () => {
                 </div>
               </div>
 
-              <Separator className="bg-green-300" />
+              <Separator className="bg-success/30" />
 
               {/* Payments summary */}
               <div>
-                <h4 className="text-sm font-semibold text-lindezas-forest mb-2 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                <h4 className="text-sm font-semibold text-success mb-2 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
                   Pagamentos realizados
                 </h4>
                 <div className="space-y-1.5">
                   {closedBillSummary.payments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between py-2 px-3 bg-white rounded-lg border border-green-200 text-sm">
-                      <div className="flex items-center gap-2 text-lindezas-espresso">
+                    <div key={payment.id} className="flex items-center justify-between py-2 px-3 bg-card rounded-lg border border-border text-sm">
+                      <div className="flex items-center gap-2 text-foreground">
                         {getMethodIcon(payment.payment_method)}
                         <span className="capitalize font-medium">{payment.payment_method}</span>
                         <span className="text-muted-foreground text-xs">
                           ({getPaymentTypeLabel(payment.payment_type)})
                         </span>
                       </div>
-                      <span className="font-bold text-green-700">{formatPrice(payment.amount)}</span>
+                      <span className="font-bold text-success">{formatPrice(payment.amount)}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <Separator className="bg-green-300" />
+              <Separator className="bg-success/30" />
 
               {/* Total */}
-              <div className="flex justify-between items-center bg-gradient-to-r from-green-100 to-green-50 rounded-xl p-4">
-                <span className="font-semibold text-lindezas-forest">Total pago:</span>
-                <span className="text-3xl font-display font-bold text-green-700">
+              <div className="flex justify-between items-center bg-success/10 rounded-xl p-4">
+                <span className="font-semibold text-foreground">Total pago:</span>
+                <span className="text-3xl font-display font-bold text-success">
                   {formatPrice(closedBillSummary.totalAmount)}
                 </span>
               </div>
 
               <Button 
-                className="w-full h-12 bg-lindezas-forest hover:bg-lindezas-forest/90 text-white font-semibold rounded-xl shadow-lg" 
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg" 
                 onClick={() => setClosedBillSummary(null)}
               >
                 Nova consulta
@@ -529,18 +529,18 @@ const Caixa = () => {
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="h-12 w-12 animate-spin text-lindezas-gold" />
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="text-muted-foreground mt-3 font-medium">Buscando pedidos...</p>
           </div>
         )}
 
         {searchedTable && !isLoading && orders.length === 0 && (
-          <Card className="border-2 border-dashed border-lindezas-gold/40 bg-white/80">
+          <Card className="border-2 border-dashed border-primary/40 bg-card">
             <CardContent className="py-12 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-lindezas-cream flex items-center justify-center mb-3">
-                <AlertCircle className="h-8 w-8 text-lindezas-gold" />
+              <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                <AlertCircle className="h-8 w-8 text-primary" />
               </div>
-              <p className="font-display font-bold text-xl text-lindezas-forest">Mesa {searchedTable} sem pedidos</p>
+              <p className="font-display font-bold text-xl text-foreground">Mesa {searchedTable} sem pedidos</p>
               <p className="text-muted-foreground mt-1">Nenhum pedido em aberto para esta mesa</p>
             </CardContent>
           </Card>
@@ -549,22 +549,19 @@ const Caixa = () => {
         {orders.length > 0 && (
           <>
             {/* Order Summary */}
-            <Card className="border border-lindezas-gold/30 bg-white/90 backdrop-blur-sm shadow-lg overflow-hidden">
-              <CardHeader className="pb-3 bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream">
+            <Card className="border border-border bg-card shadow-lg overflow-hidden">
+              <CardHeader className="pb-3 bg-primary/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Badge 
-                      className="border-0 px-3 py-1.5 text-base font-bold"
-                      style={{ backgroundColor: '#2D5A27', color: '#ffffff' }}
-                    >
+                    <Badge className="border-0 px-3 py-1.5 text-base font-bold bg-primary text-primary-foreground">
                       Mesa {searchedTable}
                     </Badge>
                   </div>
                   <div className="text-right">
                     {totalPago > 0 && (
-                      <p className="text-xs text-green-600 font-semibold">Pago: {formatPrice(totalPago)}</p>
+                      <p className="text-xs text-success font-semibold">Pago: {formatPrice(totalPago)}</p>
                     )}
-                    <span className="text-3xl font-display font-bold text-lindezas-gold">{formatPrice(totalRestante)}</span>
+                    <span className="text-3xl font-display font-bold text-primary">{formatPrice(totalRestante)}</span>
                   </div>
                 </div>
               </CardHeader>
@@ -573,13 +570,13 @@ const Caixa = () => {
                 {payments.length > 0 && (
                   <button
                     onClick={() => setShowHistory(!showHistory)}
-                    className="w-full flex items-center justify-between py-3 px-4 bg-gradient-to-r from-green-500/15 to-green-400/10 rounded-xl text-sm hover:from-green-500/20 hover:to-green-400/15 transition-all border border-green-300/50"
+                    className="w-full flex items-center justify-between py-3 px-4 bg-success/10 rounded-xl text-sm hover:bg-success/15 transition-all border border-success/30"
                   >
-                    <span className="text-green-700 flex items-center gap-2 font-semibold">
+                    <span className="text-success flex items-center gap-2 font-semibold">
                       <CheckCircle2 className="h-4 w-4" />
                       {payments.length} pagamento(s) registrado(s)
                     </span>
-                    {showHistory ? <ChevronUp className="h-4 w-4 text-green-700" /> : <ChevronDown className="h-4 w-4 text-green-700" />}
+                    {showHistory ? <ChevronUp className="h-4 w-4 text-success" /> : <ChevronDown className="h-4 w-4 text-success" />}
                   </button>
                 )}
 
@@ -587,18 +584,18 @@ const Caixa = () => {
                 {showHistory && payments.length > 0 && (
                   <div className="space-y-2 py-2">
                     {payments.map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between py-2 px-3 bg-green-50 rounded-lg text-sm border border-green-200">
-                        <div className="flex items-center gap-2 text-lindezas-espresso">
-                          <Clock className="h-3.5 w-3.5 text-green-600" />
+                      <div key={payment.id} className="flex items-center justify-between py-2 px-3 bg-success/5 rounded-lg text-sm border border-success/20">
+                        <div className="flex items-center gap-2 text-foreground">
+                          <Clock className="h-3.5 w-3.5 text-success" />
                           <span className="font-medium">{formatTime(payment.created_at)}</span>
-                          <span className="text-green-700 font-semibold">{getPaymentTypeLabel(payment.payment_type)}</span>
+                          <span className="text-success font-semibold">{getPaymentTypeLabel(payment.payment_type)}</span>
                           {payment.items_count > 0 && (
                             <span className="text-muted-foreground">({payment.items_count} itens)</span>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
                           {getMethodIcon(payment.payment_method)}
-                          <span className="font-bold text-green-700">{formatPrice(payment.amount)}</span>
+                          <span className="font-bold text-success">{formatPrice(payment.amount)}</span>
                         </div>
                       </div>
                     ))}
@@ -613,24 +610,20 @@ const Caixa = () => {
                       className={`flex items-center gap-3 py-3 px-4 rounded-xl transition-all text-sm ${
                         paymentMode === 'by-items'
                           ? selectedItems.has(item.id)
-                            ? 'bg-lindezas-gold/20 border-2 border-lindezas-gold shadow-md'
-                            : 'bg-lindezas-cream hover:bg-lindezas-gold/10 cursor-pointer border-2 border-transparent'
-                          : 'bg-lindezas-cream/70'
+                            ? 'bg-primary/10 border-2 border-primary shadow-md'
+                            : 'bg-muted hover:bg-primary/5 cursor-pointer border-2 border-transparent'
+                          : 'bg-muted/70'
                       }`}
                       onClick={() => paymentMode === 'by-items' && toggleItemSelection(item.id)}
                     >
                       {paymentMode === 'by-items' && (
                         <Checkbox 
                           checked={selectedItems.has(item.id)} 
-                          className="pointer-events-none"
-                          style={{
-                            border: '2px solid #2D5A27',
-                            backgroundColor: selectedItems.has(item.id) ? '#2D5A27' : '#ffffff'
-                          }}
+                          className="pointer-events-none border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
                       )}
-                      <span className="flex-1 truncate font-medium text-lindezas-espresso">{item.quantity}x {item.product?.name}</span>
-                      <span className="font-bold text-lindezas-forest">{formatPrice(item.subtotal)}</span>
+                      <span className="flex-1 truncate font-medium text-foreground">{item.quantity}x {item.product?.name}</span>
+                      <span className="font-bold text-primary">{formatPrice(item.subtotal)}</span>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -647,11 +640,11 @@ const Caixa = () => {
                 </div>
 
                 {totalRestante <= 0 && (
-                  <div className="text-center py-6 bg-gradient-to-r from-green-100 to-green-50 rounded-xl">
-                    <div className="w-14 h-14 mx-auto rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-2 shadow-lg">
-                      <CheckCircle2 className="h-7 w-7 text-white" />
+                  <div className="text-center py-6 bg-success/10 rounded-xl">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-success flex items-center justify-center mb-2 shadow-lg">
+                      <CheckCircle2 className="h-7 w-7 text-success-foreground" />
                     </div>
-                    <p className="font-display font-bold text-xl text-green-700">Conta paga!</p>
+                    <p className="font-display font-bold text-xl text-success">Conta paga!</p>
                   </div>
                 )}
               </CardContent>
@@ -659,7 +652,7 @@ const Caixa = () => {
 
             {/* Payment */}
             {totalRestante > 0 && (
-              <Card className="border border-lindezas-gold/30 bg-white/90 backdrop-blur-sm shadow-lg overflow-hidden">
+              <Card className="border border-border bg-card shadow-lg overflow-hidden">
                 <CardContent className="pt-5 space-y-4">
                   {/* Payment Mode */}
                   <div className="grid grid-cols-4 gap-2">
@@ -676,13 +669,11 @@ const Caixa = () => {
                           setSelectedItems(new Set()); 
                           setCustomValue('');
                         }}
-                        className="h-auto py-3 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all"
-                        style={{
-                          backgroundColor: paymentMode === mode ? '#2D5A27' : '#F5F0E8',
-                          color: paymentMode === mode ? '#ffffff' : '#4A3728',
-                          border: paymentMode === mode ? 'none' : '2px solid rgba(212, 168, 75, 0.4)',
-                          boxShadow: paymentMode === mode ? '0 4px 12px rgba(45, 90, 39, 0.3)' : 'none'
-                        }}
+                        className={`h-auto py-3 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all ${
+                          paymentMode === mode 
+                            ? 'bg-primary text-primary-foreground shadow-lg' 
+                            : 'bg-muted text-foreground border-2 border-border hover:bg-muted/80'
+                        }`}
                       >
                         <Icon className="h-5 w-5" />
                         <span className="text-xs">{label}</span>
@@ -692,36 +683,36 @@ const Caixa = () => {
 
                   {/* Mode-specific UI */}
                   {paymentMode === 'by-items' && (
-                    <div className="bg-lindezas-cream rounded-xl p-4 text-sm border border-lindezas-gold/30">
+                    <div className="bg-muted rounded-xl p-4 text-sm border border-border">
                       {selectedItems.size === 0 
                         ? <span className="text-muted-foreground font-medium">Toque nos itens acima para selecionar</span>
                         : <div className="flex justify-between items-center">
-                            <span className="font-semibold text-lindezas-espresso">{selectedItems.size} selecionado(s)</span>
-                            <span className="font-bold text-lg text-lindezas-gold">{formatPrice(selectedTotal)}</span>
+                            <span className="font-semibold text-foreground">{selectedItems.size} selecionado(s)</span>
+                            <span className="font-bold text-lg text-primary">{formatPrice(selectedTotal)}</span>
                           </div>
                       }
                     </div>
                   )}
 
                   {paymentMode === 'by-people' && (
-                    <div className="bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream rounded-xl p-4 space-y-3 border border-lindezas-gold/30">
+                    <div className="bg-primary/5 rounded-xl p-4 space-y-3 border border-primary/20">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-lindezas-espresso">Dividir entre:</span>
+                        <span className="text-sm font-semibold text-foreground">Dividir entre:</span>
                         <div className="flex items-center gap-3">
                           <Button 
                             variant="outline" 
                             size="icon" 
-                            className="h-9 w-9 rounded-lg border-2 border-lindezas-gold/50 hover:bg-lindezas-gold/20" 
+                            className="h-9 w-9 rounded-lg border-2 border-border hover:bg-primary/10" 
                             onClick={() => setNumberOfPeople(Math.max(2, numberOfPeople - 1))} 
                             disabled={numberOfPeople <= 2 || paidPeopleCount > 0}
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
-                          <span className="font-bold text-xl w-8 text-center text-lindezas-forest">{numberOfPeople}</span>
+                          <span className="font-bold text-xl w-8 text-center text-primary">{numberOfPeople}</span>
                           <Button 
                             variant="outline" 
                             size="icon" 
-                            className="h-9 w-9 rounded-lg border-2 border-lindezas-gold/50 hover:bg-lindezas-gold/20" 
+                            className="h-9 w-9 rounded-lg border-2 border-border hover:bg-primary/10" 
                             onClick={() => setNumberOfPeople(numberOfPeople + 1)} 
                             disabled={paidPeopleCount > 0}
                           >
@@ -729,22 +720,22 @@ const Caixa = () => {
                           </Button>
                         </div>
                       </div>
-                      <Separator className="bg-lindezas-gold/30" />
+                      <Separator className="bg-border" />
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-lindezas-espresso">Valor por pessoa:</span>
-                          <span className="font-bold text-xl text-lindezas-gold">{formatPrice(personPaymentAmount)}</span>
+                          <span className="text-sm font-medium text-foreground">Valor por pessoa:</span>
+                          <span className="font-bold text-xl text-primary">{formatPrice(personPaymentAmount)}</span>
                         </div>
                         {paidPeopleCount > 0 && (
-                          <div className="flex justify-between items-center text-sm bg-green-100 rounded-lg px-3 py-2">
-                            <span className="text-green-700 font-medium">✓ Já pagaram:</span>
-                            <span className="font-bold text-green-700">{paidPeopleCount} pessoa(s)</span>
+                          <div className="flex justify-between items-center text-sm bg-success/10 rounded-lg px-3 py-2">
+                            <span className="text-success font-medium">✓ Já pagaram:</span>
+                            <span className="font-bold text-success">{paidPeopleCount} pessoa(s)</span>
                           </div>
                         )}
                         {remainingPeople > 0 && (
-                          <div className="flex justify-between items-center text-sm bg-orange-100 rounded-lg px-3 py-2">
-                            <span className="text-orange-700 font-medium">Faltam:</span>
-                            <span className="font-bold text-orange-700">{remainingPeople} pessoa(s)</span>
+                          <div className="flex justify-between items-center text-sm bg-accent/10 rounded-lg px-3 py-2">
+                            <span className="text-accent-foreground font-medium">Faltam:</span>
+                            <span className="font-bold text-accent-foreground">{remainingPeople} pessoa(s)</span>
                           </div>
                         )}
                       </div>
@@ -752,22 +743,22 @@ const Caixa = () => {
                   )}
 
                   {paymentMode === 'by-value' && (
-                    <div className="bg-lindezas-cream rounded-xl p-4 space-y-3 border border-lindezas-gold/30">
+                    <div className="bg-muted rounded-xl p-4 space-y-3 border border-border">
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lindezas-forest font-bold text-lg">R$</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-bold text-lg">R$</span>
                         <Input
                           type="text"
                           inputMode="decimal"
                           placeholder="0,00"
                           value={formatInputValue(customValue)}
                           onChange={(e) => setCustomValue(e.target.value.replace(/[^\d]/g, ''))}
-                          className="pl-12 h-14 text-2xl font-bold text-right border-2 border-lindezas-gold/40 focus:border-lindezas-gold rounded-xl bg-white text-lindezas-forest"
+                          className="pl-12 h-14 text-2xl font-bold text-right border-2 border-border focus:border-primary rounded-xl bg-card text-foreground"
                         />
                       </div>
                       {customAmount > 0 && customAmount < totalRestante && (
-                        <div className="flex justify-between text-sm pt-1 bg-orange-100 rounded-lg px-3 py-2">
-                          <span className="text-orange-700 font-medium">Restará:</span>
-                          <span className="font-bold text-orange-700">{formatPrice(totalRestante - customAmount)}</span>
+                        <div className="flex justify-between text-sm pt-1 bg-accent/10 rounded-lg px-3 py-2">
+                          <span className="text-accent-foreground font-medium">Restará:</span>
+                          <span className="font-bold text-accent-foreground">{formatPrice(totalRestante - customAmount)}</span>
                         </div>
                       )}
                       {customAmount > totalRestante && (
@@ -776,7 +767,7 @@ const Caixa = () => {
                     </div>
                   )}
 
-                  <Separator className="bg-lindezas-gold/30" />
+                  <Separator className="bg-border" />
 
                   {/* Payment Method */}
                   <div className="grid grid-cols-3 gap-3">
@@ -789,13 +780,11 @@ const Caixa = () => {
                         key={method}
                         onClick={() => setSelectedPaymentMethod(method)}
                         disabled={isProcessing}
-                        className="h-14 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all disabled:opacity-50"
-                        style={{
-                          backgroundColor: selectedPaymentMethod === method ? '#D4A84B' : '#F5F0E8',
-                          color: selectedPaymentMethod === method ? '#2D5A27' : '#4A3728',
-                          border: selectedPaymentMethod === method ? 'none' : '2px solid rgba(212, 168, 75, 0.4)',
-                          boxShadow: selectedPaymentMethod === method ? '0 4px 12px rgba(212, 168, 75, 0.4)' : 'none'
-                        }}
+                        className={`h-14 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold transition-all disabled:opacity-50 ${
+                          selectedPaymentMethod === method 
+                            ? 'bg-accent text-accent-foreground shadow-lg' 
+                            : 'bg-muted text-foreground border-2 border-border hover:bg-muted/80'
+                        }`}
                       >
                         <Icon className="h-5 w-5" />
                         <span className="text-xs">{label}</span>
@@ -805,7 +794,7 @@ const Caixa = () => {
 
                   {/* Confirm */}
                   <Button
-                    className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg hover:shadow-xl transition-all"
+                    className="w-full h-14 text-lg font-bold rounded-xl bg-success hover:bg-success/90 text-success-foreground shadow-lg hover:shadow-xl transition-all"
                     onClick={() => selectedPaymentMethod && handlePayment(selectedPaymentMethod)}
                     disabled={isProcessing || !canPay()}
                   >

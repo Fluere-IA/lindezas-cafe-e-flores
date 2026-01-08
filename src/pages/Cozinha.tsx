@@ -112,25 +112,25 @@ const PendingOrdersGrid = ({
         return (
           <Card 
             key={order.id} 
-            className={`overflow-hidden transition-all duration-300 hover:shadow-xl bg-white/90 backdrop-blur-sm ${
+            className={`overflow-hidden transition-all duration-300 hover:shadow-xl bg-card ${
               isUrgent 
-                ? 'border-2 border-red-500 ring-4 ring-red-500/20 animate-pulse' 
-                : 'border border-lindezas-gold/30 hover:border-lindezas-gold/60'
+                ? 'border-2 border-destructive ring-4 ring-destructive/20 animate-pulse' 
+                : 'border border-border hover:border-primary/40'
             }`}
           >
             <CardHeader className={`pb-3 ${
               isUrgent 
-                ? 'bg-gradient-to-r from-red-500/20 to-red-400/10' 
-                : 'bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream'
+                ? 'bg-destructive/10' 
+                : 'bg-primary/5'
             }`}>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl font-display font-bold text-lindezas-forest">
+                <CardTitle className="text-2xl font-display font-bold text-foreground">
                   {order.table_number ? `Mesa ${order.table_number}` : 'Balcão'}
                 </CardTitle>
               </div>
               {/* Waiting Time Progress Bar */}
               <div className="mt-3">
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full rounded-full transition-all duration-300"
                     style={{ 
@@ -140,13 +140,13 @@ const PendingOrdersGrid = ({
                   />
                 </div>
                 <div className={`flex items-center gap-2 text-sm mt-2 ${
-                  isUrgent ? 'text-red-600 font-semibold' : 'text-muted-foreground'
+                  isUrgent ? 'text-destructive font-semibold' : 'text-muted-foreground'
                 }`}>
                   <span>{formatTime(order.created_at)}</span>
                   <span>•</span>
                   <span className="font-bold font-mono">{formatTimeDisplay(seconds)}</span>
                   {isUrgent && (
-                    <Badge className="bg-red-500 border-0 gap-1 animate-bounce" style={{ color: '#ffffff' }}>
+                    <Badge className="bg-destructive border-0 gap-1 animate-bounce text-destructive-foreground">
                       <AlertCircle className="h-3 w-3" />
                       Atrasado
                     </Badge>
@@ -158,18 +158,18 @@ const PendingOrdersGrid = ({
             <CardContent className="pt-4 space-y-4">
               {/* Order Notes */}
               {order.notes && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-                  <p className="text-sm font-medium text-yellow-800">
+                <div className="bg-accent/10 border border-accent/30 rounded-xl p-3">
+                  <p className="text-sm font-medium text-accent-foreground">
                     📝 {order.notes}
                   </p>
                 </div>
               )}
               
-              <div className="space-y-1 bg-lindezas-cream/50 rounded-xl p-3">
+              <div className="space-y-1 bg-muted/50 rounded-xl p-3">
                 {order.order_items.map((item) => (
                   <div 
                     key={item.id}
-                    className="flex items-center gap-3 py-2 border-b border-lindezas-gold/20 last:border-0"
+                    className="flex items-center gap-3 py-2 border-b border-border last:border-0"
                   >
                     <span 
                       className="font-bold text-lg min-w-[2.5rem] text-center rounded-lg py-1 bg-primary text-primary-foreground"
@@ -188,7 +188,6 @@ const PendingOrdersGrid = ({
                   disabled={isProcessing}
                   size="lg"
                   className="w-full h-14 text-lg font-bold gap-2 bg-success hover:bg-success/90 text-success-foreground shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
-                style={{ color: '#ffffff' }}
               >
                 {isProcessing ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -416,21 +415,21 @@ const Cozinha = () => {
               {readyOrders.map((order) => (
                 <Card 
                   key={order.id} 
-                  className="overflow-hidden border border-lindezas-gold/40 bg-white/90 backdrop-blur-sm hover:shadow-lg transition-all duration-300"
+                  className="overflow-hidden border border-border bg-card hover:shadow-lg transition-all duration-300"
                 >
-                  <CardHeader className="pb-3 bg-gradient-to-r from-lindezas-gold/20 to-lindezas-cream">
+                  <CardHeader className="pb-3 bg-primary/5">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-2xl font-display font-bold text-foreground">
                         {order.table_number ? `Mesa ${order.table_number}` : 'Balcão'}
                       </CardTitle>
-                      <Badge className="border-0 shadow-md gap-1 bg-accent text-accent-foreground">
+                      <Badge className="border-0 shadow-md gap-1 bg-success text-success-foreground">
                         <CheckCircle2 className="h-3 w-3" />
                         Entregue
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                      <div className="p-1.5 rounded-full bg-lindezas-gold/20">
-                        <Clock className="h-3.5 w-3.5 text-lindezas-gold" />
+                      <div className="p-1.5 rounded-full bg-primary/10">
+                        <Clock className="h-3.5 w-3.5 text-primary" />
                       </div>
                       <span>Pedido às {formatTime(order.created_at)}</span>
                     </div>
@@ -439,18 +438,18 @@ const Cozinha = () => {
                   <CardContent className="pt-4">
                     {/* Order Notes */}
                     {order.notes && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-3">
-                        <p className="text-sm font-medium text-yellow-800">
+                      <div className="bg-accent/10 border border-accent/30 rounded-xl p-3 mb-3">
+                        <p className="text-sm font-medium text-accent-foreground">
                           📝 {order.notes}
                         </p>
                       </div>
                     )}
                     
-                    <div className="space-y-1 bg-lindezas-cream/50 rounded-xl p-3">
+                    <div className="space-y-1 bg-muted/50 rounded-xl p-3">
                       {order.order_items.map((item) => (
                         <div 
                           key={item.id}
-                          className="flex items-center gap-3 py-2 border-b border-lindezas-gold/20 last:border-0"
+                          className="flex items-center gap-3 py-2 border-b border-border last:border-0"
                         >
                           <span className="font-bold text-xl min-w-[2.5rem] text-center rounded-lg py-1 bg-primary text-primary-foreground">
                             {item.quantity}x
