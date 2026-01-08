@@ -143,9 +143,13 @@ export function GerenciarCategorias({ onBack }: GerenciarCategoriasProps) {
           <h2 className="text-lg font-semibold text-foreground">Categorias</h2>
           <p className="text-sm text-muted-foreground">{categories.length} categorias</p>
         </div>
-        <Button onClick={openNewCategory} size="default" className="bg-primary hover:bg-primary/90 shadow-md">
-          <Plus className="h-4 w-4 mr-2" />
-          <span>Adicionar Categoria</span>
+        <Button 
+          onClick={openNewCategory} 
+          size="lg" 
+          className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all font-semibold px-6"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Adicionar Categoria
         </Button>
       </div>
 
