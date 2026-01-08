@@ -47,19 +47,25 @@ serve(async (req) => {
     logStep("Stripe key verified");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      logStep("ERROR: No authorization header provided");
-      throw new Error("Authentication required");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      logStep("ERROR: No valid authorization header provided");
+      return new Response(JSON.stringify({ 
+        error: "Authentication required", 
+        code: "NO_AUTH" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
     }
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
-    logStep("Authenticating user with token");
+    logStep("Validating JWT claims");
     
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) {
-      logStep("ERROR: Authentication failed", { message: userError.message });
-      // Return 401 for auth errors so frontend can handle logout
+    // Use getClaims for faster JWT validation
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      logStep("ERROR: JWT validation failed", { message: claimsError?.message });
       return new Response(JSON.stringify({ 
         error: "Authentication failed", 
         code: "INVALID_SESSION" 
@@ -68,9 +74,12 @@ serve(async (req) => {
         status: 401,
       });
     }
-    const user = userData.user;
-    if (!user?.email) {
-      logStep("ERROR: User not authenticated or email not available");
+
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+    
+    if (!userId || !userEmail) {
+      logStep("ERROR: User claims incomplete");
       return new Response(JSON.stringify({ 
         error: "Authentication failed", 
         code: "INVALID_SESSION" 
@@ -79,17 +88,22 @@ serve(async (req) => {
         status: 401,
       });
     }
-    logStep("User authenticated", { userId: user.id, email: user.email, createdAt: user.created_at });
+    
+    // Get user creation date from auth.users for trial calculation
+    const { data: fullUserData } = await supabaseClient.auth.admin.getUserById(userId);
+    const userCreatedAt = fullUserData?.user?.created_at || new Date().toISOString();
+    
+    logStep("User authenticated", { userId, email: userEmail, createdAt: userCreatedAt });
 
     // Get user's organization and find the owner's email for subscription check
     const { data: membershipData, error: membershipError } = await supabaseClient
       .from('organization_members')
       .select('organization_id, role')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .limit(1)
       .single();
 
-    let ownerEmail = user.email; // Default to current user's email
+    let ownerEmail = userEmail; // Default to current user's email
     let organizationId = null;
 
     if (membershipData && !membershipError) {
@@ -124,8 +138,8 @@ serve(async (req) => {
 
     // Check trial status (7 days from account creation) - based on owner's account
     const TRIAL_DAYS = 7;
-    const userCreatedAt = new Date(user.created_at);
-    const trialEndDate = new Date(userCreatedAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+    const createdAtDate = new Date(userCreatedAt);
+    const trialEndDate = new Date(createdAtDate.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
     const now = new Date();
     const isInTrial = now < trialEndDate;
     const trialDaysRemaining = isInTrial ? Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : 0;
@@ -135,7 +149,7 @@ serve(async (req) => {
     
     // Check subscription using the owner's email (not the logged-in user)
     const customers = await stripe.customers.list({ email: ownerEmail, limit: 1 });
-    logStep("Checking subscription for", { email: ownerEmail, isOwner: ownerEmail === user.email });
+    logStep("Checking subscription for", { email: ownerEmail, isOwner: ownerEmail === userEmail });
     
     if (customers.data.length === 0) {
       logStep("No Stripe customer found for owner, checking trial status");
