@@ -52,16 +52,12 @@ export function DashboardHeader() {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 md:gap-5">
-          <div className="flex items-center gap-2">
-            <div className="bg-white/10 rounded-lg p-2 backdrop-blur-sm flex items-center gap-2">
-              <Store className="h-5 w-5 text-white" />
-              <span className="text-sm font-semibold text-white truncate max-w-[120px] md:max-w-[180px]">
-                {currentOrganization?.name || 'Meu Negócio'}
-              </span>
-            </div>
-            <PlanBadge className="hidden sm:flex" />
+          <div className="bg-white/10 rounded-lg p-2 backdrop-blur-sm flex items-center gap-2">
+            <Store className="h-5 w-5 text-white" />
+            <span className="text-sm font-semibold text-white truncate max-w-[120px] md:max-w-[180px]">
+              {currentOrganization?.name || 'Meu Negócio'}
+            </span>
           </div>
-          
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-0.5 bg-white/10 rounded-full p-1">
             {navItems.map((item) => {
