@@ -115,33 +115,26 @@ function DroppableCategory({
               <div className="flex-1 text-left min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-foreground">{category.name}</p>
-                  {isGlobal && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">padrão</span>
-                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">{products.length} produtos</p>
               </div>
               <div className="flex items-center gap-1">
-                {!isGlobal && (
-                  <>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8" 
-                      onClick={(e) => { e.stopPropagation(); onEditCategory(category); }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-destructive hover:text-destructive" 
-                      onClick={(e) => { e.stopPropagation(); onDeleteCategory(category); }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8" 
+                  onClick={(e) => { e.stopPropagation(); onEditCategory(category); }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-destructive hover:text-destructive" 
+                  onClick={(e) => { e.stopPropagation(); onDeleteCategory(category); }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
                 <Button 
                   variant="ghost" 
                   size="icon" 
