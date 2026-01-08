@@ -22,7 +22,7 @@ const features: Feature[] = [
   { name: "KDS (Tela de Produção)", start: true, pro: true },
   
   { name: "Controle & Segurança", start: "", pro: "", isCategory: true },
-  { name: "Usuários do Sistema", start: "Apenas 2", pro: "Ilimitados", highlight: true },
+  { name: "Usuários do Sistema", start: "Ilimitados", pro: "Ilimitados" },
   { name: "Permissões de Acesso (Gerente vs Garçom)", start: false, pro: true, highlight: true },
   { name: "Auditoria de Cancelamentos", start: false, pro: true, highlight: true },
   { name: "Histórico de Edições de Pedido", start: false, pro: true, highlight: true },
