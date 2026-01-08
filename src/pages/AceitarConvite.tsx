@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, CheckCircle, XCircle, UserPlus, Eye, EyeOff } from 'lucide-react';
-
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, CheckCircle, XCircle, UserPlus, Eye, EyeOff, Info } from 'lucide-react';
 interface InviteData {
   id: string;
   email: string;
@@ -35,6 +35,7 @@ export default function AceitarConvite() {
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState(tempPassword || '');
   const [showPassword, setShowPassword] = useState(false);
+  const [hasExistingAccount, setHasExistingAccount] = useState(false);
 
   useEffect(() => {
     if (!inviteId) {
@@ -312,16 +313,46 @@ export default function AceitarConvite() {
               className="bg-muted"
             />
           </div>
+
+          <div className="flex items-center space-x-2 py-2">
+            <Checkbox
+              id="hasExistingAccount"
+              checked={hasExistingAccount}
+              onCheckedChange={(checked) => {
+                setHasExistingAccount(checked === true);
+                if (checked) {
+                  setPassword(''); // Clear temp password when switching
+                }
+              }}
+            />
+            <Label 
+              htmlFor="hasExistingAccount" 
+              className="text-sm font-normal cursor-pointer"
+            >
+              Já possuo uma conta neste sistema
+            </Label>
+          </div>
+
+          {hasExistingAccount && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+              <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Use sua senha atual para entrar. A senha temporária do e-mail não funcionará.
+              </p>
+            </div>
+          )}
           
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">
+              {hasExistingAccount ? 'Sua Senha Atual' : 'Senha'}
+            </Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Digite a senha enviada por e-mail"
+                placeholder={hasExistingAccount ? 'Digite sua senha atual' : 'Digite a senha enviada por e-mail'}
               />
               <Button
                 type="button"
@@ -333,9 +364,19 @@ export default function AceitarConvite() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              A senha foi enviada no e-mail de convite.
-            </p>
+            {!hasExistingAccount && (
+              <p className="text-xs text-muted-foreground">
+                A senha foi enviada no e-mail de convite.
+              </p>
+            )}
+            {hasExistingAccount && (
+              <a 
+                href="/recuperar-senha" 
+                className="text-xs text-primary hover:underline"
+              >
+                Esqueceu sua senha?
+              </a>
+            )}
           </div>
 
           <Button
