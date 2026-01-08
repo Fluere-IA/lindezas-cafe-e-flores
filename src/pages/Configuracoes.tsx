@@ -8,7 +8,7 @@ type ConfigSection = 'cardapio' | null;
 
 const menuItems = [
   { path: '/membros', label: 'Equipe', description: 'Gerenciar membros e convites', icon: Users },
-  { path: '/onboarding', label: 'Dados do Negócio', description: 'Nome, telefone e informações da empresa', icon: Building2 },
+  { path: '/perfil', label: 'Dados do Negócio', description: 'Nome, telefone e informações da empresa', icon: Building2 },
   { path: '/onboarding', label: 'Personalização', description: 'Alterar cor e configurações visuais', icon: Palette },
   { path: '/assinatura', label: 'Assinatura', description: 'Gerenciar plano e pagamentos', icon: CreditCard },
 ];
