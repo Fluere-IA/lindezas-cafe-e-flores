@@ -52,6 +52,7 @@ interface Invite {
   status: string;
   created_at: string;
   expires_at: string;
+  accepted_at: string | null;
 }
 
 const roleLabels: Record<string, string> = {
@@ -602,6 +603,75 @@ export default function Membros() {
                         >
                           <X className="w-4 h-4" />
                         </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Accepted Invites */}
+            {allInvites.filter(i => i.status === 'accepted').length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Convites Aceitos</CardTitle>
+                  <CardDescription>
+                    Histórico de convites aceitos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {allInvites.filter(i => i.status === 'accepted').map((invite) => (
+                      <div
+                        key={invite.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                            <Check className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{invite.email}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {roleLabels[invite.role] || invite.role} • Aceito em{' '}
+                              {invite.accepted_at ? new Date(invite.accepted_at).toLocaleDateString('pt-BR') : '-'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Expired/Cancelled Invites */}
+            {allInvites.filter(i => i.status !== 'pending' && i.status !== 'accepted').length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Convites Expirados/Cancelados</CardTitle>
+                  <CardDescription>
+                    Convites que não foram aceitos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {allInvites.filter(i => i.status !== 'pending' && i.status !== 'accepted').map((invite) => (
+                      <div
+                        key={invite.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                            <X className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-muted-foreground">{invite.email}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {roleLabels[invite.role] || invite.role} • {invite.status === 'cancelled' ? 'Cancelado' : 'Expirado'}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
