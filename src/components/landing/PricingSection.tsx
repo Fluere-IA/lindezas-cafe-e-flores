@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 const plans = [
   {
     name: "Start",
-    priceId: "price_1SmdeyHx3U4iTNTbnzINv2Rl",
+    priceId: "price_1SnHsGHx3U4iTNTbpI0twuKq",
     price: "47,90",
     description: "Operação completa para toda sua equipe.",
     features: [
@@ -20,7 +20,7 @@ const plans = [
   },
   {
     name: "Pro",
-    priceId: "price_1Sn9TrHx3U4iTNTblXPO4bsJ",
+    priceId: "price_1SnHtVHx3U4iTNTbJWheQ49X",
     price: "89,90",
     description: "Auditoria, lucro real e contabilidade.",
     features: [

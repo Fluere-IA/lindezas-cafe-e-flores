@@ -11,15 +11,15 @@ const plans = [
   {
     id: 'start',
     name: "Start",
-    priceId: "price_1SmdeyHx3U4iTNTbnzINv2Rl",
-    price: "99,90",
-    description: "Para quem quer modernizar o atendimento e eliminar o papel.",
+    priceId: "price_1SnHsGHx3U4iTNTbpI0twuKq",
+    price: "47,90",
+    description: "Operação completa para toda sua equipe.",
     features: [
-      "Comanda Digital & Mesas",
-      "Frente de Caixa (PDV) Ágil",
-      "KDS (Tela de Cozinha Digital)",
-      "Equipe Ilimitada",
-      "Relatórios Básicos",
+      { text: "Usuários Ilimitados", bold: true },
+      { text: "Gestão de Cargos (Gerente, Caixa, Garçom)", bold: true },
+      { text: "Frente de Caixa (PDV) e Comanda", bold: false },
+      { text: "KDS (Tela de Cozinha)", bold: false },
+      { text: "Relatórios Básicos de Venda", bold: false },
     ],
     highlighted: false,
     icon: Zap,
@@ -27,15 +27,16 @@ const plans = [
   {
     id: 'pro',
     name: "Pro",
-    priceId: "price_1Sn9TrHx3U4iTNTblXPO4bsJ",
-    price: "149,90",
-    description: "Para quem busca controle total, segurança e mais lucro.",
+    priceId: "price_1SnHtVHx3U4iTNTbJWheQ49X",
+    price: "89,90",
+    description: "Auditoria, lucro real e contabilidade.",
     features: [
-      "Tudo do Start, mais:",
-      "Segurança Anti-Fraude (Auditoria)",
-      "Relatórios de Lucro (DRE e Curva ABC)",
-      "Mapa de Calor (Horários de Pico)",
-      "Suporte VIP (WhatsApp Direto)",
+      { text: "Tudo do Start, mais:", bold: true },
+      { text: "Auditoria Anti-Roubo (Rastreio de Cancelamentos)", bold: true },
+      { text: "DRE e Lucro Real (Saiba quanto sobrou no bolso)", bold: true },
+      { text: "Curva ABC (Ranking de Produtos)", bold: false },
+      { text: "Exportação para Contador", bold: false },
+      { text: "Suporte Prioritário", bold: false },
     ],
     highlighted: true,
     icon: Crown,
@@ -217,8 +218,8 @@ const Planos = () => {
                       <Check className={`h-4 w-4 flex-shrink-0 mt-0.5 ${
                         plan.highlighted ? 'text-green-300' : 'text-green-500'
                       }`} />
-                      <span className={`text-sm ${plan.highlighted ? 'text-primary-foreground/90' : 'text-muted-foreground'}`}>
-                        {feature}
+                      <span className={`text-sm ${plan.highlighted ? 'text-primary-foreground/90' : 'text-muted-foreground'} ${feature.bold ? 'font-semibold' : ''}`}>
+                        {feature.text}
                       </span>
                     </li>
                   ))}
