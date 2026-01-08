@@ -491,16 +491,19 @@ export default function Perfil() {
                           <Label htmlFor="tableCount" className="text-sm font-medium">
                             Nº de Mesas
                           </Label>
-                          <Input
-                            id="tableCount"
-                            type="number"
-                            value={tableCount}
-                            onChange={(e) => setTableCount(parseInt(e.target.value) || 1)}
-                            min={1}
-                            max={100}
-                            className="h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
-                            disabled={isSubmittingBusiness}
-                          />
+                          <div className="relative">
+                            <LayoutGrid className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="tableCount"
+                              type="number"
+                              value={tableCount}
+                              onChange={(e) => setTableCount(parseInt(e.target.value) || 1)}
+                              min={1}
+                              max={100}
+                              className="pl-10 h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                              disabled={isSubmittingBusiness}
+                            />
+                          </div>
                         </div>
                       </div>
 
