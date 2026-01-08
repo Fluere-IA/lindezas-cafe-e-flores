@@ -132,10 +132,10 @@ serve(async (req) => {
       const priceId = subscription.items.data[0].price.id;
       productId = subscription.items.data[0].price.product;
       
-      // Map price IDs to plan names
-      if (priceId === "price_1SnHsGHx3U4iTNTbpI0twuKq") {
+      // Map price IDs to plan names (Production)
+      if (priceId === "price_1SnI4HHMyb0hj0n72D4sZjWE") {
         planName = "Start";
-      } else if (priceId === "price_1SnHtVHx3U4iTNTbJWheQ49X") {
+      } else if (priceId === "price_1SnI5SHMyb0hj0n7XZ4n1heP") {
         planName = "Pro";
       }
       
