@@ -117,43 +117,45 @@ export default function AceitarConvite() {
     setIsProcessing(true);
 
     try {
-      // Try to sign in first (user might already exist)
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: invite.email,
-        password: password,
-      });
-
       let userId: string;
 
-      if (signInError) {
-        // If sign in fails, try to sign up
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // First, try to sign up (new user)
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: invite.email,
+        password: password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: {
+            full_name: fullName.trim(),
+          },
+        },
+      });
+
+      // Check if user already exists
+      if (signUpError?.message?.includes('already registered') || 
+          (signUpData.user && signUpData.user.identities?.length === 0)) {
+        // User exists, try to sign in with the provided password
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: invite.email,
           password: password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-            data: {
-              full_name: fullName.trim(),
-            },
-          },
         });
 
-        if (signUpError) {
-          throw new Error(signUpError.message);
+        if (signInError) {
+          throw new Error('Usuário já existe. Faça login com sua senha atual e aceite o convite pelo painel.');
         }
 
-        if (!signUpData.user) {
-          throw new Error('Erro ao criar conta.');
-        }
-
-        userId = signUpData.user.id;
-      } else {
         userId = signInData.user.id;
         
-        // Update user metadata with full name if it's a returning user
+        // Update user metadata with full name
         await supabase.auth.updateUser({
           data: { full_name: fullName.trim() },
         });
+      } else if (signUpError) {
+        throw new Error(signUpError.message);
+      } else if (!signUpData.user) {
+        throw new Error('Erro ao criar conta.');
+      } else {
+        userId = signUpData.user.id;
       }
 
       // Add user to organization
