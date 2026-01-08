@@ -22,6 +22,10 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+  DragOverlay,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -60,8 +64,8 @@ interface Category {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-// Sortable Category Component
-function SortableCategory({ 
+// Droppable Category Component
+function DroppableCategory({ 
   category, 
   products, 
   isExpanded, 
@@ -71,8 +75,8 @@ function SortableCategory({
   onAddProduct,
   onEditProduct,
   onDeleteProduct,
-  onProductReorder,
   search,
+  isOver,
 }: {
   category: Category;
   products: Product[];
@@ -83,67 +87,28 @@ function SortableCategory({
   onAddProduct: (categoryId: string) => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (product: Product) => void;
-  onProductReorder: (categoryId: string, oldIndex: number, newIndex: number) => void;
   search: string;
+  isOver: boolean;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: category.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const { setNodeRef } = useDroppable({ id: `category-${category.id}` });
 
   const isGlobal = !category.organization_id;
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleProductDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = products.findIndex(p => p.id === active.id);
-      const newIndex = products.findIndex(p => p.id === over.id);
-      onProductReorder(category.id, oldIndex, newIndex);
-    }
-  };
-
   return (
     <div
       ref={setNodeRef}
-      style={style}
       className={cn(
-        "bg-card rounded-xl border border-border/50 overflow-hidden transition-shadow",
-        isDragging && "shadow-lg opacity-90 z-50"
+        "bg-card rounded-xl border border-border/50 overflow-hidden transition-all",
+        isOver && "ring-2 ring-primary border-primary"
       )}
     >
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <div className="flex items-center">
-          {!isGlobal && (
-            <button
-              {...attributes}
-              {...listeners}
-              className="p-3 cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors touch-none"
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
           <CollapsibleTrigger asChild>
-            <button className={cn(
-              "flex-1 flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors",
-              isGlobal && "pl-4"
-            )}>
+            <button className="flex-1 flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors pl-4">
               <div className="p-2 rounded-lg bg-primary/10">
                 <Tag className="h-4 w-4 text-primary" />
               </div>
@@ -193,9 +158,133 @@ function SortableCategory({
         <CollapsibleContent>
           <div className="border-t border-border/50 px-3 pb-2">
             {filteredProducts.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-3 text-center">Nenhum produto nesta categoria</p>
+              <p className="text-sm text-muted-foreground py-3 text-center">
+                {isOver ? "Solte aqui para mover" : "Nenhum produto nesta categoria"}
+              </p>
             ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProductDragEnd}>
+              <SortableContext items={filteredProducts.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                {filteredProducts.map((product) => (
+                  <SortableProduct 
+                    key={product.id} 
+                    product={product} 
+                    onEdit={onEditProduct}
+                    onDelete={onDeleteProduct}
+                  />
+                ))}
+              </SortableContext>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
+// Sortable Category Wrapper (for reordering categories)
+function SortableCategoryWrapper({ 
+  category, 
+  children 
+}: { 
+  category: Category;
+  children: React.ReactNode;
+}) {
+  const isGlobal = !category.organization_id;
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id, disabled: isGlobal });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  if (isGlobal) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "relative",
+        isDragging && "opacity-50"
+      )}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors touch-none z-10 rounded-l-xl"
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </button>
+      <div className="pl-8">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Uncategorized Droppable Component
+function UncategorizedDroppable({
+  products,
+  isExpanded,
+  onToggle,
+  onEditProduct,
+  onDeleteProduct,
+  search,
+  isOver,
+}: {
+  products: Product[];
+  isExpanded: boolean;
+  onToggle: () => void;
+  onEditProduct: (product: Product) => void;
+  onDeleteProduct: (product: Product) => void;
+  search: string;
+  isOver: boolean;
+}) {
+  const { setNodeRef } = useDroppable({ id: 'category-uncategorized' });
+  
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div ref={setNodeRef}>
+      <Collapsible open={isExpanded} onOpenChange={onToggle}>
+        <div className={cn(
+          "bg-card rounded-xl border border-dashed border-border overflow-hidden transition-all",
+          isOver && "ring-2 ring-primary border-primary"
+        )}>
+          <CollapsibleTrigger asChild>
+            <button className="w-full flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors">
+              <div className="p-2 rounded-lg bg-muted">
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-medium text-muted-foreground">Sem categoria</p>
+                <p className="text-xs text-muted-foreground">{products.length} produtos</p>
+              </div>
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="border-t border-dashed border-border px-3 pb-2">
+              {filteredProducts.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-3 text-center">
+                  {isOver ? "Solte aqui para mover" : "Nenhum produto sem categoria"}
+                </p>
+              ) : (
                 <SortableContext items={filteredProducts.map(p => p.id)} strategy={verticalListSortingStrategy}>
                   {filteredProducts.map((product) => (
                     <SortableProduct 
@@ -206,10 +295,10 @@ function SortableCategory({
                     />
                   ))}
                 </SortableContext>
-              </DndContext>
-            )}
-          </div>
-        </CollapsibleContent>
+              )}
+            </div>
+          </CollapsibleContent>
+        </div>
       </Collapsible>
     </div>
   );
@@ -299,6 +388,8 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   });
   const [categoryFormData, setCategoryFormData] = useState({ name: '' });
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+  const [activeProductId, setActiveProductId] = useState<string | null>(null);
+  const [overCategoryId, setOverCategoryId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { currentOrganization } = useOrganization();
@@ -365,19 +456,136 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
     setExpandedCategories(newExpanded);
   };
 
-  // Category drag end handler
-  const handleCategoryDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
+  // Find the active product for drag overlay
+  const activeProduct = activeProductId ? products.find(p => p.id === activeProductId) : null;
 
-    const oldIndex = customCategories.findIndex(c => c.id === active.id);
-    const newIndex = customCategories.findIndex(c => c.id === over.id);
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    // Check if it's a product (not a category)
+    const isProduct = products.some(p => p.id === active.id);
+    if (isProduct) {
+      setActiveProductId(active.id as string);
+    }
+  };
+
+  // Handle drag over (detect which category we're hovering)
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    if (!over) {
+      setOverCategoryId(null);
+      return;
+    }
+
+    // Check if we're over a category droppable
+    const overId = over.id as string;
+    if (overId.startsWith('category-')) {
+      setOverCategoryId(overId.replace('category-', ''));
+    } else {
+      // Check if we're over a product - find its category
+      const overProduct = products.find(p => p.id === overId);
+      if (overProduct) {
+        setOverCategoryId(overProduct.category_id || 'uncategorized');
+      }
+    }
+  };
+
+  // Unified drag end handler for products and categories
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveProductId(null);
+    setOverCategoryId(null);
     
-    if (oldIndex === -1 || newIndex === -1) return;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Check if it's a product drag
+    const isProductDrag = products.some(p => p.id === activeId);
+    
+    if (isProductDrag) {
+      const draggedProduct = products.find(p => p.id === activeId);
+      if (!draggedProduct) return;
+
+      // Determine target category
+      let targetCategoryId: string | null = null;
+      
+      if (overId.startsWith('category-')) {
+        // Dropped on a category zone
+        targetCategoryId = overId.replace('category-', '');
+        if (targetCategoryId === 'uncategorized') targetCategoryId = null;
+      } else {
+        // Dropped on another product - get its category
+        const overProduct = products.find(p => p.id === overId);
+        if (overProduct) {
+          targetCategoryId = overProduct.category_id;
+        } else {
+          // Check if it's a category (for category reordering)
+          const isCategory = categories.some(c => c.id === overId);
+          if (isCategory && activeId !== overId) {
+            await handleCategoryReorder(activeId, overId);
+          }
+          return;
+        }
+      }
+
+      // Same category - reorder
+      if (draggedProduct.category_id === targetCategoryId) {
+        const categoryProducts = targetCategoryId 
+          ? productsByCategory[targetCategoryId] || []
+          : uncategorizedProducts;
+        
+        const oldIndex = categoryProducts.findIndex(p => p.id === activeId);
+        const newIndex = categoryProducts.findIndex(p => p.id === overId);
+        
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          const reordered = arrayMove(categoryProducts, oldIndex, newIndex);
+          try {
+            const updates = reordered.map((prod, index) => 
+              supabase.from('products').update({ position: index }).eq('id', prod.id)
+            );
+            await Promise.all(updates);
+            queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+          } catch (error) {
+            logError(error, 'Error reordering products');
+            toast.error('Erro ao reordenar produtos');
+          }
+        }
+      } else {
+        // Different category - move product
+        try {
+          const { error } = await supabase
+            .from('products')
+            .update({ category_id: targetCategoryId, position: 0 })
+            .eq('id', activeId);
+          
+          if (error) throw error;
+          
+          toast.success('Produto movido para nova categoria');
+          queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+          queryClient.invalidateQueries({ queryKey: ['products'] });
+        } catch (error) {
+          logError(error, 'Error moving product');
+          toast.error('Erro ao mover produto');
+        }
+      }
+    } else {
+      // Category reorder
+      await handleCategoryReorder(activeId, overId);
+    }
+  };
+
+  // Category reorder helper
+  const handleCategoryReorder = async (activeId: string, overId: string) => {
+    const oldIndex = customCategories.findIndex(c => c.id === activeId);
+    const newIndex = customCategories.findIndex(c => c.id === overId);
+    
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
 
     const reordered = arrayMove(customCategories, oldIndex, newIndex);
     
-    // Update positions in database
     try {
       const updates = reordered.map((cat, index) => 
         supabase.from('categories').update({ position: index }).eq('id', cat.id)
@@ -388,24 +596,6 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
     } catch (error) {
       logError(error, 'Error reordering categories');
       toast.error('Erro ao reordenar categorias');
-    }
-  };
-
-  // Product drag end handler
-  const handleProductReorder = async (categoryId: string, oldIndex: number, newIndex: number) => {
-    const categoryProducts = productsByCategory[categoryId] || [];
-    const reordered = arrayMove(categoryProducts, oldIndex, newIndex);
-    
-    try {
-      const updates = reordered.map((prod, index) => 
-        supabase.from('products').update({ position: index }).eq('id', prod.id)
-      );
-      await Promise.all(updates);
-      queryClient.invalidateQueries({ queryKey: ['products-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    } catch (error) {
-      logError(error, 'Error reordering products');
-      toast.error('Erro ao reordenar produtos');
     }
   };
 
@@ -757,39 +947,45 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
 
       {/* Drag hint */}
       <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
-        <GripVertical className="h-3 w-3" /> Arraste para reordenar
+        <GripVertical className="h-3 w-3" /> Arraste para reordenar ou mover entre categorias
       </p>
 
-      {/* Categories & Products */}
+      {/* Categories & Products - Single DndContext for cross-category movement */}
       {isLoading ? (
         <div className="text-center py-8 text-muted-foreground">Carregando...</div>
       ) : (
-        <div className="space-y-2">
-          {/* Global categories (not draggable) */}
-          {globalCategories.map((category) => (
-            <SortableCategory
-              key={category.id}
-              category={category}
-              products={productsByCategory[category.id] || []}
-              isExpanded={expandedCategories.has(category.id)}
-              onToggle={() => toggleCategory(category.id)}
-              onEditCategory={openEditCategory}
-              onDeleteCategory={confirmDeleteCategory}
-              onAddProduct={openNewProduct}
-              onEditProduct={openEditProduct}
-              onDeleteProduct={(p) => { setProductToDelete(p); setDeleteProductDialogOpen(true); }}
-              onProductReorder={handleProductReorder}
-              search={search}
-            />
-          ))}
+        <DndContext 
+          sensors={sensors} 
+          collisionDetection={closestCenter} 
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="space-y-2">
+            {/* All categories with products */}
+            <SortableContext items={[...customCategories.map(c => c.id), ...products.map(p => p.id)]} strategy={verticalListSortingStrategy}>
+              {/* Global categories */}
+              {globalCategories.map((category) => (
+                <DroppableCategory
+                  key={category.id}
+                  category={category}
+                  products={productsByCategory[category.id] || []}
+                  isExpanded={expandedCategories.has(category.id)}
+                  onToggle={() => toggleCategory(category.id)}
+                  onEditCategory={openEditCategory}
+                  onDeleteCategory={confirmDeleteCategory}
+                  onAddProduct={openNewProduct}
+                  onEditProduct={openEditProduct}
+                  onDeleteProduct={(p) => { setProductToDelete(p); setDeleteProductDialogOpen(true); }}
+                  search={search}
+                  isOver={overCategoryId === category.id}
+                />
+              ))}
 
-          {/* Custom categories (draggable) */}
-          {customCategories.length > 0 && (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
-              <SortableContext items={customCategories.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                {customCategories.map((category) => (
-                  <SortableCategory
-                    key={category.id}
+              {/* Custom categories (sortable) */}
+              {customCategories.map((category) => (
+                <SortableCategoryWrapper key={category.id} category={category}>
+                  <DroppableCategory
                     category={category}
                     products={productsByCategory[category.id] || []}
                     isExpanded={expandedCategories.has(category.id)}
@@ -799,60 +995,48 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
                     onAddProduct={openNewProduct}
                     onEditProduct={openEditProduct}
                     onDeleteProduct={(p) => { setProductToDelete(p); setDeleteProductDialogOpen(true); }}
-                    onProductReorder={handleProductReorder}
                     search={search}
+                    isOver={overCategoryId === category.id}
                   />
-                ))}
-              </SortableContext>
-            </DndContext>
-          )}
+                </SortableCategoryWrapper>
+              ))}
 
-          {/* Uncategorized products */}
-          {uncategorizedProducts.length > 0 && (
-            <Collapsible open={expandedCategories.has('uncategorized')} onOpenChange={() => toggleCategory('uncategorized')}>
-              <div className="bg-card rounded-xl border border-dashed border-border overflow-hidden">
-                <CollapsibleTrigger asChild>
-                  <button className="w-full flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-medium text-muted-foreground">Sem categoria</p>
-                      <p className="text-xs text-muted-foreground">{uncategorizedProducts.length} produtos</p>
-                    </div>
-                    {expandedCategories.has('uncategorized') ? (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="border-t border-dashed border-border px-3 pb-2">
-                    {uncategorizedProducts
-                      .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
-                      .map((product) => (
-                        <SortableProduct 
-                          key={product.id} 
-                          product={product} 
-                          onEdit={openEditProduct}
-                          onDelete={(p) => { setProductToDelete(p); setDeleteProductDialogOpen(true); }}
-                        />
-                      ))}
-                  </div>
-                </CollapsibleContent>
+              {/* Uncategorized products */}
+              {uncategorizedProducts.length > 0 && (
+                <UncategorizedDroppable
+                  products={uncategorizedProducts}
+                  isExpanded={expandedCategories.has('uncategorized')}
+                  onToggle={() => toggleCategory('uncategorized')}
+                  onEditProduct={openEditProduct}
+                  onDeleteProduct={(p) => { setProductToDelete(p); setDeleteProductDialogOpen(true); }}
+                  search={search}
+                  isOver={overCategoryId === 'uncategorized'}
+                />
+              )}
+            </SortableContext>
+
+            {products.length === 0 && (
+              <div className="text-center py-8">
+                <Package className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+                <p className="text-muted-foreground">Nenhum produto cadastrado</p>
+                <p className="text-sm text-muted-foreground">Adicione produtos ou importe via foto</p>
               </div>
-            </Collapsible>
-          )}
+            )}
+          </div>
 
-          {products.length === 0 && (
-            <div className="text-center py-8">
-              <Package className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-              <p className="text-muted-foreground">Nenhum produto cadastrado</p>
-              <p className="text-sm text-muted-foreground">Adicione produtos ou importe via foto</p>
-            </div>
-          )}
-        </div>
+          {/* Drag Overlay */}
+          <DragOverlay>
+            {activeProduct && (
+              <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-card border shadow-lg">
+                <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{activeProduct.name}</p>
+                </div>
+                <p className="text-sm font-semibold text-primary">{formatCurrency(activeProduct.price)}</p>
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {/* Product Dialog */}
