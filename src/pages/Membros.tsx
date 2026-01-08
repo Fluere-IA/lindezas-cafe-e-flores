@@ -39,6 +39,9 @@ interface Member {
   role: string;
   created_at: string;
   user_email?: string;
+  profile?: {
+    full_name: string | null;
+  };
 }
 
 interface Invite {
@@ -110,14 +113,32 @@ export default function Membros() {
     queryFn: async () => {
       if (!currentOrganization?.id) return [];
       
-      const { data, error } = await supabase
+      // First get organization members
+      const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
         .select('*')
         .eq('organization_id', currentOrganization.id)
         .order('created_at');
 
-      if (error) throw error;
-      return data as Member[];
+      if (membersError) throw membersError;
+      if (!membersData || membersData.length === 0) return [];
+
+      // Get user IDs to fetch profiles
+      const userIds = membersData.map(m => m.user_id);
+      
+      // Fetch profiles for these users
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+
+      // Map profiles to members
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+      
+      return membersData.map(member => ({
+        ...member,
+        profile: profilesMap.get(member.user_id) || null,
+      })) as Member[];
     },
     enabled: !!currentOrganization?.id,
   });
@@ -453,7 +474,9 @@ export default function Membros() {
                           </div>
                           <div>
                             <p className="font-medium">
-                              {member.user_id === user?.id ? 'Você' : `Membro ${member.id.slice(0, 6)}`}
+                              {member.user_id === user?.id 
+                                ? 'Você' 
+                                : member.profile?.full_name || `Membro ${member.user_id.slice(0, 6)}`}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {roleLabels[member.role] || member.role}
