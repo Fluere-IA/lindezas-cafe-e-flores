@@ -31,6 +31,15 @@ const tiposEstabelecimento = [
   { value: 'outro', label: 'Outro' },
 ];
 
+// Phone mask function
+const formatPhone = (value: string): string => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+};
+
 // Validation schemas
 const profileSchema = z.object({
   fullName: z.string().max(100, 'Nome deve ter no máximo 100 caracteres'),
@@ -452,19 +461,21 @@ export default function Perfil() {
                         <Label htmlFor="businessType" className="text-sm font-medium">
                           Tipo de Estabelecimento
                         </Label>
-                        <Select value={businessType} onValueChange={setBusinessType} disabled={isSubmittingBusiness}>
-                          <SelectTrigger className="h-11 bg-muted/50 border-0">
-                            <LayoutGrid className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <SelectValue placeholder="Selecione..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {tiposEstabelecimento.map((tipo) => (
-                              <SelectItem key={tipo.value} value={tipo.value}>
-                                {tipo.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="relative">
+                          <LayoutGrid className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                          <Select value={businessType} onValueChange={setBusinessType} disabled={isSubmittingBusiness}>
+                            <SelectTrigger className="h-11 pl-10 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20">
+                              <SelectValue placeholder="Selecione o tipo..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {tiposEstabelecimento.map((tipo) => (
+                                <SelectItem key={tipo.value} value={tipo.value}>
+                                  {tipo.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
@@ -478,11 +489,10 @@ export default function Perfil() {
                               id="businessPhone"
                               type="tel"
                               value={businessPhone}
-                              onChange={(e) => setBusinessPhone(e.target.value)}
+                              onChange={(e) => setBusinessPhone(formatPhone(e.target.value))}
                               placeholder="(00) 00000-0000"
                               className="pl-10 h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
                               disabled={isSubmittingBusiness}
-                              maxLength={20}
                             />
                           </div>
                         </div>
