@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Search, Pencil, Trash2, Package, ImageIcon, Loader2, Tag, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Pencil, Trash2, Package, ImageIcon, Loader2, Tag, ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -14,6 +14,23 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { logError } from '@/lib/errorLogger';
 import { productSchema, categorySchema } from '@/lib/validation';
 import { cn } from '@/lib/utils';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface GerenciarCardapioProps {
   onBack: () => void;
@@ -28,6 +45,7 @@ interface Product {
   is_active: boolean;
   stock: number;
   organization_id: string | null;
+  position: number;
 }
 
 interface Category {
@@ -36,10 +54,230 @@ interface Category {
   type: string;
   icon: string | null;
   organization_id: string | null;
+  position: number;
 }
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
+// Sortable Category Component
+function SortableCategory({ 
+  category, 
+  products, 
+  isExpanded, 
+  onToggle, 
+  onEditCategory, 
+  onDeleteCategory, 
+  onAddProduct,
+  onEditProduct,
+  onDeleteProduct,
+  onProductReorder,
+  search,
+}: {
+  category: Category;
+  products: Product[];
+  isExpanded: boolean;
+  onToggle: () => void;
+  onEditCategory: (cat: Category) => void;
+  onDeleteCategory: (cat: Category) => void;
+  onAddProduct: (categoryId: string) => void;
+  onEditProduct: (product: Product) => void;
+  onDeleteProduct: (product: Product) => void;
+  onProductReorder: (categoryId: string, oldIndex: number, newIndex: number) => void;
+  search: string;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const isGlobal = !category.organization_id;
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleProductDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = products.findIndex(p => p.id === active.id);
+      const newIndex = products.findIndex(p => p.id === over.id);
+      onProductReorder(category.id, oldIndex, newIndex);
+    }
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "bg-card rounded-xl border border-border/50 overflow-hidden transition-shadow",
+        isDragging && "shadow-lg opacity-90 z-50"
+      )}
+    >
+      <Collapsible open={isExpanded} onOpenChange={onToggle}>
+        <div className="flex items-center">
+          {!isGlobal && (
+            <button
+              {...attributes}
+              {...listeners}
+              className="p-3 cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors touch-none"
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
+          <CollapsibleTrigger asChild>
+            <button className={cn(
+              "flex-1 flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors",
+              isGlobal && "pl-4"
+            )}>
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Tag className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1 text-left min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-foreground">{category.name}</p>
+                  {isGlobal && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">padrão</span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">{products.length} produtos</p>
+              </div>
+              <div className="flex items-center gap-1">
+                {!isGlobal && (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8" 
+                      onClick={(e) => { e.stopPropagation(); onEditCategory(category); }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-destructive hover:text-destructive" 
+                      onClick={(e) => { e.stopPropagation(); onDeleteCategory(category); }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8" 
+                  onClick={(e) => { e.stopPropagation(); onAddProduct(category.id); }}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+              </div>
+            </button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent>
+          <div className="border-t border-border/50 px-3 pb-2">
+            {filteredProducts.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-3 text-center">Nenhum produto nesta categoria</p>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProductDragEnd}>
+                <SortableContext items={filteredProducts.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                  {filteredProducts.map((product) => (
+                    <SortableProduct 
+                      key={product.id} 
+                      product={product} 
+                      onEdit={onEditProduct}
+                      onDelete={onDeleteProduct}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
+// Sortable Product Component
+function SortableProduct({ 
+  product, 
+  onEdit, 
+  onDelete 
+}: { 
+  product: Product; 
+  onEdit: (product: Product) => void;
+  onDelete: (product: Product) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: product.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-2 py-2 px-1 rounded-lg hover:bg-muted/50 transition-colors",
+        isDragging && "shadow-md bg-card opacity-90 z-50"
+      )}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="p-1 cursor-grab active:cursor-grabbing hover:bg-muted rounded transition-colors touch-none"
+      >
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+      </button>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">{product.name}</p>
+        {product.description && (
+          <p className="text-xs text-muted-foreground truncate">{product.description}</p>
+        )}
+      </div>
+      <p className="text-sm font-semibold text-primary shrink-0">{formatCurrency(product.price)}</p>
+      <div className="flex gap-1 shrink-0">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(product)}>
+          <Pencil className="h-3.5 w-3.5" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-7 w-7 text-destructive hover:text-destructive" 
+          onClick={() => onDelete(product)}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   const [search, setSearch] = useState('');
@@ -65,6 +303,11 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   const queryClient = useQueryClient();
   const { currentOrganization } = useOrganization();
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
   // Fetch products
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['products-admin', currentOrganization?.id],
@@ -73,7 +316,8 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
         .from('products')
         .select('*')
         .eq('is_active', true)
-        .order('name');
+        .order('position', { ascending: true })
+        .order('name', { ascending: true });
       if (error) throw error;
       return data as Product[];
     },
@@ -88,7 +332,8 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
         .from('categories')
         .select('*')
         .or(`organization_id.eq.${currentOrganization?.id},organization_id.is.null`)
-        .order('name');
+        .order('position', { ascending: true })
+        .order('name', { ascending: true });
       if (error) throw error;
       return data as Category[];
     },
@@ -96,6 +341,10 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   });
 
   const isLoading = productsLoading || categoriesLoading;
+
+  // Separate global and custom categories
+  const globalCategories = categories.filter(c => !c.organization_id);
+  const customCategories = categories.filter(c => c.organization_id);
 
   // Group products by category
   const productsByCategory = categories.reduce((acc, category) => {
@@ -106,10 +355,6 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   // Products without category
   const uncategorizedProducts = products.filter(p => !p.category_id);
 
-  // Filter by search
-  const filterProducts = (prods: Product[]) => 
-    prods.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
-
   const toggleCategory = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
     if (newExpanded.has(categoryId)) {
@@ -118,6 +363,50 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
       newExpanded.add(categoryId);
     }
     setExpandedCategories(newExpanded);
+  };
+
+  // Category drag end handler
+  const handleCategoryDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = customCategories.findIndex(c => c.id === active.id);
+    const newIndex = customCategories.findIndex(c => c.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(customCategories, oldIndex, newIndex);
+    
+    // Update positions in database
+    try {
+      const updates = reordered.map((cat, index) => 
+        supabase.from('categories').update({ position: index }).eq('id', cat.id)
+      );
+      await Promise.all(updates);
+      queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    } catch (error) {
+      logError(error, 'Error reordering categories');
+      toast.error('Erro ao reordenar categorias');
+    }
+  };
+
+  // Product drag end handler
+  const handleProductReorder = async (categoryId: string, oldIndex: number, newIndex: number) => {
+    const categoryProducts = productsByCategory[categoryId] || [];
+    const reordered = arrayMove(categoryProducts, oldIndex, newIndex);
+    
+    try {
+      const updates = reordered.map((prod, index) => 
+        supabase.from('products').update({ position: index }).eq('id', prod.id)
+      );
+      await Promise.all(updates);
+      queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    } catch (error) {
+      logError(error, 'Error reordering products');
+      toast.error('Erro ao reordenar produtos');
+    }
   };
 
   // Product handlers
@@ -214,7 +503,6 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   };
 
   const openEditCategory = (category: Category) => {
-    // Only allow editing custom categories
     if (!category.organization_id) {
       toast.error('Categorias padrão não podem ser editadas');
       return;
@@ -251,7 +539,9 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
         if (error) throw error;
         toast.success('Categoria atualizada');
       } else {
-        const { error } = await supabase.from('categories').insert(categoryData);
+        // Get max position for new category
+        const maxPosition = Math.max(0, ...customCategories.map(c => c.position || 0));
+        const { error } = await supabase.from('categories').insert({ ...categoryData, position: maxPosition + 1 });
         if (error) throw error;
         toast.success('Categoria adicionada');
       }
@@ -278,7 +568,6 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
     if (!categoryToDelete) return;
     
     try {
-      // Remove category reference from products first
       await supabase
         .from('products')
         .update({ category_id: null })
@@ -350,12 +639,14 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
           if (existingCat) {
             categoryMap[catName] = existingCat.id;
           } else {
+            const maxPosition = Math.max(0, ...customCategories.map(c => c.position || 0));
             const { data: cat, error: catError } = await supabase
               .from('categories')
               .insert({
                 name: catName,
                 type: 'cafeteria',
                 organization_id: currentOrganization?.id,
+                position: maxPosition + 1,
               })
               .select()
               .single();
@@ -366,7 +657,7 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
           }
         }
 
-        const productsToInsert = data.items.map((item: any) => ({
+        const productsToInsert = data.items.map((item: any, index: number) => ({
           name: item.name,
           price: parseFloat(item.price) || 0,
           description: item.description || null,
@@ -374,6 +665,7 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
           organization_id: currentOrganization?.id,
           is_active: true,
           stock: 100,
+          position: index,
         }));
 
         const { error: prodError } = await supabase.from('products').insert(productsToInsert);
@@ -398,34 +690,6 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
       }
     }
   };
-
-  const renderProductItem = (product: Product) => (
-    <div
-      key={product.id}
-      className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors"
-    >
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{product.name}</p>
-        {product.description && (
-          <p className="text-xs text-muted-foreground truncate">{product.description}</p>
-        )}
-      </div>
-      <p className="text-sm font-semibold text-primary shrink-0">{formatCurrency(product.price)}</p>
-      <div className="flex gap-1 shrink-0">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditProduct(product)}>
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-7 w-7 text-destructive hover:text-destructive" 
-          onClick={() => { setProductToDelete(product); setDeleteProductDialogOpen(true); }}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-4">
@@ -491,80 +755,57 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
         />
       </div>
 
+      {/* Drag hint */}
+      <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+        <GripVertical className="h-3 w-3" /> Arraste para reordenar
+      </p>
+
       {/* Categories & Products */}
       {isLoading ? (
         <div className="text-center py-8 text-muted-foreground">Carregando...</div>
       ) : (
         <div className="space-y-2">
-          {/* Categorized products */}
-          {categories.map((category) => {
-            const categoryProducts = filterProducts(productsByCategory[category.id] || []);
-            const isExpanded = expandedCategories.has(category.id);
-            const isGlobal = !category.organization_id;
-            
-            return (
-              <Collapsible key={category.id} open={isExpanded} onOpenChange={() => toggleCategory(category.id)}>
-                <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
-                  <CollapsibleTrigger asChild>
-                    <button className="w-full flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Tag className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-foreground">{category.name}</p>
-                          {isGlobal && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">padrão</span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{(productsByCategory[category.id] || []).length} produtos</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {!isGlobal && (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8" 
-                              onClick={(e) => { e.stopPropagation(); openEditCategory(category); }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-destructive hover:text-destructive" 
-                              onClick={(e) => { e.stopPropagation(); confirmDeleteCategory(category); }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8" 
-                          onClick={(e) => { e.stopPropagation(); openNewProduct(category.id); }}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                        {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                      </div>
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="border-t border-border/50 px-3 pb-2">
-                      {categoryProducts.length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-3 text-center">Nenhum produto nesta categoria</p>
-                      ) : (
-                        categoryProducts.map(renderProductItem)
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </div>
-              </Collapsible>
-            );
-          })}
+          {/* Global categories (not draggable) */}
+          {globalCategories.map((category) => (
+            <SortableCategory
+              key={category.id}
+              category={category}
+              products={productsByCategory[category.id] || []}
+              isExpanded={expandedCategories.has(category.id)}
+              onToggle={() => toggleCategory(category.id)}
+              onEditCategory={openEditCategory}
+              onDeleteCategory={confirmDeleteCategory}
+              onAddProduct={openNewProduct}
+              onEditProduct={openEditProduct}
+              onDeleteProduct={(p) => { setProductToDelete(p); setDeleteProductDialogOpen(true); }}
+              onProductReorder={handleProductReorder}
+              search={search}
+            />
+          ))}
+
+          {/* Custom categories (draggable) */}
+          {customCategories.length > 0 && (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+              <SortableContext items={customCategories.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                {customCategories.map((category) => (
+                  <SortableCategory
+                    key={category.id}
+                    category={category}
+                    products={productsByCategory[category.id] || []}
+                    isExpanded={expandedCategories.has(category.id)}
+                    onToggle={() => toggleCategory(category.id)}
+                    onEditCategory={openEditCategory}
+                    onDeleteCategory={confirmDeleteCategory}
+                    onAddProduct={openNewProduct}
+                    onEditProduct={openEditProduct}
+                    onDeleteProduct={(p) => { setProductToDelete(p); setDeleteProductDialogOpen(true); }}
+                    onProductReorder={handleProductReorder}
+                    search={search}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          )}
 
           {/* Uncategorized products */}
           {uncategorizedProducts.length > 0 && (
@@ -588,7 +829,16 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="border-t border-dashed border-border px-3 pb-2">
-                    {filterProducts(uncategorizedProducts).map(renderProductItem)}
+                    {uncategorizedProducts
+                      .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+                      .map((product) => (
+                        <SortableProduct 
+                          key={product.id} 
+                          product={product} 
+                          onEdit={openEditProduct}
+                          onDelete={(p) => { setProductToDelete(p); setDeleteProductDialogOpen(true); }}
+                        />
+                      ))}
                   </div>
                 </CollapsibleContent>
               </div>
