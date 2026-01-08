@@ -15,6 +15,7 @@ interface InviteEmailRequest {
   organizationName: string;
   role: string;
   inviteUrl: string;
+  tempPassword: string;
 }
 
 const roleLabels: Record<string, string> = {
@@ -34,7 +35,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, inviterName, organizationName, role, inviteUrl }: InviteEmailRequest = await req.json();
+    const { to, inviterName, organizationName, role, inviteUrl, tempPassword }: InviteEmailRequest = await req.json();
 
     console.log(`Sending invite email to: ${to} for organization: ${organizationName}`);
 
@@ -63,10 +64,21 @@ const handler = async (req: Request): Promise<Response> => {
                 <p style="color: #64748b; line-height: 1.6; margin: 0 0 24px;">
                   <strong>${inviterName || 'Um administrador'}</strong> convidou você para fazer parte de <strong>${organizationName}</strong> como <strong>${roleLabel}</strong>.
                 </p>
+                
+                <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 0 0 24px;">
+                  <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Suas credenciais de acesso:</p>
+                  <p style="color: #1e293b; font-size: 14px; margin: 0 0 4px;"><strong>Email:</strong> ${to}</p>
+                  <p style="color: #1e293b; font-size: 14px; margin: 0;"><strong>Senha:</strong> ${tempPassword}</p>
+                </div>
+                
                 <a href="${inviteUrl}" style="display: inline-block; background: #1E40AF; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600;">
-                  Aceitar Convite
+                  Aceitar Convite e Entrar
                 </a>
+                
                 <p style="color: #94a3b8; font-size: 13px; margin: 24px 0 0; line-height: 1.5;">
+                  Recomendamos alterar sua senha após o primeiro acesso.
+                </p>
+                <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0; line-height: 1.5;">
                   Se você não esperava este convite, pode ignorar este email.
                 </p>
               </div>

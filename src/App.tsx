@@ -29,6 +29,7 @@ const Organizacoes = lazy(() => import("./pages/Organizacoes"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Membros = lazy(() => import("./pages/Membros"));
 const Perfil = lazy(() => import("./pages/Perfil"));
+const AceitarConvite = lazy(() => import("./pages/AceitarConvite"));
 const SuperDashboard = lazy(() => import("./pages/SuperDashboard"));
 
 const Relatorios = lazy(() => import("./pages/Relatorios"));
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="/cadastro" element={<Cadastro />} />
                 <Route path="/recuperar-senha" element={<RecuperarSenha />} />
                 <Route path="/atualizar-senha" element={<AtualizarSenha />} />
+                <Route path="/aceitar-convite" element={<AceitarConvite />} />
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/cookies" element={<Cookies />} />
                 <Route path="/termos" element={<TermosDeUso />} />
