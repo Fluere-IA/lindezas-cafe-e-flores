@@ -81,7 +81,48 @@ serve(async (req) => {
     }
     logStep("User authenticated", { userId: user.id, email: user.email, createdAt: user.created_at });
 
-    // Check trial status (7 days from account creation)
+    // Get user's organization and find the owner's email for subscription check
+    const { data: membershipData, error: membershipError } = await supabaseClient
+      .from('organization_members')
+      .select('organization_id, role')
+      .eq('user_id', user.id)
+      .limit(1)
+      .single();
+
+    let ownerEmail = user.email; // Default to current user's email
+    let organizationId = null;
+
+    if (membershipData && !membershipError) {
+      organizationId = membershipData.organization_id;
+      logStep("Found user organization", { organizationId, userRole: membershipData.role });
+
+      // If user is not the owner, find the owner's email for subscription check
+      if (membershipData.role !== 'owner') {
+        const { data: ownerData, error: ownerError } = await supabaseClient
+          .from('organization_members')
+          .select('user_id')
+          .eq('organization_id', organizationId)
+          .eq('role', 'owner')
+          .limit(1)
+          .single();
+
+        if (ownerData && !ownerError) {
+          // Get owner's email from auth.users via profiles or directly
+          const { data: ownerUserData, error: ownerUserError } = await supabaseClient.auth.admin.getUserById(ownerData.user_id);
+          
+          if (ownerUserData?.user?.email && !ownerUserError) {
+            ownerEmail = ownerUserData.user.email;
+            logStep("Found organization owner", { ownerId: ownerData.user_id, ownerEmail });
+          }
+        }
+      } else {
+        logStep("User is the organization owner");
+      }
+    } else {
+      logStep("No organization membership found, using user's own email");
+    }
+
+    // Check trial status (7 days from account creation) - based on owner's account
     const TRIAL_DAYS = 7;
     const userCreatedAt = new Date(user.created_at);
     const trialEndDate = new Date(userCreatedAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
@@ -91,10 +132,13 @@ serve(async (req) => {
     logStep("Trial status checked", { isInTrial, trialDaysRemaining, trialEndDate: trialEndDate.toISOString() });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    
+    // Check subscription using the owner's email (not the logged-in user)
+    const customers = await stripe.customers.list({ email: ownerEmail, limit: 1 });
+    logStep("Checking subscription for", { email: ownerEmail, isOwner: ownerEmail === user.email });
     
     if (customers.data.length === 0) {
-      logStep("No customer found, checking trial status");
+      logStep("No Stripe customer found for owner, checking trial status");
       return new Response(JSON.stringify({ 
         subscribed: false,
         is_in_trial: isInTrial,
@@ -141,7 +185,7 @@ serve(async (req) => {
       
       logStep("Determined subscription tier", { productId, planName });
     } else {
-      logStep("No active subscription found");
+      logStep("No active subscription found for owner");
     }
 
     return new Response(JSON.stringify({
