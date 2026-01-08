@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, XCircle, UserPlus, Eye, EyeOff, Info } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, UserPlus, Eye, EyeOff } from 'lucide-react';
+
 interface InviteData {
   id: string;
   email: string;
