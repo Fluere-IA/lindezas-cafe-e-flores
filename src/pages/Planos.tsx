@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Crown, Zap, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, Crown, Zap, Loader2, BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 
 const plans = [
   {
@@ -47,7 +48,13 @@ const plans = [
 const Planos = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { planTier, subscribed } = useSubscriptionContext();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const isCurrentPlan = (planId: string) => {
+    if (!subscribed) return false;
+    return planTier === planId;
+  };
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
     if (!isAuthenticated) {
@@ -107,13 +114,20 @@ const Planos = () => {
             return (
               <div
                 key={plan.id}
-                className={`rounded-2xl p-6 border-2 transition-all ${
+                className={`relative rounded-2xl p-6 border-2 transition-all ${
                   plan.highlighted
                     ? "bg-primary text-primary-foreground border-primary shadow-lg"
                     : "bg-card text-foreground border-border"
-                }`}
+                } ${isCurrentPlan(plan.id) ? "ring-2 ring-green-500 ring-offset-2 ring-offset-background" : ""}`}
               >
-                {plan.highlighted && (
+                {isCurrentPlan(plan.id) && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                    <BadgeCheck className="h-3 w-3" />
+                    Seu plano atual
+                  </div>
+                )}
+                
+                {plan.highlighted && !isCurrentPlan(plan.id) && (
                   <span className="inline-block px-3 py-1 bg-white/20 text-primary-foreground text-xs font-medium rounded-full mb-3">
                     Mais popular
                   </span>
@@ -152,15 +166,19 @@ const Planos = () => {
 
                 <Button
                   onClick={() => handleSubscribe(plan)}
-                  disabled={loadingPlan === plan.id}
+                  disabled={loadingPlan === plan.id || isCurrentPlan(plan.id)}
                   className={`w-full h-12 text-base font-semibold ${
-                    plan.highlighted
-                      ? "bg-white text-primary hover:bg-white/90"
-                      : "bg-primary text-primary-foreground hover:bg-primary/90"
+                    isCurrentPlan(plan.id)
+                      ? "bg-green-500 text-white cursor-default hover:bg-green-500"
+                      : plan.highlighted
+                        ? "bg-white text-primary hover:bg-white/90"
+                        : "bg-primary text-primary-foreground hover:bg-primary/90"
                   }`}
                 >
                   {loadingPlan === plan.id ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : isCurrentPlan(plan.id) ? (
+                    "Plano Ativo"
                   ) : (
                     `Assinar ${plan.name}`
                   )}
