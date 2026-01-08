@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,15 +19,17 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
-  const { signIn, isAuthenticated, isLoading } = useAuth();
+  const { signIn, user, isAuthenticated, isLoading } = useAuth();
+  const { getRedirectPath } = useRoleBasedRedirect();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate('/dashboard');
+    if (!isLoading && isAuthenticated && user) {
+      // Redirect based on user role
+      getRedirectPath(user.id).then(path => navigate(path));
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, user, navigate, getRedirectPath]);
 
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -76,7 +79,7 @@ export default function Auth() {
           title: 'Bem-vindo!',
           description: 'Login realizado com sucesso.',
         });
-        navigate('/dashboard');
+        // Role-based redirect is handled by useEffect when user state updates
       }
     } finally {
       setIsSubmitting(false);
