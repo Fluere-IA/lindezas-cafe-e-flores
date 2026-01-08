@@ -4,6 +4,8 @@ import { PlanGuard } from '@/components/subscription/PlanGuard';
 import { useReports, PeriodFilter } from '@/hooks/useReports';
 import { DRECard } from '@/components/reports/DRECard';
 import { ABCChart } from '@/components/reports/ABCChart';
+import { HeatmapChart } from '@/components/reports/HeatmapChart';
+import { AuditCard } from '@/components/reports/AuditCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, Calendar, TrendingUp, FileText, Loader2 } from 'lucide-react';
@@ -16,7 +18,7 @@ import {
 } from '@/components/ui/select';
 
 function ReportsContent() {
-  const { period, setPeriod, periodLabel, dre, abc } = useReports();
+  const { period, setPeriod, periodLabel, dre, abc, heatmap, audit } = useReports();
 
   const periodOptions: { value: PeriodFilter; label: string }[] = [
     { value: 'today', label: 'Hoje' },
@@ -131,6 +133,20 @@ function ReportsContent() {
         <ABCChart
           data={abc.data}
           isLoading={abc.isLoading}
+          periodLabel={periodLabel}
+        />
+      </div>
+
+      {/* Pro Features: Heatmap and Audit */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <HeatmapChart
+          data={heatmap.data}
+          isLoading={heatmap.isLoading}
+          periodLabel={periodLabel}
+        />
+        <AuditCard
+          data={audit.data}
+          isLoading={audit.isLoading}
           periodLabel={periodLabel}
         />
       </div>

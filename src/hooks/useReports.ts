@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { startOfDay, subDays, startOfMonth, endOfDay } from 'date-fns';
+import { startOfDay, subDays, startOfMonth, endOfDay, getDay, getHours } from 'date-fns';
 
 export type PeriodFilter = 'today' | 'week' | 'month';
 
@@ -19,6 +19,21 @@ interface ABCProduct {
   quantity: number;
   percentage: number;
   classification: 'A' | 'B' | 'C';
+}
+
+interface HeatmapData {
+  hour: number;
+  day: string;
+  count: number;
+}
+
+interface AuditEvent {
+  id: string;
+  type: 'cancel' | 'edit' | 'delete' | 'void';
+  description: string;
+  user: string;
+  timestamp: Date;
+  orderId?: string;
 }
 
 export function useReports() {
@@ -163,6 +178,92 @@ export function useReports() {
     enabled: !!currentOrganization?.id,
   });
 
+  // Fetch Heatmap data
+  const heatmapQuery = useQuery({
+    queryKey: ['reports-heatmap', currentOrganization?.id, dateRange.start, dateRange.end],
+    queryFn: async (): Promise<HeatmapData[] | null> => {
+      if (!currentOrganization?.id) return null;
+
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('created_at')
+        .eq('organization_id', currentOrganization.id)
+        .gte('created_at', dateRange.start.toISOString())
+        .lte('created_at', dateRange.end.toISOString());
+
+      if (error) {
+        console.error('Error fetching heatmap data:', error);
+        return null;
+      }
+
+      // Aggregate orders by day of week and hour
+      const heatmapMap = new Map<string, number>();
+
+      orders?.forEach((order) => {
+        const date = new Date(order.created_at);
+        const dayOfWeek = getDay(date); // 0-6 (Sunday to Saturday)
+        const hour = getHours(date);
+        
+        // Only count business hours (8-21)
+        if (hour >= 8 && hour <= 21) {
+          const key = `${dayOfWeek}-${hour}`;
+          heatmapMap.set(key, (heatmapMap.get(key) || 0) + 1);
+        }
+      });
+
+      // Convert to array
+      const result: HeatmapData[] = [];
+      for (let day = 0; day <= 6; day++) {
+        for (let hour = 8; hour <= 21; hour++) {
+          const key = `${day}-${hour}`;
+          result.push({
+            day: String(day),
+            hour,
+            count: heatmapMap.get(key) || 0,
+          });
+        }
+      }
+
+      return result;
+    },
+    enabled: !!currentOrganization?.id,
+  });
+
+  // Fetch Audit data (canceled/voided orders)
+  const auditQuery = useQuery({
+    queryKey: ['reports-audit', currentOrganization?.id, dateRange.start, dateRange.end],
+    queryFn: async (): Promise<AuditEvent[] | null> => {
+      if (!currentOrganization?.id) return null;
+
+      // For now, we track canceled orders as audit events
+      // In a full implementation, you'd have a dedicated audit_logs table
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('id, order_number, status, updated_at, notes')
+        .eq('organization_id', currentOrganization.id)
+        .eq('status', 'cancelled')
+        .gte('updated_at', dateRange.start.toISOString())
+        .lte('updated_at', dateRange.end.toISOString())
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Error fetching audit data:', error);
+        return null;
+      }
+
+      return orders?.map((order) => ({
+        id: order.id,
+        type: 'cancel' as const,
+        description: order.notes || 'Pedido cancelado',
+        user: 'Sistema',
+        timestamp: new Date(order.updated_at),
+        orderId: String(order.order_number),
+      })) || [];
+    },
+    enabled: !!currentOrganization?.id,
+  });
+
   return {
     period,
     setPeriod,
@@ -174,6 +275,14 @@ export function useReports() {
     abc: {
       data: abcQuery.data,
       isLoading: abcQuery.isLoading,
+    },
+    heatmap: {
+      data: heatmapQuery.data,
+      isLoading: heatmapQuery.isLoading,
+    },
+    audit: {
+      data: auditQuery.data,
+      isLoading: auditQuery.isLoading,
     },
   };
 }
