@@ -19,22 +19,24 @@ interface Feature {
 const features: Feature[] = [
   { name: "Vendas & Operação", start: "", pro: "", isCategory: true },
   { name: "PDV (Frente de Caixa)", start: true, pro: true },
-  { name: "Comanda Digital (Mesas)", start: true, pro: true },
-  { name: "Cardápio Digital (QR Code)", start: true, pro: true },
-  { name: "KDS (Tela de Cozinha)", start: true, pro: true },
+  { name: "Comanda Digital e Mesas", start: true, pro: true },
+  { name: "Cardápio QR Code", start: true, pro: true },
+  { name: "KDS (Tela da Cozinha)", start: true, pro: true },
+  { name: "Relatório de Vendas do Dia", start: true, pro: true },
   
-  { name: "Gestão & Controle", start: "", pro: "", isCategory: true },
-  { name: "Controle de Estoque Básico", start: true, pro: true },
-  { name: "Estoque Avançado (Ficha Técnica)", start: false, pro: true, highlight: true },
-  { name: "Relatórios Financeiros (DRE)", start: false, pro: true, highlight: true },
+  { name: "Gestão & Inteligência", start: "", pro: "", isCategory: true },
+  { name: "Dashboards de Lucro & DRE", start: false, pro: true, highlight: true },
   { name: "Curva ABC de Produtos", start: false, pro: true, highlight: true },
+  { name: "IA para Descrição de Pratos", start: false, pro: true, highlight: true },
   
-  { name: "Gestão de Equipe", start: "", pro: "", isCategory: true },
-  { name: "Permissões de Acesso (RBAC)", start: false, pro: true, highlight: true },
+  { name: "Equipe & Segurança", start: "", pro: "", isCategory: true },
+  { name: "Até 2 Usuários", start: true, pro: false },
+  { name: "Usuários Ilimitados", start: false, pro: true, highlight: true },
+  { name: "Permissões de Acesso", start: false, pro: true, highlight: true },
   
   { name: "Suporte", start: "", pro: "", isCategory: true },
   { name: "Suporte via Email", start: true, pro: true },
-  { name: "Suporte WhatsApp Prioritário", start: false, pro: true, highlight: true },
+  { name: "Suporte Prioritário WhatsApp", start: false, pro: true, highlight: true },
 ];
 
 function FeatureValue({ value }: { value: boolean | string }) {
