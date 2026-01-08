@@ -141,7 +141,8 @@ export default function AceitarConvite() {
         });
 
         if (signInError) {
-          throw new Error('Usuário já existe. Faça login com sua senha atual e aceite o convite pelo painel.');
+          // If password is wrong, show a more helpful message
+          throw new Error('Senha incorreta. Se você já possui conta, use sua senha atual. Caso contrário, verifique a senha enviada no e-mail de convite.');
         }
 
         userId = signInData.user.id;
