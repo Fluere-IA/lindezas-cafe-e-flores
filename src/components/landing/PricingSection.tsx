@@ -12,7 +12,7 @@ const plans = [
       "Comanda Digital & Mesas",
       "Frente de Caixa (PDV) Ágil",
       "KDS (Tela de Cozinha Digital)",
-      "Limite de 2 Usuários (Dono + 1)",
+      "Equipe Ilimitada",
       "Relatórios Básicos",
     ],
     highlighted: false,
@@ -25,7 +25,6 @@ const plans = [
     description: "Para quem busca controle total, segurança e mais lucro.",
     features: [
       "Tudo do Start, mais:",
-      "Equipe Ilimitada (Garçons, Cozinha, Caixa)",
       "Segurança Anti-Fraude (Auditoria)",
       "Relatórios de Lucro (DRE e Curva ABC)",
       "Mapa de Calor (Horários de Pico)",
