@@ -16,7 +16,7 @@ interface RoleGuardProps {
 
 export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: RoleGuardProps) {
   const { user, isLoading: authLoading } = useAuth();
-  const { currentOrganization, isMasterAdmin } = useOrganization();
+  const { currentOrganization, isMasterAdmin, isLoading: orgLoading } = useOrganization();
 
   const { data: memberRole, isLoading: roleLoading } = useQuery({
     queryKey: ['member-role', currentOrganization?.id, user?.id],
@@ -28,7 +28,7 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
         .select('role')
         .eq('organization_id', currentOrganization.id)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching member role:', error);
@@ -40,7 +40,8 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
     enabled: !!currentOrganization?.id && !!user?.id,
   });
 
-  const isLoading = authLoading || roleLoading;
+  // Wait for all loading states
+  const isLoading = authLoading || orgLoading || roleLoading;
 
   if (isLoading) {
     return (
@@ -53,6 +54,15 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
   // Master admins bypass all role checks
   if (isMasterAdmin) {
     return <>{children}</>;
+  }
+
+  // If no organization is loaded yet, show loading state
+  if (!currentOrganization) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   // Check if user has allowed role
