@@ -60,7 +60,14 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
 
   if (!hasAccess) {
     if (fallback === 'redirect') {
-      return <Navigate to="/dashboard" replace />;
+      // Redirect to appropriate page based on role
+      let redirectTo = '/pedidos'; // Default for most roles
+      if (memberRole === 'kitchen') {
+        redirectTo = '/cozinha';
+      } else if (memberRole === 'cashier') {
+        redirectTo = '/caixa';
+      }
+      return <Navigate to={redirectTo} replace />;
     }
 
     return (

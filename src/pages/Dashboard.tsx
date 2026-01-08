@@ -7,6 +7,7 @@ import { SalesChart } from '@/components/dashboard/SalesChart';
 import { TopProducts } from '@/components/dashboard/TopProducts';
 import { TrialBanner } from '@/components/dashboard/TrialBanner';
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
+import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { 
@@ -51,6 +52,26 @@ const Dashboard = () => {
   // Show skeleton while checking organization
   if (orgLoading) {
     return <DashboardSkeleton />;
+  }
+
+  // If no organization found after loading, show error state
+  if (!currentOrganization) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background">
+        <DashboardHeader />
+        <main className="flex-1 p-4 md:p-5 flex items-center justify-center">
+          <div className="text-center p-8 bg-card rounded-lg shadow-lg max-w-md border border-border">
+            <h1 className="text-xl font-bold text-foreground mb-2">Nenhuma organização encontrada</h1>
+            <p className="text-muted-foreground mb-4">
+              Aguarde enquanto carregamos os dados ou tente recarregar a página.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Recarregar
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
