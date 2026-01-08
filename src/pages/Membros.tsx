@@ -77,7 +77,18 @@ export default function Membros() {
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('waiter');
+  const [invitePassword, setInvitePassword] = useState('');
   const [isInviting, setIsInviting] = useState(false);
+
+  // Generate a random password
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setInvitePassword(password);
+  };
 
   // Fetch members
   const { data: members = [], isLoading: loadingMembers } = useQuery({
@@ -117,7 +128,7 @@ export default function Membros() {
   });
 
   const handleInvite = async () => {
-    if (!currentOrganization?.id || !user?.id || !inviteEmail) return;
+    if (!currentOrganization?.id || !user?.id || !inviteEmail || !invitePassword) return;
 
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -125,6 +136,15 @@ export default function Membros() {
       toast({
         title: 'Email inválido',
         description: 'Por favor, insira um email válido.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (invitePassword.length < 6) {
+      toast({
+        title: 'Senha muito curta',
+        description: 'A senha deve ter pelo menos 6 caracteres.',
         variant: 'destructive',
       });
       return;
@@ -170,7 +190,7 @@ export default function Membros() {
 
       // Send invite email via edge function
       try {
-        const inviteUrl = `${window.location.origin}/auth?invite=${inviteData.id}`;
+        const inviteUrl = `${window.location.origin}/aceitar-convite?id=${inviteData.id}&senha=${encodeURIComponent(invitePassword)}`;
         await supabase.functions.invoke('send-invite-email', {
           body: {
             to: inviteEmail.toLowerCase(),
@@ -178,6 +198,7 @@ export default function Membros() {
             organizationName: currentOrganization.name,
             role: inviteRole,
             inviteUrl,
+            tempPassword: invitePassword,
           },
         });
         console.log('Invite email sent successfully');
@@ -193,6 +214,7 @@ export default function Membros() {
 
       setInviteEmail('');
       setInviteRole('waiter');
+      setInvitePassword('');
       setInviteDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['organization-invites'] });
     } catch (error) {
@@ -330,6 +352,29 @@ export default function Membros() {
                   </Select>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha Temporária</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="password"
+                      type="text"
+                      placeholder="Senha para o convidado"
+                      value={invitePassword}
+                      onChange={(e) => setInvitePassword(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={generatePassword}
+                    >
+                      Gerar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Esta senha será enviada no e-mail e o convidado usará para acessar o sistema.
+                  </p>
+                </div>
+
                 <div className="flex gap-2 pt-4">
                   <Button
                     variant="outline"
@@ -341,7 +386,7 @@ export default function Membros() {
                   <Button
                     className="flex-1"
                     onClick={handleInvite}
-                    disabled={isInviting || !inviteEmail}
+                    disabled={isInviting || !inviteEmail || !invitePassword}
                   >
                     {isInviting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
