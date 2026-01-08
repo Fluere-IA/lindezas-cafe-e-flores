@@ -7,13 +7,14 @@ const plans = [
     name: "Start",
     priceId: "price_1SmdeyHx3U4iTNTbnzINv2Rl",
     price: "99,90",
-    description: "Ideal para pequenos estabelecimentos",
+    description: "Ideal para sair do papel e organizar a casa",
     features: [
-      "Comanda Digital",
+      "Comanda Digital e Mesas",
       "Frente de Caixa (PDV)",
       "KDS (Tela da Cozinha)",
-      "Suporte via Chat",
-      "Relatório básico de vendas",
+      "Cardápio QR Code",
+      "Até 2 Usuários",
+      "Relatório de Vendas do Dia",
     ],
     highlighted: false,
     cta: "Assinar Start",
@@ -22,13 +23,15 @@ const plans = [
     name: "Pro",
     priceId: "price_1Sn9TrHx3U4iTNTblXPO4bsJ",
     price: "149,90",
-    description: "Para negócios em crescimento",
+    description: "Para quem quer lucrar mais com inteligência",
     features: [
       "Tudo do Start +",
-      "Estoque Avançado",
-      "Relatórios Financeiros",
-      "Suporte Prioritário",
-      "Dashboard Gerencial",
+      "Dashboards de Lucro & DRE",
+      "Usuários Ilimitados (Equipe)",
+      "Segurança (Permissões de Acesso)",
+      "Curva ABC de Produtos",
+      "IA para Descrição de Pratos",
+      "Suporte Prioritário WhatsApp",
     ],
     highlighted: true,
     cta: "Assinar Pro",
@@ -52,10 +55,10 @@ export function PricingSection() {
             Planos
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-            Escolha o plano ideal para você
+            Escolha o poder que seu negócio precisa
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Comece com 7 dias grátis. Cancele a qualquer momento.
+            Comece com 7 dias grátis. Sem fidelidade.
           </p>
         </div>
 
@@ -72,7 +75,7 @@ export function PricingSection() {
             >
               {plan.highlighted && (
                 <span className="inline-block px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full mb-4">
-                  Mais popular
+                  Recomendado
                 </span>
               )}
               
