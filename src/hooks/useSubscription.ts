@@ -36,14 +36,26 @@ export function useSubscription() {
       if (error) {
         console.error('Error checking subscription:', error);
         
-        // Check for 401 status or invalid session errors
-        const errorContext = error?.context;
-        const status = errorContext?.status || error?.status;
+        // Parse error response for status code and error details
+        let errorData = null;
+        try {
+          // FunctionsHttpError has context.response that needs to be parsed
+          if (error.context?.body) {
+            errorData = JSON.parse(error.context.body);
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
         
-        if (status === 401 || 
-            error.message?.includes('INVALID_SESSION') ||
-            error.message?.includes('user_not_found') || 
-            error.message?.includes('does not exist')) {
+        // Check for 401 status or invalid session errors
+        const isInvalidSession = 
+          error.context?.status === 401 ||
+          errorData?.code === 'INVALID_SESSION' ||
+          error.message?.includes('INVALID_SESSION') ||
+          error.message?.includes('user_not_found') || 
+          error.message?.includes('does not exist');
+        
+        if (isInvalidSession) {
           console.log('User session invalid, signing out...');
           await supabase.auth.signOut();
           localStorage.removeItem('currentOrganizationId');
