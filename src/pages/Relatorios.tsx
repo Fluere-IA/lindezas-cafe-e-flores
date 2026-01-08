@@ -6,6 +6,7 @@ import { DRECard } from '@/components/reports/DRECard';
 import { ABCChart } from '@/components/reports/ABCChart';
 import { HeatmapChart } from '@/components/reports/HeatmapChart';
 import { AuditCard } from '@/components/reports/AuditCard';
+import { FiscalReportCard } from '@/components/reports/FiscalReportCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, Calendar, TrendingUp, FileText, Loader2 } from 'lucide-react';
@@ -151,7 +152,8 @@ function ReportsContent() {
         />
       </div>
 
-      {/* Additional Info */}
+      {/* Fiscal Export */}
+      <FiscalReportCard />
       <Card className="border-border/50 bg-muted/30">
         <CardContent className="pt-6">
           <div className="flex items-start gap-4">
