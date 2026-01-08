@@ -16,8 +16,9 @@ import { useQuery } from '@tanstack/react-query';
 import { 
   Loader2, User, Save, ArrowLeft, Mail, 
   Shield, CreditCard, Crown, Lock, Building2, Phone, LayoutGrid,
-  CheckCircle2, AlertCircle
+  CheckCircle2, AlertCircle, Sparkles, ChevronRight
 } from 'lucide-react';
+import { z } from 'zod';
 
 const tiposEstabelecimento = [
   { value: 'cafeteria', label: 'Cafeteria' },
@@ -29,7 +30,6 @@ const tiposEstabelecimento = [
   { value: 'food_truck', label: 'Food Truck' },
   { value: 'outro', label: 'Outro' },
 ];
-import { z } from 'zod';
 
 // Validation schemas
 const profileSchema = z.object({
@@ -253,12 +253,13 @@ export default function Perfil() {
   };
 
   const getPlanStatus = () => {
-    if (!subscribed && !isInTrial) return { label: 'Inativo', color: 'text-red-600', icon: AlertCircle };
-    if (isInTrial) return { label: 'Período de Teste', color: 'text-amber-600', icon: AlertCircle };
-    return { label: 'Ativo', color: 'text-emerald-600', icon: CheckCircle2 };
+    if (!subscribed && !isInTrial) return { label: 'Inativo', color: 'text-destructive', bgColor: 'bg-destructive/10', icon: AlertCircle };
+    if (isInTrial) return { label: 'Período de Teste', color: 'text-amber-600', bgColor: 'bg-amber-50', icon: AlertCircle };
+    return { label: 'Ativo', color: 'text-emerald-600', bgColor: 'bg-emerald-50', icon: CheckCircle2 };
   };
 
   const planStatus = getPlanStatus();
+  const isPro = planTier === 'pro';
 
   if (isLoading) {
     return (
@@ -269,112 +270,131 @@ export default function Perfil() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
+      <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-4">
             <Link 
               to="/dashboard" 
-              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+              className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar ao Dashboard
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Link>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">Minha Conta</h1>
+              <p className="text-xs text-muted-foreground">Gerencie suas informações</p>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
-          {/* Page Title */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground">Minha Conta</h1>
-            <p className="text-muted-foreground mt-1">
-              Gerencie suas informações pessoais e preferências
-            </p>
-          </div>
-
-          {/* Avatar Preview */}
-          <div className="flex items-center gap-4 mb-6 p-4 bg-card rounded-xl border">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
-                {getInitials(fullName)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                {fullName || 'Usuário'}
-              </h2>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
+      <main className="container mx-auto px-4 py-6">
+        <div className="max-w-2xl mx-auto space-y-6">
+          
+          {/* Profile Card */}
+          <Card className="overflow-hidden border-0 shadow-sm">
+            <div className="bg-gradient-to-br from-primary to-primary/80 p-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16 ring-4 ring-white/20">
+                  <AvatarFallback className="bg-white text-primary text-xl font-bold">
+                    {getInitials(fullName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-white">
+                  <h2 className="text-xl font-bold">
+                    {fullName || 'Usuário'}
+                  </h2>
+                  <p className="text-white/80 text-sm">{user?.email}</p>
+                </div>
+              </div>
             </div>
-          </div>
+            
+            {/* Quick Plan Badge */}
+            <div className="p-4 bg-card border-t flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${isPro ? 'bg-amber-100' : 'bg-primary/10'}`}>
+                  {isPro ? <Crown className="h-4 w-4 text-amber-600" /> : <Sparkles className="h-4 w-4 text-primary" />}
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{getPlanDisplayName()}</p>
+                  <p className={`text-xs ${planStatus.color}`}>{planStatus.label}</p>
+                </div>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate('/assinatura')}
+                className="text-muted-foreground"
+              >
+                Ver <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </Card>
 
           {/* Tabs */}
-          <Tabs defaultValue="geral" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 h-12">
-              <TabsTrigger value="geral" className="flex items-center gap-2">
+          <Tabs defaultValue="geral" className="space-y-4">
+            <TabsList className="w-full bg-card border p-1 h-auto flex-wrap">
+              <TabsTrigger value="geral" className="flex-1 gap-2 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">Geral</span>
               </TabsTrigger>
-              <TabsTrigger value="empresa" className="flex items-center gap-2">
+              <TabsTrigger value="empresa" className="flex-1 gap-2 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Building2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Empresa</span>
               </TabsTrigger>
-              <TabsTrigger value="assinatura" className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                <span className="hidden sm:inline">Assinatura</span>
-              </TabsTrigger>
-              <TabsTrigger value="seguranca" className="flex items-center gap-2">
+              <TabsTrigger value="seguranca" className="flex-1 gap-2 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Segurança</span>
               </TabsTrigger>
             </TabsList>
 
             {/* Tab: Geral */}
-            <TabsContent value="geral" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Informações Pessoais</CardTitle>
+            <TabsContent value="geral">
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">Informações Pessoais</CardTitle>
                   <CardDescription>
                     Atualize seu nome e foto de perfil
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleProfileSubmit} className="space-y-6">
-                    {/* Full Name */}
+                  <form onSubmit={handleProfileSubmit} className="space-y-5">
                     <div className="space-y-2">
-                      <Label htmlFor="fullName" className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="fullName" className="text-sm font-medium">
                         Nome completo
                       </Label>
-                      <Input
-                        id="fullName"
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Seu nome completo"
-                        className="h-12"
-                        disabled={isSubmittingProfile}
-                        maxLength={100}
-                      />
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="fullName"
+                          type="text"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="Seu nome completo"
+                          className="pl-10 h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                          disabled={isSubmittingProfile}
+                          maxLength={100}
+                        />
+                      </div>
                     </div>
 
-                    {/* Email (read-only) */}
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="email" className="text-sm font-medium">
                         Email
                       </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={user?.email || ''}
-                        className="h-12 bg-muted/50"
-                        disabled
-                        readOnly
-                      />
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="email"
+                          type="email"
+                          value={user?.email || ''}
+                          className="pl-10 h-11 bg-muted/50 border-0"
+                          disabled
+                          readOnly
+                        />
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         O email não pode ser alterado.
                       </p>
@@ -382,20 +402,15 @@ export default function Perfil() {
 
                     <Button
                       type="submit"
-                      className="w-full h-12"
+                      className="w-full h-11"
                       disabled={isSubmittingProfile}
                     >
                       {isSubmittingProfile ? (
-                        <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Salvando...
-                        </>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
-                        <>
-                          <Save className="mr-2 h-5 w-5" />
-                          Salvar alterações
-                        </>
+                        <Save className="mr-2 h-4 w-4" />
                       )}
+                      Salvar alterações
                     </Button>
                   </form>
                 </CardContent>
@@ -403,44 +418,43 @@ export default function Perfil() {
             </TabsContent>
 
             {/* Tab: Empresa */}
-            <TabsContent value="empresa" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    Dados do Negócio
-                  </CardTitle>
+            <TabsContent value="empresa">
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">Dados do Negócio</CardTitle>
                   <CardDescription>
-                    Informações da empresa {currentOrganization?.name}
+                    Informações de {currentOrganization?.name}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {isOwnerOrAdmin ? (
-                    <form onSubmit={handleBusinessSubmit} className="space-y-6">
+                    <form onSubmit={handleBusinessSubmit} className="space-y-5">
                       <div className="space-y-2">
-                        <Label htmlFor="businessName" className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="businessName" className="text-sm font-medium">
                           Nome do Negócio
                         </Label>
-                        <Input
-                          id="businessName"
-                          type="text"
-                          value={businessName}
-                          onChange={(e) => setBusinessName(e.target.value)}
-                          placeholder="Nome da sua empresa"
-                          className="h-12"
-                          disabled={isSubmittingBusiness}
-                          maxLength={100}
-                        />
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="businessName"
+                            type="text"
+                            value={businessName}
+                            onChange={(e) => setBusinessName(e.target.value)}
+                            placeholder="Nome da sua empresa"
+                            className="pl-10 h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                            disabled={isSubmittingBusiness}
+                            maxLength={100}
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="businessType" className="flex items-center gap-2">
-                          <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="businessType" className="text-sm font-medium">
                           Tipo de Estabelecimento
                         </Label>
                         <Select value={businessType} onValueChange={setBusinessType} disabled={isSubmittingBusiness}>
-                          <SelectTrigger className="h-12">
+                          <SelectTrigger className="h-11 bg-muted/50 border-0">
+                            <LayoutGrid className="h-4 w-4 mr-2 text-muted-foreground" />
                             <SelectValue placeholder="Selecione..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -453,135 +467,66 @@ export default function Perfil() {
                         </Select>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="businessPhone" className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          Telefone
-                        </Label>
-                        <Input
-                          id="businessPhone"
-                          type="tel"
-                          value={businessPhone}
-                          onChange={(e) => setBusinessPhone(e.target.value)}
-                          placeholder="(00) 00000-0000"
-                          className="h-12"
-                          disabled={isSubmittingBusiness}
-                          maxLength={20}
-                        />
-                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="businessPhone" className="text-sm font-medium">
+                            Telefone
+                          </Label>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="businessPhone"
+                              type="tel"
+                              value={businessPhone}
+                              onChange={(e) => setBusinessPhone(e.target.value)}
+                              placeholder="(00) 00000-0000"
+                              className="pl-10 h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                              disabled={isSubmittingBusiness}
+                              maxLength={20}
+                            />
+                          </div>
+                        </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="tableCount" className="flex items-center gap-2">
-                          <LayoutGrid className="h-4 w-4 text-muted-foreground" />
-                          Número de Mesas
-                        </Label>
-                        <Input
-                          id="tableCount"
-                          type="number"
-                          value={tableCount}
-                          onChange={(e) => setTableCount(parseInt(e.target.value) || 1)}
-                          min={1}
-                          max={100}
-                          className="h-12"
-                          disabled={isSubmittingBusiness}
-                        />
+                        <div className="space-y-2">
+                          <Label htmlFor="tableCount" className="text-sm font-medium">
+                            Nº de Mesas
+                          </Label>
+                          <Input
+                            id="tableCount"
+                            type="number"
+                            value={tableCount}
+                            onChange={(e) => setTableCount(parseInt(e.target.value) || 1)}
+                            min={1}
+                            max={100}
+                            className="h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                            disabled={isSubmittingBusiness}
+                          />
+                        </div>
                       </div>
 
                       <Button
                         type="submit"
-                        className="w-full h-12"
+                        className="w-full h-11"
                         disabled={isSubmittingBusiness}
                       >
                         {isSubmittingBusiness ? (
-                          <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            Salvando...
-                          </>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
-                          <>
-                            <Save className="mr-2 h-5 w-5" />
-                            Salvar alterações
-                          </>
+                          <Save className="mr-2 h-4 w-4" />
                         )}
+                        Salvar alterações
                       </Button>
                     </form>
                   ) : (
-                    <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                    <div className="p-4 rounded-xl bg-muted/50">
                       <div className="flex items-center gap-3">
-                        <Lock className="h-5 w-5 text-muted-foreground" />
+                        <div className="p-2 rounded-lg bg-muted">
+                          <Lock className="h-4 w-4 text-muted-foreground" />
+                        </div>
                         <div>
-                          <p className="font-medium text-foreground">Acesso restrito</p>
-                          <p className="text-sm text-muted-foreground">
-                            Apenas administradores podem editar os dados da empresa.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-
-            {/* Tab: Assinatura */}
-            <TabsContent value="assinatura">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Assinatura da Empresa
-                  </CardTitle>
-                  <CardDescription>
-                    Informações sobre o plano de {currentOrganization?.name || 'sua empresa'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Plan Info Card */}
-                  <div className="p-6 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Plano Atual</p>
-                        <div className="flex items-center gap-2">
-                          {planTier === 'pro' && (
-                            <Crown className="h-5 w-5 text-amber-500" />
-                          )}
-                          <span className="text-2xl font-bold text-foreground">
-                            {getPlanDisplayName()}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground mb-1">Status</p>
-                        <div className={`flex items-center gap-1.5 ${planStatus.color}`}>
-                          <planStatus.icon className="h-4 w-4" />
-                          <span className="font-medium">{planStatus.label}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action based on role */}
-                  {isOwnerOrAdmin ? (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        Como administrador, você pode gerenciar a assinatura da empresa.
-                      </p>
-                      <Button 
-                        onClick={() => navigate('/assinatura')}
-                        className="w-full"
-                      >
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Gerenciar Assinatura
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="p-4 rounded-lg bg-muted/50 border border-border">
-                      <div className="flex items-center gap-3">
-                        <Lock className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium text-foreground">Gerido pelo administrador</p>
-                          <p className="text-sm text-muted-foreground">
-                            Entre em contato com o administrador da sua empresa para alterar o plano.
+                          <p className="font-medium text-sm">Acesso restrito</p>
+                          <p className="text-xs text-muted-foreground">
+                            Apenas administradores podem editar
                           </p>
                         </div>
                       </div>
@@ -593,67 +538,63 @@ export default function Perfil() {
 
             {/* Tab: Segurança */}
             <TabsContent value="seguranca">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Alterar Senha
-                  </CardTitle>
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">Alterar Senha</CardTitle>
                   <CardDescription>
                     Atualize sua senha de acesso
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                  <form onSubmit={handlePasswordSubmit} className="space-y-5">
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword" className="flex items-center gap-2">
-                        <Lock className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="newPassword" className="text-sm font-medium">
                         Nova Senha
                       </Label>
-                      <Input
-                        id="newPassword"
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="h-12"
-                        disabled={isSubmittingPassword}
-                        minLength={6}
-                      />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="pl-10 h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                          disabled={isSubmittingPassword}
+                          minLength={6}
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="flex items-center gap-2">
-                        <Lock className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="confirmPassword" className="text-sm font-medium">
                         Confirmar Nova Senha
                       </Label>
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="h-12"
-                        disabled={isSubmittingPassword}
-                      />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="pl-10 h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                          disabled={isSubmittingPassword}
+                        />
+                      </div>
                     </div>
 
                     <Button
                       type="submit"
-                      className="w-full h-12"
+                      className="w-full h-11"
                       disabled={isSubmittingPassword || !newPassword || !confirmPassword}
                     >
                       {isSubmittingPassword ? (
-                        <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Atualizando...
-                        </>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
-                        <>
-                          <Shield className="mr-2 h-5 w-5" />
-                          Atualizar Senha
-                        </>
+                        <Shield className="mr-2 h-4 w-4" />
                       )}
+                      Atualizar Senha
                     </Button>
                   </form>
                 </CardContent>
