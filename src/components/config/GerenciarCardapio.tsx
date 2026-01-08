@@ -959,12 +959,12 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2">
-        <Button onClick={() => openNewProduct()} size="sm" className="flex-1">
-          <Plus className="h-4 w-4 mr-1" /> Produto
+      <div className="flex gap-2 justify-end">
+        <Button onClick={() => openNewProduct()} size="sm">
+          <Plus className="h-4 w-4 mr-1.5" /> Adicionar Produto
         </Button>
-        <Button onClick={openNewCategory} size="sm" variant="outline" className="flex-1">
-          <Tag className="h-4 w-4 mr-1" /> Categoria
+        <Button onClick={openNewCategory} size="sm" variant="outline">
+          <Plus className="h-4 w-4 mr-1.5" /> Adicionar Categoria
         </Button>
       </div>
 
