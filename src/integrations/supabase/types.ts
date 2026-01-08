@@ -21,6 +21,7 @@ export type Database = {
           id: string
           name: string
           organization_id: string | null
+          position: number | null
           type: string
         }
         Insert: {
@@ -29,6 +30,7 @@ export type Database = {
           id?: string
           name: string
           organization_id?: string | null
+          position?: number | null
           type: string
         }
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           id?: string
           name?: string
           organization_id?: string | null
+          position?: number | null
           type?: string
         }
         Relationships: [
@@ -345,6 +348,7 @@ export type Database = {
           is_active: boolean
           name: string
           organization_id: string | null
+          position: number | null
           price: number
           stock: number
           updated_at: string
@@ -358,6 +362,7 @@ export type Database = {
           is_active?: boolean
           name: string
           organization_id?: string | null
+          position?: number | null
           price: number
           stock?: number
           updated_at?: string
@@ -371,6 +376,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           organization_id?: string | null
+          position?: number | null
           price?: number
           stock?: number
           updated_at?: string
