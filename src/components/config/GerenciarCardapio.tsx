@@ -741,10 +741,6 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   };
 
   const confirmDeleteCategory = (category: Category) => {
-    if (!category.organization_id) {
-      toast.error('Categorias padrão não podem ser removidas');
-      return;
-    }
     setCategoryToDelete(category);
     setDeleteCategoryDialogOpen(true);
   };
