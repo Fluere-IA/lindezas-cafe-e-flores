@@ -28,12 +28,23 @@ const roleLabels: Record<string, string> = {
   kitchen: 'Cozinha',
 };
 
-// Map display role to database role
+// Map display role to organization_members role
+const orgRoleMap: Record<string, string> = {
+  admin: 'admin',
+  waiter: 'member',
+  cashier: 'member',
+  kitchen: 'member',
+  member: 'member',
+  owner: 'owner',
+};
+
+// Map display role to user_roles database role
 const dbRoleMap: Record<string, string> = {
   admin: 'admin',
   waiter: 'cashier',
   cashier: 'cashier',
   kitchen: 'kitchen',
+  member: 'cashier',
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -90,13 +101,16 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`User created successfully: ${userId}`);
     }
 
-    // Add user to organization
+    // Add user to organization with mapped role
+    const orgRole = orgRoleMap[role] || 'member';
+    console.log(`Adding member with org role: ${orgRole} (from: ${role})`);
+    
     const { error: memberError } = await supabaseAdmin
       .from('organization_members')
       .upsert({
         organization_id: organizationId,
         user_id: userId,
-        role: role,
+        role: orgRole,
       }, { onConflict: 'organization_id,user_id' });
 
     if (memberError) {
