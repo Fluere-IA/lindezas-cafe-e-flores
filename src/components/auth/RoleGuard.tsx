@@ -40,18 +40,6 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
     enabled: !!currentOrganization?.id && !!user?.id,
   });
 
-  // Debug logging
-  console.log('RoleGuard state:', {
-    authLoading,
-    orgLoading,
-    roleLoading,
-    hasUser: !!user,
-    hasCurrentOrg: !!currentOrganization,
-    organizationsCount: organizations.length,
-    memberRole,
-    isMasterAdmin
-  });
-
   // Wait for auth and org loading states
   const isLoading = authLoading || orgLoading;
 
@@ -68,8 +56,13 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
     return <>{children}</>;
   }
 
-  // If no organization is loaded yet, show loading state
-  if (!currentOrganization) {
+  // If no organization found and no organizations exist, user needs onboarding
+  if (!currentOrganization && organizations.length === 0) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // If there are organizations but none selected, show loading briefly
+  if (!currentOrganization && organizations.length > 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
