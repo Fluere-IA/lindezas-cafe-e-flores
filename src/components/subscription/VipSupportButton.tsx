@@ -9,7 +9,7 @@ interface VipSupportButtonProps {
 }
 
 // WhatsApp number for VIP support (Brazil format)
-const WHATSAPP_NUMBER = '5511999999999'; // Replace with actual support number
+const WHATSAPP_NUMBER = '5511982892019';
 const WHATSAPP_MESSAGE = encodeURIComponent('Olá! Sou assinante Pro e preciso de suporte.');
 
 export function VipSupportButton({ 
