@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, AppRole } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, requiredRole, requiresSubscription = true }: ProtectedRouteProps) {
   const { isAuthenticated, role, isLoading: authLoading } = useAuth();
-  const { subscribed, planName, isLoading: subLoading, isInTrial, trialDaysRemaining } = useSubscription();
+  const { subscribed, isLoading: subLoading, isInTrial } = useSubscriptionContext();
   const location = useLocation();
 
   // User has access if subscribed OR in trial period
