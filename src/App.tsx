@@ -31,6 +31,7 @@ const Perfil = lazy(() => import("./pages/Perfil"));
 const SuperDashboard = lazy(() => import("./pages/SuperDashboard"));
 const Estoque = lazy(() => import("./pages/Estoque"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
+const Auditoria = lazy(() => import("./pages/Auditoria"));
 const Planos = lazy(() => import("./pages/Planos"));
 const CheckoutSucesso = lazy(() => import("./pages/CheckoutSucesso"));
 
@@ -89,6 +90,7 @@ const App = () => (
                 <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
                 <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
                 <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+                <Route path="/auditoria" element={<ProtectedRoute><Auditoria /></ProtectedRoute>} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
