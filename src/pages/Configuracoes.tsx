@@ -1,18 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { Settings, Package, Tag, FileText, ChevronRight, Users, Palette, Crown } from 'lucide-react';
+import { Settings, Package, FileText, ChevronRight, Users, Palette, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { GerenciarProdutos } from '@/components/config/GerenciarProdutos';
-import { GerenciarCategorias } from '@/components/config/GerenciarCategorias';
-import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
+import { GerenciarCardapio } from '@/components/config/GerenciarCardapio';
 
-type ConfigSection = 'produtos' | 'categorias' | null;
-
-const menuItems = [
-  { id: 'produtos' as const, label: 'Cardápio', description: 'Adicionar, editar e remover produtos', icon: Package },
-  { id: 'categorias' as const, label: 'Categorias', description: 'Gerenciar categorias do cardápio', icon: Tag },
-];
+type ConfigSection = 'cardapio' | null;
 
 const navigationItems = [
   { path: '/membros', label: 'Equipe', description: 'Gerenciar membros e convites', icon: Users },
@@ -25,71 +18,62 @@ const Configuracoes = () => {
   const [activeSection, setActiveSection] = useState<ConfigSection>(null);
 
   const renderContent = () => {
-    switch (activeSection) {
-      case 'produtos':
-        return <GerenciarProdutos onBack={() => setActiveSection(null)} />;
-      case 'categorias':
-        return <GerenciarCategorias onBack={() => setActiveSection(null)} />;
-      default:
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h2 className="text-sm font-medium text-muted-foreground px-1">Cardápio</h2>
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id)}
-                    className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-border/50 hover:border-primary/50 transition-colors text-left"
-                  >
-                    <div className="p-2.5 rounded-lg bg-primary/10">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{item.label}</p>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="space-y-2">
-              <h2 className="text-sm font-medium text-muted-foreground px-1">Organização</h2>
-              {navigationItems.map((item) => {
-                const Icon = item.icon;
-                const isPro = 'pro' in item && item.pro;
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => navigate(item.path)}
-                    className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-border/50 hover:border-primary/50 transition-colors text-left"
-                  >
-                    <div className={cn("p-2.5 rounded-lg", isPro ? "bg-amber-500/10" : "bg-primary/10")}>
-                      <Icon className={cn("h-5 w-5", isPro ? "text-amber-600" : "text-primary")} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-foreground">{item.label}</p>
-                        {isPro && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                            <Crown className="h-3 w-3" />
-                            PRO
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
+    if (activeSection === 'cardapio') {
+      return <GerenciarCardapio onBack={() => setActiveSection(null)} />;
     }
+
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-sm font-medium text-muted-foreground px-1">Cardápio</h2>
+          <button
+            onClick={() => setActiveSection('cardapio')}
+            className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-border/50 hover:border-primary/50 transition-colors text-left"
+          >
+            <div className="p-2.5 rounded-lg bg-primary/10">
+              <Package className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-foreground">Gerenciar Cardápio</p>
+              <p className="text-sm text-muted-foreground">Produtos e categorias em um só lugar</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          <h2 className="text-sm font-medium text-muted-foreground px-1">Organização</h2>
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isPro = 'pro' in item && item.pro;
+            return (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-border/50 hover:border-primary/50 transition-colors text-left"
+              >
+                <div className={cn("p-2.5 rounded-lg", isPro ? "bg-amber-500/10" : "bg-primary/10")}>
+                  <Icon className={cn("h-5 w-5", isPro ? "text-amber-600" : "text-primary")} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-foreground">{item.label}</p>
+                    {isPro && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                        <Crown className="h-3 w-3" />
+                        PRO
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
