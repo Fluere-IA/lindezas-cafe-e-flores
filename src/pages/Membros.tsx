@@ -53,7 +53,7 @@ interface Invite {
 const roleLabels: Record<string, string> = {
   owner: 'Proprietário',
   admin: 'Administrador',
-  member: 'Membro',
+  waiter: 'Garçom',
   cashier: 'Caixa',
   kitchen: 'Cozinha',
 };
@@ -61,7 +61,7 @@ const roleLabels: Record<string, string> = {
 const roleColors: Record<string, string> = {
   owner: 'bg-amber-500',
   admin: 'bg-purple-500',
-  member: 'bg-blue-500',
+  waiter: 'bg-blue-500',
   cashier: 'bg-green-500',
   kitchen: 'bg-orange-500',
 };
@@ -76,7 +76,7 @@ export default function Membros() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('member');
+  const [inviteRole, setInviteRole] = useState('waiter');
   const [isInviting, setIsInviting] = useState(false);
 
   // Fetch members
@@ -192,7 +192,7 @@ export default function Membros() {
       });
 
       setInviteEmail('');
-      setInviteRole('member');
+      setInviteRole('waiter');
       setInviteDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['organization-invites'] });
     } catch (error) {
@@ -323,7 +323,7 @@ export default function Membros() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Administrador</SelectItem>
-                      <SelectItem value="member">Membro</SelectItem>
+                      <SelectItem value="waiter">Garçom</SelectItem>
                       <SelectItem value="cashier">Caixa</SelectItem>
                       <SelectItem value="kitchen">Cozinha</SelectItem>
                     </SelectContent>
