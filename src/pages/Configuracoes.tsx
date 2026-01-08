@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { Settings, Package, FileText, ChevronRight, Users, Palette, CreditCard, Building2 } from 'lucide-react';
+import { Settings, Package, FileText, ChevronRight, Users, CreditCard, Building2 } from 'lucide-react';
 import { GerenciarCardapio } from '@/components/config/GerenciarCardapio';
 
 type ConfigSection = 'cardapio' | null;
 
 const menuItems = [
   { path: '/membros', label: 'Equipe', description: 'Gerenciar membros e convites', icon: Users },
-  { path: '/perfil', label: 'Dados do Negócio', description: 'Nome, telefone e informações da empresa', icon: Building2 },
-  { path: '/onboarding', label: 'Personalização', description: 'Alterar cor e configurações visuais', icon: Palette },
+  { path: '/perfil', label: 'Minha Conta', description: 'Dados pessoais e da empresa', icon: Building2 },
   { path: '/assinatura', label: 'Assinatura', description: 'Gerenciar plano e pagamentos', icon: CreditCard },
 ];
 
