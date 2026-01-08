@@ -33,9 +33,9 @@ export const categorySchema = z.object({
     .min(1, 'Nome é obrigatório')
     .max(100, 'Nome deve ter no máximo 100 caracteres')
     .trim(),
-  type: z.enum(['bebidas', 'salgados', 'sobremesas', 'flores'], {
-    errorMap: () => ({ message: 'Tipo de categoria inválido' }),
-  }),
+  type: z.string()
+    .min(1, 'Tipo é obrigatório')
+    .max(50, 'Tipo deve ter no máximo 50 caracteres'),
 });
 
 // Order validation schema
