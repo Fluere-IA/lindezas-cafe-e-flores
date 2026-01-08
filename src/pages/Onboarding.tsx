@@ -20,7 +20,8 @@ import {
   FileText,
   LayoutGrid,
   Minus,
-  Building2
+  Building2,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +76,13 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualItem, setManualItem] = useState<MenuItem>({ name: '', price: '', category: '' });
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Preview state
+  const [previewData, setPreviewData] = useState<{
+    base64: string;
+    fileName: string;
+    fileType: 'image' | 'pdf';
+  } | null>(null);
 
   // Pre-fill data from current organization when in edit mode
   React.useEffect(() => {
@@ -195,8 +203,6 @@ export default function Onboarding() {
       return;
     }
 
-    setIsProcessingOCR(true);
-
     try {
       // Convert file to base64
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -206,11 +212,37 @@ export default function Onboarding() {
         reader.readAsDataURL(file);
       });
 
+      // Set preview state instead of processing immediately
+      setPreviewData({
+        base64,
+        fileName: file.name,
+        fileType: isPdf ? 'pdf' : 'image',
+      });
+    } catch (error) {
+      console.error('File read error:', error);
+      toast({
+        title: 'Erro ao ler arquivo',
+        description: 'Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleConfirmOCR = async () => {
+    if (!previewData) return;
+
+    setIsProcessingOCR(true);
+
+    try {
       // Call OCR edge function with file type
       const { data, error } = await supabase.functions.invoke('ocr-menu', {
         body: { 
-          image: base64,
-          fileType: isPdf ? 'pdf' : 'image'
+          image: previewData.base64,
+          fileType: previewData.fileType
         },
       });
 
@@ -238,10 +270,12 @@ export default function Onboarding() {
       });
     } finally {
       setIsProcessingOCR(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      setPreviewData(null);
     }
+  };
+
+  const handleCancelPreview = () => {
+    setPreviewData(null);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -487,34 +521,80 @@ export default function Onboarding() {
         <p className="text-muted-foreground mt-2">Envie uma foto do cardápio ou adicione itens manualmente</p>
       </div>
 
-      {/* Upload Area */}
-      <div 
-        className={cn(
-          "border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer",
-          isProcessingOCR 
-            ? "border-primary bg-primary/5" 
-            : isDragging
-              ? "border-primary bg-primary/10 scale-[1.02]"
-              : "border-border hover:border-primary/50 hover:bg-muted/30"
-        )}
-        onClick={() => !isProcessingOCR && fileInputRef.current?.click()}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
-        {isProcessingOCR ? (
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Analisando cardápio com IA...</p>
+      {/* Upload Area / Preview */}
+      {previewData ? (
+        <div className="border-2 border-primary rounded-xl p-4 space-y-4">
+          {/* Preview */}
+          <div className="relative">
+            {previewData.fileType === 'image' ? (
+              <img 
+                src={previewData.base64} 
+                alt="Preview do cardápio"
+                className="w-full max-h-64 object-contain rounded-lg bg-muted"
+              />
+            ) : (
+              <div className="flex items-center justify-center gap-3 p-8 bg-muted rounded-lg">
+                <FileText className="w-12 h-12 text-primary" />
+                <div className="text-left">
+                  <p className="font-medium text-foreground">{previewData.fileName}</p>
+                  <p className="text-sm text-muted-foreground">Documento PDF</p>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
+
+          {/* Action buttons */}
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={handleCancelPreview}
+              disabled={isProcessingOCR}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button 
+              className="flex-1"
+              onClick={handleConfirmOCR}
+              disabled={isProcessingOCR}
+            >
+              {isProcessingOCR ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Processar com IA
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div 
+          className={cn(
+            "border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer",
+            isProcessingOCR 
+              ? "border-primary bg-primary/5" 
+              : isDragging
+                ? "border-primary bg-primary/10 scale-[1.02]"
+                : "border-border hover:border-primary/50 hover:bg-muted/30"
+          )}
+          onClick={() => !isProcessingOCR && fileInputRef.current?.click()}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
           <div className="flex flex-col items-center gap-3">
             <div className={cn(
               "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
@@ -534,8 +614,8 @@ export default function Onboarding() {
               </p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Manual Add */}
       <Card>
