@@ -13,7 +13,6 @@ const plans = [
       "Frente de Caixa (PDV)",
       "KDS (Tela da Cozinha)",
       "Suporte via Chat",
-      "1 Usuário",
       "Relatório básico de vendas",
     ],
     highlighted: false,
@@ -27,9 +26,7 @@ const plans = [
     features: [
       "Tudo do Start +",
       "Estoque Avançado",
-      "Múltiplos Usuários (até 5)",
       "Relatórios Financeiros",
-      "Integração Fiscal",
       "Suporte Prioritário",
       "Dashboard Gerencial",
     ],
