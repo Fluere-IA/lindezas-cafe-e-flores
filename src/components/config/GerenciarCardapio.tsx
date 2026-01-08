@@ -688,10 +688,6 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
   };
 
   const openEditCategory = (category: Category) => {
-    if (!category.organization_id) {
-      toast.error('Categorias padrão não podem ser editadas');
-      return;
-    }
     setEditingCategory(category);
     setCategoryFormData({ name: category.name });
     setCategoryDialogOpen(true);
