@@ -779,18 +779,18 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
     }
   };
 
-  // OCR Handler
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // OCR Handler - Process file (image or PDF)
+  const processMenuFile = async (file: File) => {
+    const isImage = file.type.startsWith('image/');
+    const isPDF = file.type === 'application/pdf';
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, envie uma imagem do cardápio.');
+    if (!isImage && !isPDF) {
+      toast.error('Por favor, envie uma imagem ou PDF do cardápio.');
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('O arquivo deve ter no máximo 10MB.');
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('O arquivo deve ter no máximo 20MB.');
       return;
     }
 
@@ -805,80 +805,124 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
       });
 
       const { data, error } = await supabase.functions.invoke('ocr-menu', {
-        body: { image: base64 },
+        body: { image: base64, fileType: isPDF ? 'pdf' : 'image' },
       });
 
       if (error) throw error;
 
-      if (data?.items && Array.isArray(data.items) && data.items.length > 0) {
-        const normalize = (str: string) => 
-          str.toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .trim();
-        
-        const uniqueCategories = [...new Set(data.items.map((item: any) => item.category || 'Geral'))];
-        const categoryMap: Record<string, string> = {};
-
-        for (const categoryName of uniqueCategories) {
-          const catName = (categoryName as string).trim();
-          const normalizedCatName = normalize(catName);
-          
-          const existingCat = categories.find(c => normalize(c.name) === normalizedCatName);
-          
-          if (existingCat) {
-            categoryMap[catName] = existingCat.id;
-          } else {
-            const maxPosition = Math.max(0, ...customCategories.map(c => c.position || 0));
-            const { data: cat, error: catError } = await supabase
-              .from('categories')
-              .insert({
-                name: catName,
-                type: 'cafeteria',
-                organization_id: currentOrganization?.id,
-                position: maxPosition + 1,
-              })
-              .select()
-              .single();
-
-            if (!catError && cat) {
-              categoryMap[catName] = cat.id;
-            }
-          }
-        }
-
-        const productsToInsert = data.items.map((item: any, index: number) => ({
-          name: item.name,
-          price: parseFloat(item.price) || 0,
-          description: item.description || null,
-          category_id: categoryMap[item.category || 'Geral'] || null,
-          organization_id: currentOrganization?.id,
-          is_active: true,
-          stock: 100,
-          position: index,
-        }));
-
-        const { error: prodError } = await supabase.from('products').insert(productsToInsert);
-        if (prodError) throw prodError;
-
-        queryClient.invalidateQueries({ queryKey: ['products-admin'] });
-        queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
-        queryClient.invalidateQueries({ queryKey: ['products'] });
-        queryClient.invalidateQueries({ queryKey: ['categories'] });
-
-        toast.success(`${data.items.length} itens importados do cardápio!`);
-      } else {
-        toast.error('Nenhum item encontrado. Tente uma imagem mais clara.');
-      }
+      await processOCRResults(data);
     } catch (error) {
       logError(error, 'OCR Error');
-      toast.error('Erro ao processar imagem. Tente novamente.');
+      toast.error('Erro ao processar arquivo. Tente novamente.');
     } finally {
       setIsProcessingOCR(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
+  };
+
+  // Process OCR results
+  const processOCRResults = async (data: any) => {
+    if (data?.items && Array.isArray(data.items) && data.items.length > 0) {
+      const normalize = (str: string) => 
+        str.toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim();
+      
+      const uniqueCategories = [...new Set(data.items.map((item: any) => item.category || 'Geral'))];
+      const categoryMap: Record<string, string> = {};
+
+      for (const categoryName of uniqueCategories) {
+        const catName = (categoryName as string).trim();
+        const normalizedCatName = normalize(catName);
+        
+        const existingCat = categories.find(c => normalize(c.name) === normalizedCatName);
+        
+        if (existingCat) {
+          categoryMap[catName] = existingCat.id;
+        } else {
+          const maxPosition = Math.max(0, ...customCategories.map(c => c.position || 0));
+          const { data: cat, error: catError } = await supabase
+            .from('categories')
+            .insert({
+              name: catName,
+              type: 'cafeteria',
+              organization_id: currentOrganization?.id,
+              position: maxPosition + 1,
+            })
+            .select()
+            .single();
+
+          if (!catError && cat) {
+            categoryMap[catName] = cat.id;
+          }
+        }
+      }
+
+      const productsToInsert = data.items.map((item: any, index: number) => ({
+        name: item.name,
+        price: parseFloat(item.price) || 0,
+        description: item.description || null,
+        category_id: categoryMap[item.category || 'Geral'] || null,
+        organization_id: currentOrganization?.id,
+        is_active: true,
+        stock: 100,
+        position: index,
+      }));
+
+      const { error: prodError } = await supabase.from('products').insert(productsToInsert);
+      if (prodError) throw prodError;
+
+      queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+
+      toast.success(`${data.items.length} itens importados do cardápio!`);
+    } else {
+      toast.error('Nenhum item encontrado. Tente um arquivo mais claro.');
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processMenuFile(file);
+  };
+
+  // Handle paste from clipboard
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          await processMenuFile(file);
+        }
+        break;
+      }
+    }
+  };
+
+  // Handle drag and drop for file upload
+  const handleFileDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processMenuFile(file);
+    }
+  };
+
+  const handleFileDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   return (
@@ -913,11 +957,15 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
             : "border-border hover:border-primary/50 hover:bg-muted/30"
         )}
         onClick={() => !isProcessingOCR && fileInputRef.current?.click()}
+        onPaste={handlePaste}
+        onDrop={handleFileDrop}
+        onDragOver={handleFileDragOver}
+        tabIndex={0}
       >
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.pdf,application/pdf"
           onChange={handleFileUpload}
           className="hidden"
         />
@@ -927,9 +975,12 @@ export function GerenciarCardapio({ onBack }: GerenciarCardapioProps) {
             <p className="text-sm text-muted-foreground">Analisando cardápio com IA...</p>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-2">
-            <ImageIcon className="w-5 h-5 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Importar cardápio via foto (IA)</p>
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center justify-center gap-2">
+              <ImageIcon className="w-5 h-5 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Importar cardápio via foto ou PDF</p>
+            </div>
+            <p className="text-xs text-muted-foreground/70">Clique, arraste ou cole (Ctrl+V) uma imagem</p>
           </div>
         )}
       </div>
