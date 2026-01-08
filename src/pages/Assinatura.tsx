@@ -170,7 +170,7 @@ const Assinatura = () => {
             </div>
             <CardContent className="p-4">
               <Button 
-                onClick={() => navigate('/')} 
+                onClick={() => navigate('/planos')} 
                 className="w-full h-12"
                 size="lg"
               >
