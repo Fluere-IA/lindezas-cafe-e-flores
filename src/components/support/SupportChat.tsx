@@ -16,6 +16,7 @@ export function SupportChat() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     message: '',
   });
   const { toast } = useToast();
@@ -39,6 +40,7 @@ export function SupportChat() {
         body: {
           userName: formData.name,
           userEmail: formData.email,
+          userPhone: formData.phone,
           message: formData.message,
           ownerEmail: OWNER_EMAIL,
         },
@@ -51,7 +53,7 @@ export function SupportChat() {
         description: "Você receberá uma confirmação por e-mail.",
       });
 
-      setFormData({ name: '', email: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', message: '' });
       setIsOpen(false);
     } catch (error: any) {
       console.error('Error sending support email:', error);
@@ -104,6 +106,18 @@ export function SupportChat() {
                 placeholder="seu@email.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="support-phone">Telefone</Label>
+              <Input
+                id="support-phone"
+                type="tel"
+                placeholder="(00) 00000-0000"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 disabled={isLoading}
               />
             </div>
