@@ -158,13 +158,23 @@ export default function AceitarConvite() {
         userId = signUpData.user.id;
       }
 
+      // Map display role to database role
+      const roleMap: Record<string, string> = {
+        'Garçom': 'member',
+        'Administrador': 'admin',
+        'Admin': 'admin',
+        'Cozinha': 'member',
+        'Caixa': 'member',
+      };
+      const dbRole = roleMap[invite.role] || invite.role.toLowerCase();
+
       // Add user to organization
       const { error: memberError } = await supabase
         .from('organization_members')
         .insert({
           organization_id: invite.organization_id,
           user_id: userId,
-          role: invite.role,
+          role: dbRole,
         });
 
       if (memberError) {
