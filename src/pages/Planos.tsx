@@ -13,14 +13,13 @@ const plans = [
     name: "Start",
     priceId: "price_1SmdeyHx3U4iTNTbnzINv2Rl",
     price: "99,90",
-    description: "Ideal para pequenos estabelecimentos",
+    description: "Para quem quer modernizar o atendimento e eliminar o papel.",
     features: [
-      "Comanda Digital",
-      "Frente de Caixa (PDV)",
-      "KDS (Tela da Cozinha)",
-      "Suporte via Chat",
-      "Usuários Ilimitados",
-      "Relatório básico de vendas",
+      "Comanda Digital & Mesas",
+      "Frente de Caixa (PDV) Ágil",
+      "KDS (Tela de Cozinha Digital)",
+      "Equipe Ilimitada",
+      "Relatórios Básicos",
     ],
     highlighted: false,
     icon: Zap,
@@ -30,13 +29,13 @@ const plans = [
     name: "Pro",
     priceId: "price_1Sn9TrHx3U4iTNTblXPO4bsJ",
     price: "149,90",
-    description: "Para negócios em crescimento",
+    description: "Para quem busca controle total, segurança e mais lucro.",
     features: [
-      "Tudo do Start +",
-      "Usuários Ilimitados",
-      "Relatórios Financeiros",
-      "Suporte Prioritário",
-      "Dashboard Gerencial",
+      "Tudo do Start, mais:",
+      "Segurança Anti-Fraude (Auditoria)",
+      "Relatórios de Lucro (DRE e Curva ABC)",
+      "Mapa de Calor (Horários de Pico)",
+      "Suporte VIP (WhatsApp Direto)",
     ],
     highlighted: true,
     icon: Crown,
@@ -190,7 +189,7 @@ const Planos = () => {
                 
                 {plan.highlighted && !isCurrentPlan(plan.id) && (
                   <span className="inline-block px-3 py-1 bg-white/20 text-primary-foreground text-xs font-medium rounded-full mb-3">
-                    Mais popular
+                    Recomendado
                   </span>
                 )}
 
