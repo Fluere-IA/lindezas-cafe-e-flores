@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileSpreadsheet, Download, Loader2, Lock } from 'lucide-react';
+import { FileSpreadsheet, Download, Loader2, Lock, FileText } from 'lucide-react';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useFiscalReport } from '@/hooks/useFiscalReport';
@@ -32,9 +32,9 @@ export function FiscalReportCard() {
 
   const [selectedMonth, setSelectedMonth] = useState(monthOptions[0].value);
 
-  const handleDownload = () => {
+  const handleDownload = (format: 'csv' | 'xlsx') => {
     if (isPro) {
-      generateReport(selectedMonth);
+      generateReport(selectedMonth, format);
     } else {
       navigate('/assinatura');
     }
@@ -54,7 +54,7 @@ export function FiscalReportCard() {
           Compatível com a maioria dos sistemas contábeis (CSV/Excel).
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="sm:w-[200px]">
               <SelectValue placeholder="Selecione o mês" />
@@ -68,31 +68,44 @@ export function FiscalReportCard() {
             </SelectContent>
           </Select>
 
-          <Button
-            onClick={handleDownload}
-            disabled={isLoading}
-            className={isPro 
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none'
-              : 'bg-muted text-muted-foreground flex-1 sm:flex-none'
-            }
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Gerando...
-              </>
-            ) : isPro ? (
-              <>
-                <Download className="h-4 w-4 mr-2" />
-                Baixar Relatório Fiscal
-              </>
-            ) : (
-              <>
-                <Lock className="h-4 w-4 mr-2" />
-                Recurso Pro
-              </>
-            )}
-          </Button>
+          {isPro ? (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                onClick={() => handleDownload('xlsx')}
+                disabled={isLoading}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Baixar Excel (.xlsx)
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => handleDownload('csv')}
+                disabled={isLoading}
+                variant="outline"
+                className="flex-1"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Baixar CSV
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => navigate('/assinatura')}
+              className="bg-muted text-muted-foreground flex-1 sm:flex-none"
+            >
+              <Lock className="h-4 w-4 mr-2" />
+              Recurso Pro
+            </Button>
+          )}
         </div>
 
         {!isPro && (
