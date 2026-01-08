@@ -326,11 +326,12 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
         </div>
         <Button 
           onClick={openNewProduct} 
-          size="lg" 
-          className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all font-semibold px-6"
+          className="h-12 px-5 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all rounded-full font-semibold text-base gap-2"
         >
-          <Plus className="h-5 w-5 mr-2" />
-          Adicionar Produto
+          <div className="bg-white/20 rounded-full p-1">
+            <Plus className="h-4 w-4" />
+          </div>
+          Novo Produto
         </Button>
       </div>
 
