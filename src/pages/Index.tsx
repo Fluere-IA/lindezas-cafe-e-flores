@@ -4,6 +4,7 @@ import { CategoryTabs, CategoryFilter } from '@/components/pos/CategoryTabs';
 import { SearchBar } from '@/components/pos/SearchBar';
 import { ProductGrid } from '@/components/pos/ProductGrid';
 import { CartSheet } from '@/components/pos/CartSheet';
+import { PedidosSkeleton } from '@/components/ui/dashboard-skeleton';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -115,6 +116,11 @@ const Index = () => {
       toast.error('Erro ao enviar pedido');
     }
   };
+
+  // Show skeleton during initial load
+  if (isLoading && products.length === 0) {
+    return <PedidosSkeleton />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20">
