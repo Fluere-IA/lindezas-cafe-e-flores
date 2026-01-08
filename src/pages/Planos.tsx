@@ -33,7 +33,6 @@ const plans = [
     description: "Para negócios em crescimento",
     features: [
       "Tudo do Start +",
-      "Estoque Avançado",
       "Usuários Ilimitados",
       "Relatórios Financeiros",
       "Integração Fiscal",
