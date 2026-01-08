@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { Settings, Package, FileText, ChevronRight, Users, CreditCard, Building2 } from 'lucide-react';
+import { Settings, UtensilsCrossed, ChevronRight, UsersRound, Sparkles, Boxes, BarChart3 } from 'lucide-react';
 import { GerenciarCardapio } from '@/components/config/GerenciarCardapio';
 
 type ConfigSection = 'cardapio' | null;
 
 const menuItems = [
-  { path: '/membros', label: 'Equipe', description: 'Gerenciar membros e convites', icon: Users },
-  { path: '/assinatura', label: 'Assinatura', description: 'Gerenciar plano e pagamentos', icon: CreditCard },
+  { path: '/membros', label: 'Equipe', description: 'Gerenciar membros e convites', icon: UsersRound },
+  { path: '/assinatura', label: 'Assinatura', description: 'Gerenciar plano e pagamentos', icon: Sparkles },
 ];
 
 const proItems = [
-  { path: '/estoque', label: 'Estoque', description: 'Controle de quantidades e movimentações', icon: Package, pro: true },
-  { path: '/relatorios', label: 'Relatórios', description: 'DRE, Curva ABC e análises financeiras', icon: FileText, pro: true },
+  { path: '/estoque', label: 'Estoque', description: 'Controle de quantidades e movimentações', icon: Boxes },
+  { path: '/relatorios', label: 'Relatórios', description: 'DRE, Curva ABC e análises financeiras', icon: BarChart3 },
 ];
 
 const Configuracoes = () => {
@@ -34,7 +34,7 @@ const Configuracoes = () => {
             className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-border/50 hover:border-primary/50 transition-colors text-left"
           >
             <div className="p-2.5 rounded-lg bg-primary/10">
-              <Package className="h-5 w-5 text-primary" />
+              <UtensilsCrossed className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
               <p className="font-medium text-foreground">Gerenciar Cardápio</p>
