@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -13,8 +14,9 @@ interface InviteEmailRequest {
   to: string;
   inviterName: string;
   organizationName: string;
+  organizationId: string;
   role: string;
-  inviteUrl: string;
+  inviteId: string;
   tempPassword: string;
 }
 
@@ -26,6 +28,14 @@ const roleLabels: Record<string, string> = {
   kitchen: 'Cozinha',
 };
 
+// Map display role to database role
+const dbRoleMap: Record<string, string> = {
+  admin: 'admin',
+  waiter: 'cashier',
+  cashier: 'cashier',
+  kitchen: 'kitchen',
+};
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-invite-email function called");
 
@@ -35,16 +45,104 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, inviterName, organizationName, role, inviteUrl, tempPassword }: InviteEmailRequest = await req.json();
+    const { to, inviterName, organizationName, organizationId, role, inviteId, tempPassword }: InviteEmailRequest = await req.json();
 
-    console.log(`Sending invite email to: ${to} for organization: ${organizationName}`);
+    console.log(`Processing invite for: ${to}, organization: ${organizationName}, role: ${role}`);
+
+    // Create Supabase admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // Check if user already exists
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === to.toLowerCase());
+
+    let userId: string;
+    let isNewUser = false;
+
+    if (existingUser) {
+      console.log(`User already exists: ${existingUser.id}`);
+      userId = existingUser.id;
+    } else {
+      // Create new user
+      console.log(`Creating new user for: ${to}`);
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: to,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { invited: true },
+      });
+
+      if (createError) {
+        console.error("Error creating user:", createError);
+        throw new Error(`Erro ao criar usuário: ${createError.message}`);
+      }
+
+      if (!newUser.user) {
+        throw new Error("Usuário não foi criado");
+      }
+
+      userId = newUser.user.id;
+      isNewUser = true;
+      console.log(`User created successfully: ${userId}`);
+    }
+
+    // Add user to organization
+    const { error: memberError } = await supabaseAdmin
+      .from('organization_members')
+      .upsert({
+        organization_id: organizationId,
+        user_id: userId,
+        role: role,
+      }, { onConflict: 'organization_id,user_id' });
+
+    if (memberError) {
+      console.error("Error adding member:", memberError);
+      throw new Error(`Erro ao adicionar membro: ${memberError.message}`);
+    }
+
+    console.log(`Member added to organization: ${organizationId}`);
+
+    // Add user_roles entry if needed
+    const dbRole = dbRoleMap[role] || 'cashier';
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .upsert({
+        user_id: userId,
+        role: dbRole,
+      }, { onConflict: 'user_id' });
+
+    if (roleError) {
+      console.error("Error adding user role:", roleError);
+      // Don't throw, role might already exist
+    }
+
+    // Update invite status to accepted
+    const { error: inviteError } = await supabaseAdmin
+      .from('organization_invites')
+      .update({ 
+        status: 'accepted',
+        accepted_at: new Date().toISOString(),
+      })
+      .eq('id', inviteId);
+
+    if (inviteError) {
+      console.error("Error updating invite:", inviteError);
+      // Don't throw, invite update is not critical
+    }
 
     const roleLabel = roleLabels[role] || role;
+    
+    // Build login URL - user can go straight to login
+    const loginUrl = `${req.headers.get('origin') || 'https://servire.app.br'}/auth`;
 
     const emailResponse = await resend.emails.send({
       from: "Servire <noreply@servire.app.br>",
       to: [to],
-      subject: `Convite para ${organizationName} - Servire`,
+      subject: `Você foi adicionado a ${organizationName} - Servire`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -59,25 +157,35 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               <div style="padding: 32px;">
                 <h2 style="color: #1e293b; margin: 0 0 16px; font-size: 20px;">
-                  Você foi convidado! 🎉
+                  Você foi adicionado! 🎉
                 </h2>
                 <p style="color: #64748b; line-height: 1.6; margin: 0 0 24px;">
-                  <strong>${inviterName || 'Um administrador'}</strong> convidou você para fazer parte de <strong>${organizationName}</strong> como <strong>${roleLabel}</strong>.
+                  <strong>${inviterName || 'Um administrador'}</strong> adicionou você em <strong>${organizationName}</strong> como <strong>${roleLabel}</strong>.
                 </p>
                 
+                ${isNewUser ? `
                 <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 0 0 24px;">
                   <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Suas credenciais de acesso:</p>
                   <p style="color: #1e293b; font-size: 14px; margin: 0 0 4px;"><strong>Email:</strong> ${to}</p>
                   <p style="color: #1e293b; font-size: 14px; margin: 0;"><strong>Senha:</strong> ${tempPassword}</p>
                 </div>
+                ` : `
+                <div style="background: #dbeafe; border-radius: 8px; padding: 16px; margin: 0 0 24px;">
+                  <p style="color: #1e40af; font-size: 14px; margin: 0;">
+                    Você já possui uma conta. Use suas credenciais atuais para acessar.
+                  </p>
+                </div>
+                `}
                 
-                <a href="${inviteUrl}" style="display: inline-block; background: #1E40AF; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600;">
-                  Aceitar Convite e Entrar
+                <a href="${loginUrl}" style="display: inline-block; background: #1E40AF; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600;">
+                  Acessar o Sistema
                 </a>
                 
+                ${isNewUser ? `
                 <p style="color: #94a3b8; font-size: 13px; margin: 24px 0 0; line-height: 1.5;">
                   Recomendamos alterar sua senha após o primeiro acesso.
                 </p>
+                ` : ''}
                 <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0; line-height: 1.5;">
                   Se você não esperava este convite, pode ignorar este email.
                 </p>
@@ -95,7 +203,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Invite email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      data: emailResponse,
+      userId,
+      isNewUser,
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
