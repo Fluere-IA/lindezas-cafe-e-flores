@@ -74,6 +74,7 @@ export default function Onboarding() {
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualItem, setManualItem] = useState<MenuItem>({ name: '', price: '', category: '' });
+  const [isDragging, setIsDragging] = useState(false);
 
   // Pre-fill data from current organization when in edit mode
   React.useEffect(() => {
@@ -240,6 +241,38 @@ export default function Onboarding() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isProcessingOCR) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (isProcessingOCR) return;
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      // Create a synthetic event to reuse existing handler
+      const syntheticEvent = {
+        target: { files: [file] }
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      handleFileUpload(syntheticEvent);
     }
   };
 
@@ -457,12 +490,17 @@ export default function Onboarding() {
       {/* Upload Area */}
       <div 
         className={cn(
-          "border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer",
+          "border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer",
           isProcessingOCR 
             ? "border-primary bg-primary/5" 
-            : "border-border hover:border-primary/50 hover:bg-muted/30"
+            : isDragging
+              ? "border-primary bg-primary/10 scale-[1.02]"
+              : "border-border hover:border-primary/50 hover:bg-muted/30"
         )}
         onClick={() => !isProcessingOCR && fileInputRef.current?.click()}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         <input
           ref={fileInputRef}
@@ -478,12 +516,22 @@ export default function Onboarding() {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <ImageIcon className="w-7 h-7 text-muted-foreground" />
+            <div className={cn(
+              "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
+              isDragging ? "bg-primary/20" : "bg-muted"
+            )}>
+              <ImageIcon className={cn(
+                "w-7 h-7 transition-colors",
+                isDragging ? "text-primary" : "text-muted-foreground"
+              )} />
             </div>
             <div>
-              <p className="font-medium text-foreground">Enviar foto ou PDF do cardápio</p>
-              <p className="text-sm text-muted-foreground">A IA identificará os itens automaticamente</p>
+              <p className="font-medium text-foreground">
+                {isDragging ? "Solte o arquivo aqui" : "Enviar foto ou PDF do cardápio"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {isDragging ? "Imagem ou PDF" : "Arraste ou clique para selecionar"}
+              </p>
             </div>
           </div>
         )}
