@@ -16,7 +16,7 @@ interface RoleGuardProps {
 
 export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: RoleGuardProps) {
   const { user, isLoading: authLoading } = useAuth();
-  const { currentOrganization, isMasterAdmin, isLoading: orgLoading } = useOrganization();
+  const { currentOrganization, isMasterAdmin, isLoading: orgLoading, organizations } = useOrganization();
 
   const { data: memberRole, isLoading: roleLoading } = useQuery({
     queryKey: ['member-role', currentOrganization?.id, user?.id],
@@ -40,8 +40,20 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
     enabled: !!currentOrganization?.id && !!user?.id,
   });
 
-  // Wait for all loading states
-  const isLoading = authLoading || orgLoading || roleLoading;
+  // Debug logging
+  console.log('RoleGuard state:', {
+    authLoading,
+    orgLoading,
+    roleLoading,
+    hasUser: !!user,
+    hasCurrentOrg: !!currentOrganization,
+    organizationsCount: organizations.length,
+    memberRole,
+    isMasterAdmin
+  });
+
+  // Wait for auth and org loading states
+  const isLoading = authLoading || orgLoading;
 
   if (isLoading) {
     return (
