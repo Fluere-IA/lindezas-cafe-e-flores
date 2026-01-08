@@ -30,7 +30,6 @@ const features: Feature[] = [
   { name: "Curva ABC de Produtos", start: false, pro: true, highlight: true },
   
   { name: "Gestão de Equipe", start: "", pro: "", isCategory: true },
-  { name: "Usuários", start: "Até 2", pro: "Ilimitados", highlight: true },
   { name: "Permissões de Acesso (RBAC)", start: false, pro: true, highlight: true },
   
   { name: "Suporte", start: "", pro: "", isCategory: true },
