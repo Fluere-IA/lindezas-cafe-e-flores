@@ -29,12 +29,12 @@ const roleLabels: Record<string, string> = {
   kitchen: 'Cozinha',
 };
 
-// Map display role to organization_members role
+// Map display role to organization_members role (now supports all roles)
 const orgRoleMap: Record<string, string> = {
   admin: 'admin',
   waiter: 'member',
-  cashier: 'member',
-  kitchen: 'member',
+  cashier: 'cashier',
+  kitchen: 'kitchen',
   member: 'member',
   owner: 'owner',
 };

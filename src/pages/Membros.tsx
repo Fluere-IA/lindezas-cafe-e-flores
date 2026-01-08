@@ -653,7 +653,9 @@ export default function Membros() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="member">Membro (Garçom/Caixa/Cozinha)</SelectItem>
+                    <SelectItem value="member">Garçom</SelectItem>
+                    <SelectItem value="cashier">Caixa</SelectItem>
+                    <SelectItem value="kitchen">Cozinha</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

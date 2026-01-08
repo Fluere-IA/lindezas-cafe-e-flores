@@ -80,9 +80,9 @@ const App = () => (
                 
                 {/* Protected App Routes */}
                 <Route path="/onboarding" element={<ProtectedRoute requiresSubscription={false}><Onboarding /></ProtectedRoute>} />
-                <Route path="/pedidos" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin', 'member']}><Index /></RoleGuard></ProtectedRoute>} />
+                <Route path="/pedidos" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin', 'member', 'cashier']}><Index /></RoleGuard></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin']}><Dashboard /></RoleGuard></ProtectedRoute>} />
-                <Route path="/caixa" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin', 'cashier', 'member']}><Caixa /></RoleGuard></ProtectedRoute>} />
+                <Route path="/caixa" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin', 'cashier']}><Caixa /></RoleGuard></ProtectedRoute>} />
                 <Route path="/cozinha" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin', 'kitchen']}><Cozinha /></RoleGuard></ProtectedRoute>} />
                 <Route path="/configuracoes" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin']}><Configuracoes /></RoleGuard></ProtectedRoute>} />
                 <Route path="/organizacoes" element={<ProtectedRoute><Organizacoes /></ProtectedRoute>} />
