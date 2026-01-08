@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { Settings, UtensilsCrossed, ChevronRight, UsersRound, Sparkles, Boxes, BarChart3, ShieldCheck } from 'lucide-react';
+import { Settings, UtensilsCrossed, ChevronRight, UsersRound, Boxes, BarChart3 } from 'lucide-react';
 import { GerenciarCardapio } from '@/components/config/GerenciarCardapio';
 
 type ConfigSection = 'cardapio' | null;
@@ -12,8 +12,7 @@ const menuItems = [
 
 const proItems = [
   { path: '/estoque', label: 'Estoque', description: 'Controle de quantidades e movimentações', icon: Boxes },
-  { path: '/relatorios', label: 'Relatórios', description: 'DRE, Curva ABC e análises financeiras', icon: BarChart3 },
-  { path: '/auditoria', label: 'Auditoria', description: 'Histórico de alterações e cancelamentos', icon: ShieldCheck },
+  { path: '/relatorios', label: 'Relatórios', description: 'DRE, Curva ABC, Auditoria e análises financeiras', icon: BarChart3 },
 ];
 
 const Configuracoes = () => {
