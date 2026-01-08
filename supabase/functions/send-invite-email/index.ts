@@ -18,6 +18,7 @@ interface InviteEmailRequest {
   role: string;
   inviteId: string;
   tempPassword: string;
+  memberName?: string;
 }
 
 const roleLabels: Record<string, string> = {
@@ -56,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, inviterName, organizationName, organizationId, role, inviteId, tempPassword }: InviteEmailRequest = await req.json();
+    const { to, inviterName, organizationName, organizationId, role, inviteId, tempPassword, memberName }: InviteEmailRequest = await req.json();
 
     console.log(`Processing invite for: ${to}, organization: ${organizationName}, role: ${role}`);
 
@@ -77,6 +78,13 @@ const handler = async (req: Request): Promise<Response> => {
     if (existingUser) {
       console.log(`User already exists: ${existingUser.id}`);
       userId = existingUser.id;
+      
+      // Update profile name if provided
+      if (memberName) {
+        await supabaseAdmin
+          .from('profiles')
+          .upsert({ id: userId, full_name: memberName }, { onConflict: 'id' });
+      }
     } else {
       // Create new user
       console.log(`Creating new user for: ${to}`);
@@ -84,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
         email: to,
         password: tempPassword,
         email_confirm: true,
-        user_metadata: { invited: true },
+        user_metadata: { invited: true, full_name: memberName },
       });
 
       if (createError) {
@@ -99,6 +107,13 @@ const handler = async (req: Request): Promise<Response> => {
       userId = newUser.user.id;
       isNewUser = true;
       console.log(`User created successfully: ${userId}`);
+      
+      // Create profile with name
+      if (memberName) {
+        await supabaseAdmin
+          .from('profiles')
+          .upsert({ id: userId, full_name: memberName }, { onConflict: 'id' });
+      }
     }
 
     // Add user to organization with mapped role
