@@ -10,6 +10,7 @@ type ConfigSection = 'cardapio' | null;
 const navigationItems = [
   { path: '/membros', label: 'Equipe', description: 'Gerenciar membros e convites', icon: Users },
   { path: '/onboarding', label: 'Personalização', description: 'Alterar cor e configurações iniciais', icon: Palette },
+  { path: '/estoque', label: 'Estoque', description: 'Controle de quantidades e movimentações', icon: Package, pro: true },
   { path: '/relatorios', label: 'Relatórios', description: 'DRE, Curva ABC e análises financeiras', icon: FileText, pro: true },
 ];
 
@@ -52,15 +53,14 @@ const Configuracoes = () => {
                 onClick={() => navigate(item.path)}
                 className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-border/50 hover:border-primary/50 transition-colors text-left"
               >
-                <div className={cn("p-2.5 rounded-lg", isPro ? "bg-amber-500/10" : "bg-primary/10")}>
-                  <Icon className={cn("h-5 w-5", isPro ? "text-amber-600" : "text-primary")} />
+                <div className="p-2.5 rounded-lg bg-primary/10">
+                  <Icon className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-foreground">{item.label}</p>
                     {isPro && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                        <Crown className="h-3 w-3" />
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
                         PRO
                       </span>
                     )}
