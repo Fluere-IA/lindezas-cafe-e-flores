@@ -324,8 +324,9 @@ export function GerenciarProdutos({ onBack }: GerenciarProdutosProps) {
           <h2 className="text-lg font-semibold text-foreground">Cardápio</h2>
           <p className="text-sm text-muted-foreground">{products.length} produtos</p>
         </div>
-        <Button onClick={openNewProduct} size="sm" className="bg-primary hover:bg-primary/90">
-          <Plus className="h-4 w-4 mr-1" /> Novo
+        <Button onClick={openNewProduct} size="default" className="bg-primary hover:bg-primary/90 shadow-md">
+          <Plus className="h-4 w-4 mr-2" />
+          <span>Adicionar Produto</span>
         </Button>
       </div>
 
