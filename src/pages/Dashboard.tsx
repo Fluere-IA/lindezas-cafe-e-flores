@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { TrendingUp, Trophy, Loader2 } from 'lucide-react';
+import { TrendingUp, Trophy } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { CurrentStatusCard } from '@/components/dashboard/CurrentStatusCard';
 import { SalesChart } from '@/components/dashboard/SalesChart';
 import { TopProducts } from '@/components/dashboard/TopProducts';
 import { TrialBanner } from '@/components/dashboard/TrialBanner';
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { 
@@ -47,13 +48,9 @@ const Dashboard = () => {
     checkOnboarding();
   }, [orgLoading, currentOrganization, navigate, hasCheckedOnboarding, location.state]);
 
-  // Show loading while checking organization
+  // Show skeleton while checking organization
   if (orgLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

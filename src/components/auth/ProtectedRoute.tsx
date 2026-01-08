@@ -1,8 +1,9 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, AppRole } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
-import { Loader2, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -22,14 +23,7 @@ export function ProtectedRoute({ children, requiredRole, requiresSubscription = 
   const isLoading = authLoading || (isAuthenticated && requiresSubscription && subLoading);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-lindezas-cream">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-lindezas-forest mx-auto mb-4" />
-          <p className="text-lindezas-forest">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!isAuthenticated) {
