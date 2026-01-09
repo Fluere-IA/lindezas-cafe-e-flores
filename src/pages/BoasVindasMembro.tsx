@@ -120,6 +120,13 @@ export default function BoasVindasMembro() {
 
   const handleTourComplete = async () => {
     if (!user) return;
+    
+    // Save tour completed preference
+    await supabase
+      .from('profiles')
+      .update({ tour_completed: true })
+      .eq('id', user.id);
+    
     const redirectPath = await getRedirectPath(user.id);
     navigate(redirectPath, { replace: true });
   };
