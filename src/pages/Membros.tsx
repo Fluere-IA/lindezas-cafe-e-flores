@@ -85,6 +85,8 @@ export default function Membros() {
   const [memberToEdit, setMemberToEdit] = useState<Member | null>(null);
   const [editRole, setEditRole] = useState('');
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+  const [deleteFromDatabase, setDeleteFromDatabase] = useState(false);
+  const [isDeletingMember, setIsDeletingMember] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState('waiter');
@@ -329,18 +331,27 @@ export default function Membros() {
   };
 
   const removeMember = async () => {
-    if (!memberToDelete) return;
+    if (!memberToDelete || !currentOrganization?.id) return;
+
+    setIsDeletingMember(true);
 
     try {
-      const { error } = await supabase
-        .from('organization_members')
-        .delete()
-        .eq('id', memberToDelete.id);
+      const { data, error } = await supabase.functions.invoke('delete-member', {
+        body: {
+          memberId: memberToDelete.id,
+          userId: memberToDelete.user_id,
+          organizationId: currentOrganization.id,
+          deleteFromDatabase,
+        },
+      });
 
       if (error) throw error;
 
       toast({
-        title: 'Membro removido',
+        title: deleteFromDatabase && data?.userDeleted 
+          ? 'Membro e conta excluídos' 
+          : 'Membro removido',
+        description: data?.message,
       });
 
       queryClient.invalidateQueries({ queryKey: ['organization-members'] });
@@ -353,6 +364,8 @@ export default function Membros() {
     } finally {
       setDeleteDialogOpen(false);
       setMemberToDelete(null);
+      setDeleteFromDatabase(false);
+      setIsDeletingMember(false);
     }
   };
 
@@ -721,18 +734,57 @@ export default function Membros() {
         )}
 
         {/* Delete Member Confirmation Dialog */}
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent className="max-w-sm">
+        <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setDeleteFromDatabase(false);
+          }
+        }}>
+          <AlertDialogContent className="max-w-md">
             <AlertDialogHeader>
               <AlertDialogTitle>Remover membro?</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja remover este membro da equipe?
+                Tem certeza que deseja remover{' '}
+                <strong>{memberToDelete?.profile?.full_name || 'este membro'}</strong> da equipe?
               </AlertDialogDescription>
             </AlertDialogHeader>
+            
+            <div className="flex items-center space-x-2 py-2">
+              <input
+                type="checkbox"
+                id="deleteFromDb"
+                checked={deleteFromDatabase}
+                onChange={(e) => setDeleteFromDatabase(e.target.checked)}
+                className="h-4 w-4 rounded border-destructive text-destructive focus:ring-destructive"
+              />
+              <label 
+                htmlFor="deleteFromDb" 
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                Também excluir a conta do usuário permanentemente
+              </label>
+            </div>
+            
+            {deleteFromDatabase && (
+              <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                ⚠️ Esta ação é irreversível! O usuário perderá acesso a todas as organizações e seus dados serão excluídos.
+              </p>
+            )}
+            
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={removeMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Remover
+              <AlertDialogCancel disabled={isDeletingMember}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={removeMember} 
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={isDeletingMember}
+              >
+                {isDeletingMember ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : deleteFromDatabase ? (
+                  'Excluir Permanentemente'
+                ) : (
+                  'Remover da Equipe'
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
