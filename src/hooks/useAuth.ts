@@ -66,26 +66,28 @@ export function useAuth() {
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!isMounted) return;
         
+        // Update state synchronously first
+        setAuthState(prev => ({
+          ...prev,
+          session,
+          user: session?.user ?? null,
+        }));
+        
+        // Fetch role asynchronously using setTimeout(0) to avoid deadlocks
         if (session?.user) {
-          const role = await fetchUserRole(session.user.id);
-          if (isMounted) {
-            setAuthState({
-              session,
-              user: session.user,
-              role,
-              isLoading: false,
+          const userId = session.user.id;
+          setTimeout(() => {
+            fetchUserRole(userId).then(role => {
+              if (isMounted) {
+                setAuthState(prev => ({ ...prev, role, isLoading: false }));
+              }
             });
-          }
+          }, 0);
         } else {
-          setAuthState({
-            session: null,
-            user: null,
-            role: null,
-            isLoading: false,
-          });
+          setAuthState(prev => ({ ...prev, role: null, isLoading: false }));
         }
       }
     );

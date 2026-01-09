@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, AppRole } from '@/hooks/useAuth';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
@@ -15,12 +16,23 @@ export function ProtectedRoute({ children, requiredRole, requiresSubscription = 
   const { isAuthenticated, role, isLoading: authLoading } = useAuth();
   const { subscribed, isLoading: subLoading, isInTrial } = useSubscriptionContext();
   const location = useLocation();
+  
+  // Safety timeout to prevent infinite loading
+  const [forceLoaded, setForceLoaded] = useState(false);
+  
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setForceLoaded(true);
+    }, 5000);
+    return () => clearTimeout(timeout);
+  }, []);
 
   // User has access if subscribed OR in trial period
   const hasAccess = subscribed || isInTrial;
 
   // Wait for auth to load first, then wait for subscription if authenticated and subscription is required
-  const isLoading = authLoading || (isAuthenticated && requiresSubscription && subLoading);
+  // Force exit loading state after 5 seconds
+  const isLoading = !forceLoaded && (authLoading || (isAuthenticated && requiresSubscription && subLoading));
 
   if (isLoading) {
     return <DashboardSkeleton />;
