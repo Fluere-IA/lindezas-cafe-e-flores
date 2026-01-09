@@ -25,11 +25,10 @@ interface OrganizationContextType {
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
-  const { user, role, isLoading: authLoading } = useAuth();
+  const { user, role } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
 
   const isMasterAdmin = role === 'admin';
 
@@ -39,7 +38,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       setOrganizations([]);
       setCurrentOrganization(null);
       localStorage.removeItem('currentOrganizationId');
-      setIsLoading(false);
       return [];
     }
 
@@ -80,7 +78,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       }
       
       // Retry logic for newly registered users
-      // The database trigger creates the org, but it might not be immediately visible
       if (orgs.length === 0 && retries > 0) {
         await new Promise(resolve => setTimeout(resolve, 800));
         return fetchOrganizations(retries - 1);
@@ -92,7 +89,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       if (orgs.length > 0) {
         const savedOrgId = localStorage.getItem('currentOrganizationId');
         
-        // Use functional update to avoid stale closure
         setCurrentOrganization(prev => {
           const currentOrgId = prev?.id || savedOrgId;
           const matchedOrg = orgs.find(org => org.id === currentOrgId);
@@ -114,18 +110,14 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       setOrganizations([]);
       return [];
     } finally {
-      // Only set loading to false if we found orgs or exhausted retries
       setIsLoading(false);
     }
   }, [user, role]);
 
-  // Fetch organizations when auth is ready
+  // Fetch organizations when user changes
   useEffect(() => {
-    if (!authLoading && !hasFetched) {
-      setHasFetched(true);
-      fetchOrganizations();
-    }
-  }, [authLoading, hasFetched, fetchOrganizations]);
+    fetchOrganizations();
+  }, [user?.id, role]);
 
   // Persist current organization to localStorage
   useEffect(() => {
@@ -164,7 +156,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     currentOrganization,
     setCurrentOrganization,
     isMasterAdmin,
-    isLoading: isLoading || authLoading,
+    isLoading,
     refetchOrganizations: fetchOrganizations,
   };
 
