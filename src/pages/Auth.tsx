@@ -57,43 +57,24 @@ export default function Auth() {
     
     setIsSubmitting(true);
     
-    try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: 'Erro de autenticação',
-            description: 'Email ou senha incorretos.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Erro',
-            description: 'Não foi possível fazer login. Tente novamente.',
-            variant: 'destructive',
-          });
-        }
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Login successful - show toast and force redirect
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      setIsSubmitting(false);
+      const msg = error.message?.includes('Invalid login credentials')
+        ? 'Email ou senha incorretos.'
+        : 'Não foi possível fazer login. Tente novamente.';
       toast({
-        title: 'Bem-vindo!',
-        description: 'Login realizado com sucesso.',
-      });
-      
-      // Force redirect using window.location to ensure navigation works
-      window.location.href = '/dashboard';
-    } catch {
-      toast({
-        title: 'Erro',
-        description: 'Erro inesperado. Tente novamente.',
+        title: 'Erro de autenticação',
+        description: msg,
         variant: 'destructive',
       });
-      setIsSubmitting(false);
+      return;
     }
+    
+    // Login successful - force immediate redirect
+    // Use replace to prevent back button issues
+    window.location.replace('/dashboard');
   };
 
   // Don't show loading state - render form immediately
