@@ -20,6 +20,7 @@ interface OrganizationContextType {
   isMasterAdmin: boolean;
   isLoading: boolean;
   refetchOrganizations: () => Promise<Organization[]>;
+  userOrgRole: string | null;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -27,8 +28,9 @@ const OrganizationContext = createContext<OrganizationContextType | undefined>(u
 export function OrganizationProvider({ children }: { children: ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
+  const [currentOrganization, setCurrentOrganizationState] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userOrgRole, setUserOrgRole] = useState<string | null>(null);
 
   // Check master admin status from user_roles
   const [isMasterAdmin, setIsMasterAdmin] = useState(false);
@@ -55,11 +57,50 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     checkMasterAdmin();
   }, [user?.id]);
 
+  // Fetch user's role in current organization
+  const fetchUserOrgRole = useCallback(async (orgId: string) => {
+    if (!user || isMasterAdmin) {
+      // Master admins have full access
+      setUserOrgRole(isMasterAdmin ? 'owner' : null);
+      return;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('organization_id', orgId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching user org role:', error);
+        setUserOrgRole(null);
+        return;
+      }
+      
+      setUserOrgRole(data?.role || null);
+    } catch {
+      setUserOrgRole(null);
+    }
+  }, [user, isMasterAdmin]);
+
+  // Wrapper to set current organization and fetch role
+  const setCurrentOrganization = useCallback((org: Organization | null) => {
+    setCurrentOrganizationState(org);
+    if (org) {
+      fetchUserOrgRole(org.id);
+    } else {
+      setUserOrgRole(null);
+    }
+  }, [fetchUserOrgRole]);
+
   // Fetch with retry logic for newly created users
   const fetchOrganizations = useCallback(async (retries = 5): Promise<Organization[]> => {
     if (!user) {
       setOrganizations([]);
-      setCurrentOrganization(null);
+      setCurrentOrganizationState(null);
+      setUserOrgRole(null);
       localStorage.removeItem('currentOrganizationId');
       return [];
     }
@@ -112,15 +153,17 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       if (orgs.length > 0) {
         const savedOrgId = localStorage.getItem('currentOrganizationId');
         
-        setCurrentOrganization(prev => {
+        setCurrentOrganizationState(prev => {
           const currentOrgId = prev?.id || savedOrgId;
           const matchedOrg = orgs.find(org => org.id === currentOrgId);
           
           if (matchedOrg) {
             localStorage.setItem('currentOrganizationId', matchedOrg.id);
+            fetchUserOrgRole(matchedOrg.id);
             return matchedOrg;
           } else if (orgs.length === 1) {
             localStorage.setItem('currentOrganizationId', orgs[0].id);
+            fetchUserOrgRole(orgs[0].id);
             return orgs[0];
           }
           return prev;
@@ -135,7 +178,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, isMasterAdmin]);
+  }, [user, isMasterAdmin, fetchUserOrgRole]);
 
   // Fetch organizations when user changes and auth is done loading
   useEffect(() => {
@@ -194,6 +237,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     isMasterAdmin,
     isLoading,
     refetchOrganizations: fetchOrganizations,
+    userOrgRole,
   };
 
   return (
