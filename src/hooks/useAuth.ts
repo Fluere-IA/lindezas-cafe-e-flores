@@ -16,9 +16,8 @@ export function useAuth() {
     user: null,
     session: null,
     role: null,
-    isLoading: true,
+    isLoading: false, // Start as false - we'll load in background
   });
-  const [initialized, setInitialized] = useState(false);
 
   const fetchUserRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     try {
@@ -42,7 +41,6 @@ export function useAuth() {
   useEffect(() => {
     let isMounted = true;
     
-    // Initialize immediately with current session
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -59,28 +57,14 @@ export function useAuth() {
               isLoading: false,
             });
           }
-        } else {
-          setAuthState({
-            session: null,
-            user: null,
-            role: null,
-            isLoading: false,
-          });
         }
-        setInitialized(true);
       } catch (error) {
         console.error('Error initializing auth:', error);
-        if (isMounted) {
-          setAuthState(prev => ({ ...prev, isLoading: false }));
-          setInitialized(true);
-        }
       }
     };
 
-    // Start initialization
     initAuth();
 
-    // Listen for auth changes AFTER initialization
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
