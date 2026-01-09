@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
-import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,16 +19,14 @@ export default function Auth() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
   const { signIn, user, isAuthenticated, isLoading } = useAuth();
-  const { getRedirectPath } = useRoleBasedRedirect();
-  const navigate = useNavigate();
   const { toast } = useToast();
 
+  // If already authenticated on page load, redirect immediately
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      // Redirect based on user role
-      getRedirectPath(user.id).then(path => navigate(path));
+      window.location.href = '/dashboard';
     }
-  }, [isAuthenticated, isLoading, user, navigate, getRedirectPath]);
+  }, [isAuthenticated, isLoading, user]);
 
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -57,45 +54,23 @@ export default function Auth() {
     
     setIsSubmitting(true);
     
-    // Set a safety timeout to reset button if something goes wrong
-    const safetyTimeout = setTimeout(() => {
-      setIsSubmitting(false);
-    }, 8000);
+    const { error } = await signIn(email, password);
     
-    try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        clearTimeout(safetyTimeout);
-        setIsSubmitting(false);
-        const msg = error.message?.includes('Invalid login credentials')
-          ? 'Email ou senha incorretos.'
-          : 'Não foi possível fazer login. Tente novamente.';
-        toast({
-          title: 'Erro de autenticação',
-          description: msg,
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Clear safety timeout since login succeeded
-      clearTimeout(safetyTimeout);
-      
-      // Login successful - redirect immediately
-      // Use setTimeout to ensure state is updated before redirect
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 100);
-    } catch (err) {
-      clearTimeout(safetyTimeout);
+    if (error) {
       setIsSubmitting(false);
+      const msg = error.message?.includes('Invalid login credentials')
+        ? 'Email ou senha incorretos.'
+        : 'Não foi possível fazer login. Tente novamente.';
       toast({
-        title: 'Erro',
-        description: 'Erro inesperado. Tente novamente.',
+        title: 'Erro de autenticação',
+        description: msg,
         variant: 'destructive',
       });
+      return;
     }
+    
+    // Login successful - force redirect immediately without waiting
+    window.location.assign('/dashboard');
   };
 
   // Don't show loading state - render form immediately
