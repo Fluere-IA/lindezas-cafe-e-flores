@@ -34,12 +34,14 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
   // Check master admin status from user_roles
   const [isMasterAdmin, setIsMasterAdmin] = useState(false);
+  const [masterAdminChecked, setMasterAdminChecked] = useState(false);
 
   // Check master admin status
   useEffect(() => {
     const checkMasterAdmin = async () => {
       if (!user) {
         setIsMasterAdmin(false);
+        setMasterAdminChecked(true);
         return;
       }
       try {
@@ -52,6 +54,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         setIsMasterAdmin(!!data);
       } catch {
         setIsMasterAdmin(false);
+      } finally {
+        setMasterAdminChecked(true);
       }
     };
     checkMasterAdmin();
@@ -182,8 +186,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
   // Fetch organizations when user changes and auth is done loading
   useEffect(() => {
-    // Wait for auth to finish loading
-    if (authLoading) return;
+    // Wait for auth to finish loading and master admin check to complete
+    if (authLoading || !masterAdminChecked) return;
     
     // If no user, clear state
     if (!user) {
@@ -196,7 +200,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     // Fetch organizations
     fetchOrganizations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, authLoading]);
+  }, [user?.id, authLoading, masterAdminChecked]);
 
   // Persist current organization to localStorage
   useEffect(() => {
@@ -230,12 +234,15 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     };
   }, [user, fetchOrganizations]);
 
+  // Consider loading complete only when master admin check is done
+  const contextIsLoading = isLoading || !masterAdminChecked;
+
   const value: OrganizationContextType = {
     organizations,
     currentOrganization,
     setCurrentOrganization,
     isMasterAdmin,
-    isLoading,
+    isLoading: contextIsLoading,
     refetchOrganizations: fetchOrganizations,
     userOrgRole,
   };
