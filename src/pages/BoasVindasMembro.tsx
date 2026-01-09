@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, PartyPopper, Eye, EyeOff, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MemberTour } from '@/components/onboarding/MemberTour';
 
 const passwordRequirements = [
   { id: 'length', label: 'Mínimo 8 caracteres', test: (p: string) => p.length >= 8 },
@@ -32,6 +33,7 @@ export default function BoasVindasMembro() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [skipPasswordChange, setSkipPasswordChange] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   const organizationName = location.state?.organizationName || 'sua nova equipe';
 
@@ -102,9 +104,8 @@ export default function BoasVindasMembro() {
           : 'Seu nome e nova senha foram salvos.',
       });
 
-      // Redirect based on role
-      const redirectPath = await getRedirectPath(user.id);
-      navigate(redirectPath, { replace: true });
+      // Show tour instead of redirecting immediately
+      setShowTour(true);
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast({
@@ -117,11 +118,26 @@ export default function BoasVindasMembro() {
     }
   };
 
+  const handleTourComplete = async () => {
+    if (!user) return;
+    const redirectPath = await getRedirectPath(user.id);
+    navigate(redirectPath, { replace: true });
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  if (showTour) {
+    return (
+      <MemberTour 
+        onComplete={handleTourComplete} 
+        onSkip={handleTourComplete} 
+      />
     );
   }
 
