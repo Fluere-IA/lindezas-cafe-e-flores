@@ -32,7 +32,7 @@ const Dashboard = () => {
   // Track retry attempts for organization fetch
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
-  const maxRetries = 5;
+  const maxRetries = 10; // Increased for newly invited members
 
   // Auto-retry fetching organization if not found
   useEffect(() => {

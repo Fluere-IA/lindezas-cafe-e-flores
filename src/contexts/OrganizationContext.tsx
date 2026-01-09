@@ -25,10 +25,11 @@ interface OrganizationContextType {
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
-  const { user, role } = useAuth();
+  const { user, role, isLoading: authLoading } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start as true - must wait for data
+  const [hasFetched, setHasFetched] = useState(false);
 
   const isMasterAdmin = role === 'admin';
 
@@ -114,10 +115,26 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
   }, [user, role]);
 
-  // Fetch organizations when user changes
+  // Fetch organizations when user changes and auth is done loading
   useEffect(() => {
-    fetchOrganizations();
-  }, [user?.id, role]);
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
+    // If no user, clear state
+    if (!user) {
+      setOrganizations([]);
+      setCurrentOrganization(null);
+      setIsLoading(false);
+      setHasFetched(false);
+      return;
+    }
+    
+    // Fetch only once per user session
+    if (!hasFetched) {
+      setHasFetched(true);
+      fetchOrganizations();
+    }
+  }, [user?.id, role, authLoading, hasFetched]);
 
   // Persist current organization to localStorage
   useEffect(() => {
