@@ -223,14 +223,19 @@ export default function AceitarConvite() {
         }
       }
 
-      // Update invite status
-      await supabase
+      // Update invite status to accepted - only after successful login/signup
+      const { error: updateError } = await supabase
         .from('organization_invites')
         .update({
           status: 'accepted',
           accepted_at: new Date().toISOString(),
         })
         .eq('id', invite.id);
+
+      if (updateError) {
+        console.error('Error updating invite status:', updateError);
+        // Continue anyway, user was added to organization
+      }
 
       setStep('success');
 
