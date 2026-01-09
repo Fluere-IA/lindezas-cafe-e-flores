@@ -142,7 +142,7 @@ export function useSubscription() {
     }, 100);
     
     return () => clearTimeout(timer);
-  }, [authLoading, isAuthenticated, session]);
+  }, [authLoading, isAuthenticated, checkSubscription]);
 
   // Auto-refresh subscription status every 60 seconds
   useEffect(() => {
