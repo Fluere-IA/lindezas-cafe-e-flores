@@ -25,13 +25,35 @@ interface OrganizationContextType {
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
-  const { user, role, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Start as true - must wait for data
-  const [hasFetched, setHasFetched] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const isMasterAdmin = role === 'admin';
+  // Check master admin status from user_roles
+  const [isMasterAdmin, setIsMasterAdmin] = useState(false);
+
+  // Check master admin status
+  useEffect(() => {
+    const checkMasterAdmin = async () => {
+      if (!user) {
+        setIsMasterAdmin(false);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        setIsMasterAdmin(!!data);
+      } catch {
+        setIsMasterAdmin(false);
+      }
+    };
+    checkMasterAdmin();
+  }, [user?.id]);
 
   // Fetch with retry logic for newly created users
   const fetchOrganizations = useCallback(async (retries = 5): Promise<Organization[]> => {
@@ -48,7 +70,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       let orgs: Organization[] = [];
       
       // Master admins see all organizations
-      if (role === 'admin') {
+      if (isMasterAdmin) {
         const { data, error } = await supabase
           .from('organizations')
           .select('id, name, slug, phone, type, table_count, created_at, onboarding_completed')
@@ -113,12 +135,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, role]);
-
-  // Reset hasFetched when user changes
-  useEffect(() => {
-    setHasFetched(false);
-  }, [user?.id]);
+  }, [user, isMasterAdmin]);
 
   // Fetch organizations when user changes and auth is done loading
   useEffect(() => {
@@ -130,16 +147,13 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       setOrganizations([]);
       setCurrentOrganization(null);
       setIsLoading(false);
-      setHasFetched(false);
       return;
     }
     
-    // Fetch only once per user session
-    if (!hasFetched) {
-      setHasFetched(true);
-      fetchOrganizations();
-    }
-  }, [user?.id, role, authLoading, hasFetched, fetchOrganizations]);
+    // Fetch organizations
+    fetchOrganizations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading]);
 
   // Persist current organization to localStorage
   useEffect(() => {
