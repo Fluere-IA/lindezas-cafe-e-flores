@@ -123,7 +123,7 @@ export default function Membros() {
     setPassword(password);
   };
 
-  // Fetch members with last sign in info
+  // Fetch members
   const { data: members = [], isLoading: loadingMembers } = useQuery({
     queryKey: ['organization-members', currentOrganization?.id],
     queryFn: async () => {
@@ -147,9 +147,26 @@ export default function Membros() {
 
       const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
       
+      // Fetch login status from edge function
+      let loginStatusMap: Record<string, { hasLoggedIn: boolean }> = {};
+      try {
+        const { data: loginData } = await supabase.functions.invoke('get-members-login-status', {
+          body: {
+            userIds,
+            organizationId: currentOrganization.id,
+          },
+        });
+        if (loginData?.loginStatus) {
+          loginStatusMap = loginData.loginStatus;
+        }
+      } catch (err) {
+        console.error('Error fetching login status:', err);
+      }
+      
       return membersData.map(member => ({
         ...member,
         profile: profilesMap.get(member.user_id) || null,
+        hasLoggedIn: loginStatusMap[member.user_id]?.hasLoggedIn ?? true,
       })) as Member[];
     },
     enabled: !!currentOrganization?.id,
@@ -586,6 +603,11 @@ export default function Membros() {
                                 ? 'Você' 
                                 : member.profile?.full_name || `Membro ${member.user_id.slice(0, 6)}`}
                             </p>
+                            {member.role !== 'owner' && member.hasLoggedIn === false && (
+                              <Badge variant="outline" className="text-xs font-normal border-amber-500 text-amber-600 bg-amber-50">
+                                Primeiro acesso pendente
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-xs font-normal">

@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.resend-credentials]
 verify_jwt = false
+
+[functions.get-members-login-status]
+verify_jwt = false
