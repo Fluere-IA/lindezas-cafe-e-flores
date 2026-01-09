@@ -30,6 +30,7 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Membros = lazy(() => import("./pages/Membros"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const AceitarConvite = lazy(() => import("./pages/AceitarConvite"));
+const BoasVindasMembro = lazy(() => import("./pages/BoasVindasMembro"));
 const SuperDashboard = lazy(() => import("./pages/SuperDashboard"));
 
 const Relatorios = lazy(() => import("./pages/Relatorios"));
@@ -80,6 +81,7 @@ const App = () => (
                 
                 {/* Protected App Routes */}
                 <Route path="/onboarding" element={<ProtectedRoute requiresSubscription={false}><Onboarding /></ProtectedRoute>} />
+                <Route path="/boas-vindas" element={<ProtectedRoute requiresSubscription={false}><BoasVindasMembro /></ProtectedRoute>} />
                 <Route path="/pedidos" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin', 'member', 'cashier']}><Index /></RoleGuard></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin']}><Dashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/caixa" element={<ProtectedRoute><RoleGuard allowedRoles={['owner', 'admin', 'cashier']}><Caixa /></RoleGuard></ProtectedRoute>} />
