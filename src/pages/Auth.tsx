@@ -57,39 +57,42 @@ export default function Auth() {
     
     setIsSubmitting(true);
     
-    const { error } = await signIn(email, password);
-    
-    if (error) {
-      setIsSubmitting(false);
-      if (error.message.includes('Invalid login credentials')) {
-        toast({
-          title: 'Erro de autenticação',
-          description: 'Email ou senha incorretos.',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível fazer login. Tente novamente.',
-          variant: 'destructive',
-        });
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast({
+            title: 'Erro de autenticação',
+            description: 'Email ou senha incorretos.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Erro',
+            description: 'Não foi possível fazer login. Tente novamente.',
+            variant: 'destructive',
+          });
+        }
+        setIsSubmitting(false);
+        return;
       }
-      return;
-    }
-    
-    // Login successful - redirect immediately
-    toast({
-      title: 'Bem-vindo!',
-      description: 'Login realizado com sucesso.',
-    });
-    
-    // Get redirect path and navigate
-    const { data: { user: authUser } } = await (await import('@/integrations/supabase/client')).supabase.auth.getUser();
-    if (authUser) {
-      const path = await getRedirectPath(authUser.id);
-      navigate(path);
-    } else {
+      
+      // Login successful - show toast and navigate
+      toast({
+        title: 'Bem-vindo!',
+        description: 'Login realizado com sucesso.',
+      });
+      
+      // Simple redirect - let the dashboard handle role-based routing
       navigate('/dashboard');
+    } catch {
+      toast({
+        title: 'Erro',
+        description: 'Erro inesperado. Tente novamente.',
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
     }
   };
 
