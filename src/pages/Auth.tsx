@@ -86,13 +86,7 @@ export default function Auth() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1E40AF]">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
-      </div>
-    );
-  }
+  // Don't show loading state - render form immediately
 
   return (
     <div className="min-h-screen flex flex-col bg-[#1E40AF] relative overflow-hidden">
