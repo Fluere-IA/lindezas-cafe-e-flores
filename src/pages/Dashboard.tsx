@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { TrendingUp, Trophy } from 'lucide-react';
@@ -28,6 +28,25 @@ const Dashboard = () => {
   const { data: dailySales, isLoading: dailySalesLoading } = useDailySales();
   const { isInTrial, trialDaysRemaining, subscribed } = useSubscription();
   const [hasCheckedOnboarding, setHasCheckedOnboarding] = useState(false);
+  
+  // Track retry attempts for organization fetch
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const maxRetries = 5;
+
+  // Auto-retry fetching organization if not found
+  useEffect(() => {
+    if (!orgLoading && !currentOrganization && retryCount < maxRetries && !isRetrying) {
+      setIsRetrying(true);
+      const timer = setTimeout(async () => {
+        console.log(`Dashboard: Retrying organization fetch (${retryCount + 1}/${maxRetries})`);
+        await refetchOrganizations();
+        setRetryCount(prev => prev + 1);
+        setIsRetrying(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [orgLoading, currentOrganization, retryCount, isRetrying, refetchOrganizations]);
 
   // Redirect to onboarding ONLY for owners whose org hasn't completed onboarding
   useEffect(() => {
@@ -67,12 +86,12 @@ const Dashboard = () => {
     checkOnboarding();
   }, [orgLoading, currentOrganization, navigate, hasCheckedOnboarding, location.state]);
 
-  // Show skeleton while checking organization
-  if (orgLoading) {
+  // Show skeleton while checking organization or retrying
+  if (orgLoading || isRetrying || (!currentOrganization && retryCount < maxRetries)) {
     return <DashboardSkeleton />;
   }
 
-  // If no organization found after loading, show error state
+  // If no organization found after loading and all retries, show error state
   if (!currentOrganization) {
     return (
       <div className="flex flex-col min-h-screen bg-background">
@@ -83,9 +102,22 @@ const Dashboard = () => {
             <p className="text-muted-foreground mb-4">
               Aguarde enquanto carregamos os dados ou tente recarregar a página.
             </p>
-            <Button onClick={() => window.location.reload()}>
-              Recarregar
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button 
+                variant="outline"
+                onClick={async () => {
+                  setRetryCount(0);
+                  setIsRetrying(true);
+                  await refetchOrganizations();
+                  setIsRetrying(false);
+                }}
+              >
+                Tentar novamente
+              </Button>
+              <Button onClick={() => window.location.reload()}>
+                Recarregar página
+              </Button>
+            </div>
           </div>
         </main>
       </div>
