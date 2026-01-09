@@ -35,7 +35,10 @@ export default function BoasVindasMembro() {
   const [skipPasswordChange, setSkipPasswordChange] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
-  const organizationName = location.state?.organizationName || 'sua nova equipe';
+  // Get organization name and redirect path from URL params
+  const searchParams = new URLSearchParams(location.search);
+  const organizationName = searchParams.get('org') || location.state?.organizationName || 'sua nova equipe';
+  const redirectPathFromUrl = searchParams.get('redirect');
 
   // Pre-fill name from user metadata
   useEffect(() => {
@@ -127,8 +130,9 @@ export default function BoasVindasMembro() {
       .update({ tour_completed: true })
       .eq('id', user.id);
     
-    const redirectPath = await getRedirectPath(user.id);
-    navigate(redirectPath, { replace: true });
+    // Use redirect path from URL if available, otherwise get from role
+    const redirectPath = redirectPathFromUrl || await getRedirectPath(user.id);
+    window.location.assign(redirectPath);
   };
 
   if (authLoading) {
