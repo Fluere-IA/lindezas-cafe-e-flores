@@ -54,23 +54,41 @@ export default function Auth() {
     
     setIsSubmitting(true);
     
-    const { error } = await signIn(email, password);
-    
-    if (error) {
+    try {
+      console.log('[Auth] Starting login...');
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        console.log('[Auth] Login error:', error.message);
+        setIsSubmitting(false);
+        const msg = error.message?.includes('Invalid login credentials')
+          ? 'Email ou senha incorretos.'
+          : 'Não foi possível fazer login. Tente novamente.';
+        toast({
+          title: 'Erro de autenticação',
+          description: msg,
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      console.log('[Auth] Login successful, redirecting...');
+      
+      // Force redirect using multiple methods for maximum compatibility
+      try {
+        document.location.href = '/dashboard';
+      } catch {
+        window.location.href = '/dashboard';
+      }
+    } catch (err) {
+      console.error('[Auth] Unexpected error:', err);
       setIsSubmitting(false);
-      const msg = error.message?.includes('Invalid login credentials')
-        ? 'Email ou senha incorretos.'
-        : 'Não foi possível fazer login. Tente novamente.';
       toast({
-        title: 'Erro de autenticação',
-        description: msg,
+        title: 'Erro',
+        description: 'Erro inesperado. Tente novamente.',
         variant: 'destructive',
       });
-      return;
     }
-    
-    // Login successful - force redirect immediately without waiting
-    window.location.assign('/dashboard');
   };
 
   // Don't show loading state - render form immediately
