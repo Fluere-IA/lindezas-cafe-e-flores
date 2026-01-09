@@ -33,7 +33,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const isMasterAdmin = role === 'admin';
 
   // Fetch with retry logic for newly created users
-  const fetchOrganizations = useCallback(async (retries = 3): Promise<Organization[]> => {
+  const fetchOrganizations = useCallback(async (retries = 5): Promise<Organization[]> => {
     if (!user) {
       setOrganizations([]);
       setCurrentOrganization(null);
@@ -81,7 +81,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       // Retry logic for newly registered users
       // The database trigger creates the org, but it might not be immediately visible
       if (orgs.length === 0 && retries > 0) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
         return fetchOrganizations(retries - 1);
       }
       
@@ -113,6 +113,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       setOrganizations([]);
       return [];
     } finally {
+      // Only set loading to false if we found orgs or exhausted retries
       setIsLoading(false);
     }
   }, [user, role]);
