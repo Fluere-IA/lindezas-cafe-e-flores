@@ -57,32 +57,39 @@ export default function Auth() {
     
     setIsSubmitting(true);
     
-    try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: 'Erro de autenticação',
-            description: 'Email ou senha incorretos.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Erro',
-            description: 'Não foi possível fazer login. Tente novamente.',
-            variant: 'destructive',
-          });
-        }
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      setIsSubmitting(false);
+      if (error.message.includes('Invalid login credentials')) {
+        toast({
+          title: 'Erro de autenticação',
+          description: 'Email ou senha incorretos.',
+          variant: 'destructive',
+        });
       } else {
         toast({
-          title: 'Bem-vindo!',
-          description: 'Login realizado com sucesso.',
+          title: 'Erro',
+          description: 'Não foi possível fazer login. Tente novamente.',
+          variant: 'destructive',
         });
-        // Role-based redirect is handled by useEffect when user state updates
       }
-    } finally {
-      setIsSubmitting(false);
+      return;
+    }
+    
+    // Login successful - redirect immediately
+    toast({
+      title: 'Bem-vindo!',
+      description: 'Login realizado com sucesso.',
+    });
+    
+    // Get redirect path and navigate
+    const { data: { user: authUser } } = await (await import('@/integrations/supabase/client')).supabase.auth.getUser();
+    if (authUser) {
+      const path = await getRedirectPath(authUser.id);
+      navigate(path);
+    } else {
+      navigate('/dashboard');
     }
   };
 
