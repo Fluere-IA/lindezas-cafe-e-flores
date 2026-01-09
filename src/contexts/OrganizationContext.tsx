@@ -115,6 +115,11 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
   }, [user, role]);
 
+  // Reset hasFetched when user changes
+  useEffect(() => {
+    setHasFetched(false);
+  }, [user?.id]);
+
   // Fetch organizations when user changes and auth is done loading
   useEffect(() => {
     // Wait for auth to finish loading
@@ -134,7 +139,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       setHasFetched(true);
       fetchOrganizations();
     }
-  }, [user?.id, role, authLoading, hasFetched]);
+  }, [user?.id, role, authLoading, hasFetched, fetchOrganizations]);
 
   // Persist current organization to localStorage
   useEffect(() => {

@@ -229,20 +229,14 @@ export default function AceitarConvite() {
         .eq('id', userId)
         .single();
 
-      // Redirect based on tour completion status
+      // Use window.location for a full reload to ensure clean state
       setTimeout(() => {
         if (profile?.tour_completed) {
           // Skip tour, go directly to main app
-          navigate('/dashboard', { replace: true });
+          window.location.assign('/dashboard');
         } else {
           // Show welcome page with tour
-          navigate('/boas-vindas', { 
-            replace: true,
-            state: { 
-              organizationName: invite.organization_name,
-              fromInvite: true,
-            } 
-          });
+          window.location.assign(`/boas-vindas?org=${encodeURIComponent(invite.organization_name)}&fromInvite=true`);
         }
       }, 2000);
     } catch (err: any) {
