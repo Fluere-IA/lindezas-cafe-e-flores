@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,6 +18,16 @@ interface RoleGuardProps {
 export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: RoleGuardProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { currentOrganization, isMasterAdmin, isLoading: orgLoading, organizations } = useOrganization();
+  
+  // Safety timeout to prevent infinite loading
+  const [forceLoaded, setForceLoaded] = useState(false);
+  
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setForceLoaded(true);
+    }, 5000);
+    return () => clearTimeout(timeout);
+  }, []);
 
   const { data: memberRole, isLoading: roleLoading } = useQuery({
     queryKey: ['member-role', currentOrganization?.id, user?.id],
@@ -40,8 +51,8 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
     enabled: !!currentOrganization?.id && !!user?.id,
   });
 
-  // Wait for auth and org loading states
-  const isLoading = authLoading || orgLoading;
+  // Wait for auth and org loading states, with safety timeout
+  const isLoading = !forceLoaded && (authLoading || orgLoading);
 
   if (isLoading) {
     return (
