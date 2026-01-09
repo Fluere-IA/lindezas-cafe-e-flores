@@ -16,7 +16,7 @@ export function useAuth() {
     user: null,
     session: null,
     role: null,
-    isLoading: false, // Start as false - we'll load in background
+    isLoading: true, // Start as true - must wait for session check
   });
 
   const fetchUserRole = useCallback(async (userId: string): Promise<AppRole | null> => {
@@ -57,9 +57,22 @@ export function useAuth() {
               isLoading: false,
             });
           }
+        } else {
+          // No session - set loading to false
+          if (isMounted) {
+            setAuthState({
+              session: null,
+              user: null,
+              role: null,
+              isLoading: false,
+            });
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        if (isMounted) {
+          setAuthState(prev => ({ ...prev, isLoading: false }));
+        }
       }
     };
 
