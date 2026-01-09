@@ -24,14 +24,15 @@ import {
   Users, 
   UserPlus, 
   Mail, 
-  Clock, 
-  Check, 
-  X, 
   Trash2,
   Shield,
   User,
   Loader2,
-  Pencil
+  Pencil,
+  KeyRound,
+  Eye,
+  EyeOff,
+  AlertCircle
 } from 'lucide-react';
 
 interface Member {
@@ -43,31 +44,21 @@ interface Member {
   profile?: {
     full_name: string | null;
   };
-}
-
-interface Invite {
-  id: string;
-  email: string;
-  role: string;
-  status: string;
-  created_at: string;
-  expires_at: string;
-  accepted_at: string | null;
+  hasLoggedIn?: boolean;
 }
 
 const roleLabels: Record<string, string> = {
   owner: 'Proprietário',
   admin: 'Administrador',
-  waiter: 'Garçom',
+  member: 'Garçom',
   cashier: 'Caixa',
   kitchen: 'Cozinha',
-  member: 'Membro',
 };
 
 const roleColors: Record<string, string> = {
   owner: 'bg-amber-500',
   admin: 'bg-purple-500',
-  waiter: 'bg-blue-500',
+  member: 'bg-blue-500',
   cashier: 'bg-green-500',
   kitchen: 'bg-orange-500',
 };
@@ -78,52 +69,58 @@ export default function Membros() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  // Dialog states
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  
+  // Member management states
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [memberToEdit, setMemberToEdit] = useState<Member | null>(null);
-  const [editRole, setEditRole] = useState('');
-  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
   const [deleteFromDatabase, setDeleteFromDatabase] = useState(false);
   const [isDeletingMember, setIsDeletingMember] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteName, setInviteName] = useState('');
-  const [inviteRole, setInviteRole] = useState('waiter');
-  const [invitePassword, setInvitePassword] = useState('');
-  const [isInviting, setIsInviting] = useState(false);
+  
+  // Edit form states
+  const [editName, setEditName] = useState('');
+  const [editRole, setEditRole] = useState('');
+  const [editResetPassword, setEditResetPassword] = useState(false);
+  const [editNewPassword, setEditNewPassword] = useState('');
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [isUpdatingMember, setIsUpdatingMember] = useState(false);
+
+  // Add member form states
+  const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('member');
+  const [newMemberPassword, setNewMemberPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isAddingMember, setIsAddingMember] = useState(false);
 
   // Generate a random password with special characters
-  const generatePassword = () => {
+  const generatePassword = (setPassword: (p: string) => void) => {
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
     const numbers = '23456789';
     const specials = '@#$%&*!';
     
     let password = '';
-    // Add 5 letters
     for (let i = 0; i < 5; i++) {
       password += letters.charAt(Math.floor(Math.random() * letters.length));
     }
-    // Add 2 numbers
     for (let i = 0; i < 2; i++) {
       password += numbers.charAt(Math.floor(Math.random() * numbers.length));
     }
-    // Add 1 special character
     password += specials.charAt(Math.floor(Math.random() * specials.length));
-    
-    // Shuffle the password
     password = password.split('').sort(() => Math.random() - 0.5).join('');
     
-    setInvitePassword(password);
+    setPassword(password);
   };
 
-  // Fetch members
+  // Fetch members with last sign in info
   const { data: members = [], isLoading: loadingMembers } = useQuery({
     queryKey: ['organization-members', currentOrganization?.id],
     queryFn: async () => {
       if (!currentOrganization?.id) return [];
       
-      // First get organization members
       const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
         .select('*')
@@ -133,16 +130,13 @@ export default function Membros() {
       if (membersError) throw membersError;
       if (!membersData || membersData.length === 0) return [];
 
-      // Get user IDs to fetch profiles
       const userIds = membersData.map(m => m.user_id);
       
-      // Fetch profiles for these users
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', userIds);
 
-      // Map profiles to members
       const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
       
       return membersData.map(member => ({
@@ -153,33 +147,11 @@ export default function Membros() {
     enabled: !!currentOrganization?.id,
   });
 
-  // Fetch all invites (including accepted for validation)
-  const { data: allInvites = [], isLoading: loadingInvites } = useQuery({
-    queryKey: ['organization-invites', currentOrganization?.id],
-    queryFn: async () => {
-      if (!currentOrganization?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('organization_invites')
-        .select('*')
-        .eq('organization_id', currentOrganization.id)
-        .order('created_at', { ascending: false });
+  const handleAddMember = async () => {
+    if (!currentOrganization?.id || !user?.id || !newMemberEmail || !newMemberPassword) return;
 
-      if (error) throw error;
-      return data as Invite[];
-    },
-    enabled: !!currentOrganization?.id,
-  });
-
-  // Filter pending invites for display
-  const invites = allInvites.filter(i => i.status === 'pending');
-
-  const handleInvite = async () => {
-    if (!currentOrganization?.id || !user?.id || !inviteEmail || !invitePassword) return;
-
-    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(inviteEmail)) {
+    if (!emailRegex.test(newMemberEmail)) {
       toast({
         title: 'Email inválido',
         description: 'Por favor, insira um email válido.',
@@ -188,7 +160,7 @@ export default function Membros() {
       return;
     }
 
-    if (invitePassword.length < 6) {
+    if (newMemberPassword.length < 6) {
       toast({
         title: 'Senha muito curta',
         description: 'A senha deve ter pelo menos 6 caracteres.',
@@ -197,124 +169,72 @@ export default function Membros() {
       return;
     }
 
-    setIsInviting(true);
+    setIsAddingMember(true);
 
     try {
-      // Check if email already has an invite (pending or accepted)
-      const existingInvite = allInvites.find(i => i.email.toLowerCase() === inviteEmail.toLowerCase());
-      if (existingInvite) {
-        const isPending = existingInvite.status === 'pending';
-        toast({
-          title: isPending ? 'Convite já enviado' : 'Usuário já foi convidado',
-          description: isPending 
-            ? 'Já existe um convite pendente para este email.'
-            : 'Este email já foi convidado anteriormente.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Create invite
-      const { data: inviteData, error } = await supabase
+      // First create an invite record for tracking
+      const { data: inviteData, error: inviteError } = await supabase
         .from('organization_invites')
         .insert({
           organization_id: currentOrganization.id,
-          email: inviteEmail.toLowerCase(),
-          role: inviteRole,
+          email: newMemberEmail.toLowerCase(),
+          role: newMemberRole,
           invited_by: user.id,
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (inviteError) {
+        if (inviteError.code === '23505') {
+          toast({
+            title: 'Membro já existe',
+            description: 'Já existe um membro ou convite com este email.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        throw inviteError;
+      }
 
       // Create user and add to org via edge function
-      const { data: inviteResult, error: inviteError } = await supabase.functions.invoke('send-invite-email', {
+      const { error: createError } = await supabase.functions.invoke('send-invite-email', {
         body: {
-          to: inviteEmail.toLowerCase(),
+          to: newMemberEmail.toLowerCase(),
           inviterName: user.user_metadata?.full_name || 'Um administrador',
           organizationName: currentOrganization.name,
           organizationId: currentOrganization.id,
-          role: inviteRole,
+          role: newMemberRole,
           inviteId: inviteData.id,
-          tempPassword: invitePassword,
-          memberName: inviteName.trim() || undefined,
+          tempPassword: newMemberPassword,
+          memberName: newMemberName.trim() || undefined,
         },
       });
 
-      if (inviteError) {
-        console.error('Error processing invite:', inviteError);
-        throw new Error('Erro ao processar convite');
+      if (createError) {
+        console.error('Error creating member:', createError);
+        throw new Error('Erro ao criar membro');
       }
 
-      console.log('Invite processed successfully:', inviteResult);
-
       toast({
-        title: 'Convite enviado!',
-        description: `Um convite foi enviado para ${inviteEmail}`,
+        title: 'Membro adicionado!',
+        description: `${newMemberName || newMemberEmail} foi adicionado à equipe.`,
       });
 
-      setInviteEmail('');
-      setInviteName('');
-      setInviteRole('waiter');
-      setInvitePassword('');
-      setInviteDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['organization-invites'] });
+      setNewMemberEmail('');
+      setNewMemberName('');
+      setNewMemberRole('member');
+      setNewMemberPassword('');
+      setAddDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['organization-members'] });
     } catch (error) {
-      console.error('Invite error:', error);
+      console.error('Add member error:', error);
       toast({
-        title: 'Erro ao enviar convite',
+        title: 'Erro ao adicionar membro',
         description: 'Tente novamente.',
         variant: 'destructive',
       });
     } finally {
-      setIsInviting(false);
-    }
-  };
-
-  const cancelInvite = async (inviteId: string) => {
-    try {
-      const { error } = await supabase
-        .from('organization_invites')
-        .delete()
-        .eq('id', inviteId);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Convite cancelado',
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['organization-invites'] });
-    } catch (error) {
-      console.error('Cancel invite error:', error);
-      toast({
-        title: 'Erro ao cancelar convite',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const deleteInvite = async (inviteId: string) => {
-    try {
-      const { error } = await supabase
-        .from('organization_invites')
-        .delete()
-        .eq('id', inviteId);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Convite removido do histórico',
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['organization-invites'] });
-    } catch (error) {
-      console.error('Delete invite error:', error);
-      toast({
-        title: 'Erro ao remover convite',
-        variant: 'destructive',
-      });
+      setIsAddingMember(false);
     }
   };
 
@@ -371,43 +291,75 @@ export default function Membros() {
 
   const openEditMemberDialog = (member: Member) => {
     setMemberToEdit(member);
+    setEditName(member.profile?.full_name || '');
     setEditRole(member.role);
+    setEditResetPassword(false);
+    setEditNewPassword('');
     setEditDialogOpen(true);
   };
 
-  const updateMemberRole = async () => {
-    if (!memberToEdit || !editRole) return;
+  const updateMember = async () => {
+    if (!memberToEdit || !currentOrganization?.id) return;
 
-    setIsUpdatingRole(true);
+    setIsUpdatingMember(true);
 
     try {
-      const { error } = await supabase
-        .from('organization_members')
-        .update({ role: editRole })
-        .eq('id', memberToEdit.id);
+      const updates: Record<string, unknown> = {};
+      
+      if (editName && editName !== memberToEdit.profile?.full_name) {
+        updates.name = editName;
+      }
+      
+      if (editRole !== memberToEdit.role) {
+        updates.role = editRole;
+      }
+      
+      if (editResetPassword && editNewPassword) {
+        updates.resetPassword = true;
+        updates.newPassword = editNewPassword;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        toast({
+          title: 'Nenhuma alteração',
+          description: 'Nenhum dado foi alterado.',
+        });
+        setEditDialogOpen(false);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('update-member', {
+        body: {
+          memberId: memberToEdit.id,
+          userId: memberToEdit.user_id,
+          organizationId: currentOrganization.id,
+          organizationName: currentOrganization.name,
+          updates,
+        },
+      });
 
       if (error) throw error;
 
       toast({
-        title: 'Função atualizada!',
-        description: `O membro agora é ${roleLabels[editRole] || editRole}.`,
+        title: 'Membro atualizado!',
+        description: data?.emailSent 
+          ? 'As novas credenciais foram enviadas por email.'
+          : 'Dados do membro foram atualizados.',
       });
 
       queryClient.invalidateQueries({ queryKey: ['organization-members'] });
       setEditDialogOpen(false);
       setMemberToEdit(null);
     } catch (error) {
-      console.error('Update role error:', error);
+      console.error('Update member error:', error);
       toast({
-        title: 'Erro ao atualizar função',
+        title: 'Erro ao atualizar membro',
         variant: 'destructive',
       });
     } finally {
-      setIsUpdatingRole(false);
+      setIsUpdatingMember(false);
     }
   };
-
-  const isLoading = loadingMembers || loadingInvites;
 
   return (
     <div className="min-h-screen bg-background">
@@ -425,18 +377,18 @@ export default function Membros() {
             </p>
           </div>
 
-          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90">
                 <UserPlus className="w-4 h-4 mr-2" />
-                Convidar
+                Adicionar Membro
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Convidar Membro</DialogTitle>
+                <DialogTitle>Adicionar Membro</DialogTitle>
                 <DialogDescription>
-                  Envie um convite por email para adicionar alguém à sua equipe.
+                  Crie uma conta e adicione um novo membro à sua equipe. O membro receberá as credenciais por email.
                 </DialogDescription>
               </DialogHeader>
 
@@ -447,31 +399,31 @@ export default function Membros() {
                     id="name"
                     type="text"
                     placeholder="Nome completo"
-                    value={inviteName}
-                    onChange={(e) => setInviteName(e.target.value)}
+                    value={newMemberName}
+                    onChange={(e) => setNewMemberName(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="email@exemplo.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
+                    value={newMemberEmail}
+                    onChange={(e) => setNewMemberEmail(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="role">Função</Label>
-                  <Select value={inviteRole} onValueChange={setInviteRole}>
+                  <Select value={newMemberRole} onValueChange={setNewMemberRole}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Administrador</SelectItem>
-                      <SelectItem value="waiter">Garçom</SelectItem>
+                      <SelectItem value="member">Garçom</SelectItem>
                       <SelectItem value="cashier">Caixa</SelectItem>
                       <SelectItem value="kitchen">Cozinha</SelectItem>
                     </SelectContent>
@@ -479,25 +431,34 @@ export default function Membros() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha Temporária</Label>
+                  <Label htmlFor="password">Senha *</Label>
                   <div className="flex gap-2">
-                    <Input
-                      id="password"
-                      type="text"
-                      placeholder="Senha para o convidado"
-                      value={invitePassword}
-                      onChange={(e) => setInvitePassword(e.target.value)}
-                    />
+                    <div className="relative flex-1">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Senha inicial"
+                        value={newMemberPassword}
+                        onChange={(e) => setNewMemberPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={generatePassword}
+                      onClick={() => generatePassword(setNewMemberPassword)}
                     >
                       Gerar
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Esta senha será enviada no e-mail e o convidado usará para acessar o sistema.
+                    Esta senha será enviada no email. O membro poderá alterá-la depois.
                   </p>
                 </div>
 
@@ -505,21 +466,21 @@ export default function Membros() {
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={() => setInviteDialogOpen(false)}
+                    onClick={() => setAddDialogOpen(false)}
                   >
                     Cancelar
                   </Button>
                   <Button
                     className="flex-1"
-                    onClick={handleInvite}
-                    disabled={isInviting || !inviteEmail || !invitePassword}
+                    onClick={handleAddMember}
+                    disabled={isAddingMember || !newMemberEmail || !newMemberPassword}
                   >
-                    {isInviting ? (
+                    {isAddingMember ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
                         <Mail className="w-4 h-4 mr-2" />
-                        Enviar Convite
+                        Adicionar
                       </>
                     )}
                   </Button>
@@ -529,208 +490,88 @@ export default function Membros() {
           </Dialog>
         </div>
 
-        {isLoading ? (
+        {loadingMembers ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Members */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Membros Ativos</CardTitle>
-                <CardDescription>
-                  {members.length} {members.length === 1 ? 'membro' : 'membros'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {members.length === 0 ? (
-                  <p className="text-center py-6 text-muted-foreground">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Membros</CardTitle>
+              <CardDescription>
+                {members.length} {members.length === 1 ? 'membro' : 'membros'} na equipe
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {members.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">
                     Nenhum membro encontrado.
                   </p>
-                ) : (
-                  <div className="space-y-3">
-                    {members.map((member) => (
-                      <div
-                        key={member.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${roleColors[member.role] || 'bg-gray-500'}`}>
-                            {member.role === 'owner' || member.role === 'admin' ? (
-                              <Shield className="w-5 h-5" />
-                            ) : (
-                              <User className="w-5 h-5" />
-                            )}
-                          </div>
-                          <div>
+                  <p className="text-sm text-muted-foreground">
+                    Adicione membros à sua equipe clicando no botão acima.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${roleColors[member.role] || 'bg-gray-500'}`}>
+                          {member.role === 'owner' || member.role === 'admin' ? (
+                            <Shield className="w-5 h-5" />
+                          ) : (
+                            <User className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
                             <p className="font-medium">
                               {member.user_id === user?.id 
                                 ? 'Você' 
                                 : member.profile?.full_name || `Membro ${member.user_id.slice(0, 6)}`}
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-xs font-normal">
                               {roleLabels[member.role] || member.role}
-                            </p>
+                            </Badge>
                           </div>
                         </div>
-
-                        {member.role !== 'owner' && member.user_id !== user?.id && (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditMemberDialog(member)}
-                              className="text-muted-foreground hover:text-primary"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openDeleteMemberDialog(member)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Pending Invites */}
-            {invites.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Convites Pendentes</CardTitle>
-                  <CardDescription>
-                    {invites.length} {invites.length === 1 ? 'convite aguardando' : 'convites aguardando'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {invites.map((invite) => (
-                      <div
-                        key={invite.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-amber-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium">{invite.email}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {roleLabels[invite.role] || invite.role} • Expira em{' '}
-                              {new Date(invite.expires_at).toLocaleDateString('pt-BR')}
-                            </p>
-                          </div>
+                      {member.role !== 'owner' && member.user_id !== user?.id && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEditMemberDialog(member)}
+                            className="text-muted-foreground hover:text-primary"
+                            title="Editar membro"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openDeleteMemberDialog(member)}
+                            className="text-destructive hover:text-destructive"
+                            title="Remover membro"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => cancelInvite(invite.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Accepted Invites */}
-            {allInvites.filter(i => i.status === 'accepted').length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Convites Aceitos</CardTitle>
-                  <CardDescription>
-                    Histórico de convites aceitos
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {allInvites.filter(i => i.status === 'accepted').map((invite) => (
-                      <div
-                        key={invite.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                            <Check className="w-5 h-5 text-green-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium">{invite.email}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {roleLabels[invite.role] || invite.role} • Aceito em{' '}
-                              {invite.accepted_at ? new Date(invite.accepted_at).toLocaleDateString('pt-BR') : '-'}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteInvite(invite.id)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Expired/Cancelled Invites */}
-            {allInvites.filter(i => i.status !== 'pending' && i.status !== 'accepted').length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Convites Expirados/Cancelados</CardTitle>
-                  <CardDescription>
-                    Convites que não foram aceitos
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {allInvites.filter(i => i.status !== 'pending' && i.status !== 'accepted').map((invite) => (
-                      <div
-                        key={invite.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                            <X className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-muted-foreground">{invite.email}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {roleLabels[invite.role] || invite.role} • {invite.status === 'cancelled' ? 'Cancelado' : 'Expirado'}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteInvite(invite.id)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Delete Member Confirmation Dialog */}
@@ -766,9 +607,10 @@ export default function Membros() {
             </div>
             
             {deleteFromDatabase && (
-              <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">
-                ⚠️ Esta ação é irreversível! O usuário perderá acesso a todas as organizações e seus dados serão excluídos.
-              </p>
+              <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/10 p-2 rounded">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>Esta ação é irreversível! O usuário perderá acesso a todas as organizações e seus dados serão excluídos.</span>
+              </div>
             )}
             
             <AlertDialogFooter>
@@ -790,19 +632,30 @@ export default function Membros() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Edit Member Role Dialog */}
+        {/* Edit Member Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-sm">
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Editar Função</DialogTitle>
+              <DialogTitle>Editar Membro</DialogTitle>
               <DialogDescription>
-                Altere a função de {memberToEdit?.profile?.full_name || 'este membro'}
+                Atualize os dados de {memberToEdit?.profile?.full_name || 'este membro'}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label htmlFor="editRole">Nova Função</Label>
+                <Label htmlFor="editName">Nome</Label>
+                <Input
+                  id="editName"
+                  type="text"
+                  placeholder="Nome completo"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editRole">Função</Label>
                 <Select value={editRole} onValueChange={setEditRole}>
                   <SelectTrigger>
                     <SelectValue />
@@ -816,7 +669,65 @@ export default function Membros() {
                 </Select>
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="space-y-3 pt-2 border-t">
+                <div className="flex items-center space-x-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="resetPassword"
+                    checked={editResetPassword}
+                    onChange={(e) => {
+                      setEditResetPassword(e.target.checked);
+                      if (!e.target.checked) {
+                        setEditNewPassword('');
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-primary text-primary focus:ring-primary"
+                  />
+                  <label 
+                    htmlFor="resetPassword" 
+                    className="text-sm cursor-pointer flex items-center gap-2"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    Redefinir senha
+                  </label>
+                </div>
+
+                {editResetPassword && (
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Nova Senha</Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Input
+                          id="newPassword"
+                          type={showEditPassword ? 'text' : 'password'}
+                          placeholder="Nova senha"
+                          value={editNewPassword}
+                          onChange={(e) => setEditNewPassword(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowEditPassword(!showEditPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showEditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => generatePassword(setEditNewPassword)}
+                      >
+                        Gerar
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      A nova senha será enviada por email ao membro.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-4">
                 <Button
                   variant="outline"
                   className="flex-1"
@@ -826,10 +737,10 @@ export default function Membros() {
                 </Button>
                 <Button
                   className="flex-1"
-                  onClick={updateMemberRole}
-                  disabled={isUpdatingRole || editRole === memberToEdit?.role}
+                  onClick={updateMember}
+                  disabled={isUpdatingMember || (editResetPassword && !editNewPassword)}
                 >
-                  {isUpdatingRole ? (
+                  {isUpdatingMember ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     'Salvar'

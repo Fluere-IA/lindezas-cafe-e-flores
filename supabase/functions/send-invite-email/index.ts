@@ -40,9 +40,11 @@ const orgRoleMap: Record<string, string> = {
 };
 
 // Map display role to user_roles database role
+// Note: user_roles table has enum: admin, cashier, kitchen
+// waiter/member roles don't need a special user_role, default to cashier for access control
 const dbRoleMap: Record<string, string> = {
   admin: 'admin',
-  waiter: 'cashier',
+  waiter: 'cashier', // Garçons usam role cashier para acesso básico
   cashier: 'cashier',
   kitchen: 'kitchen',
   member: 'cashier',
