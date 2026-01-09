@@ -8,6 +8,23 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle, UserPlus, Eye, EyeOff } from 'lucide-react';
 
+// Helper to get redirect path based on role
+function getRedirectForRole(role: string): string {
+  switch (role) {
+    case 'kitchen':
+      return '/cozinha';
+    case 'cashier':
+      return '/caixa';
+    case 'member':
+    case 'waiter':
+      return '/pedidos';
+    case 'owner':
+    case 'admin':
+    default:
+      return '/dashboard';
+  }
+}
+
 interface InviteData {
   id: string;
   email: string;
@@ -178,13 +195,13 @@ export default function AceitarConvite() {
         }
       }
 
-      // Map display role to database role
+      // Map display role to database role - CORRECT MAPPING
       const roleMap: Record<string, string> = {
         'Garçom': 'member',
         'Administrador': 'admin',
         'Admin': 'admin',
-        'Cozinha': 'member',
-        'Caixa': 'member',
+        'Cozinha': 'kitchen',  // Fixed: was 'member'
+        'Caixa': 'cashier',    // Fixed: was 'member'
       };
       const dbRole = roleMap[invite.role] || invite.role.toLowerCase();
 
@@ -229,14 +246,17 @@ export default function AceitarConvite() {
         .eq('id', userId)
         .single();
 
+      // Get the correct redirect path based on the role
+      const redirectPath = getRedirectForRole(dbRole);
+
       // Use window.location for a full reload to ensure clean state
       setTimeout(() => {
         if (profile?.tour_completed) {
-          // Skip tour, go directly to main app
-          window.location.assign('/dashboard');
+          // Skip tour, go directly to role-specific page
+          window.location.assign(redirectPath);
         } else {
-          // Show welcome page with tour
-          window.location.assign(`/boas-vindas?org=${encodeURIComponent(invite.organization_name)}&fromInvite=true`);
+          // Show welcome page with tour, then redirect to role-specific page
+          window.location.assign(`/boas-vindas?org=${encodeURIComponent(invite.organization_name)}&fromInvite=true&redirect=${encodeURIComponent(redirectPath)}`);
         }
       }, 2000);
     } catch (err: any) {

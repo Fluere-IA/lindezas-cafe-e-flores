@@ -21,36 +21,17 @@ import {
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentOrganization, isLoading: orgLoading, refetchOrganizations } = useOrganization();
+  const { currentOrganization, isLoading: orgLoading } = useOrganization();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: currentStatus, isLoading: statusLoading } = useCurrentStatus();
   const { data: topProducts, isLoading: topProductsLoading } = useTopProducts();
   const { data: dailySales, isLoading: dailySalesLoading } = useDailySales();
   const { isInTrial, trialDaysRemaining, subscribed } = useSubscription();
   const [hasCheckedOnboarding, setHasCheckedOnboarding] = useState(false);
-  
-  // Track retry attempts for organization fetch
-  const [retryCount, setRetryCount] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const maxRetries = 10; // Increased for newly invited members
-
-  // Auto-retry fetching organization if not found
-  useEffect(() => {
-    if (!orgLoading && !currentOrganization && retryCount < maxRetries && !isRetrying) {
-      setIsRetrying(true);
-      const timer = setTimeout(async () => {
-        console.log(`Dashboard: Retrying organization fetch (${retryCount + 1}/${maxRetries})`);
-        await refetchOrganizations();
-        setRetryCount(prev => prev + 1);
-        setIsRetrying(false);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [orgLoading, currentOrganization, retryCount, isRetrying, refetchOrganizations]);
 
   // Redirect to onboarding ONLY for owners whose org hasn't completed onboarding
   useEffect(() => {
-    if (orgLoading || hasCheckedOnboarding) return;
+    if (orgLoading || hasCheckedOnboarding || !currentOrganization) return;
 
     const checkOnboarding = async () => {
       setHasCheckedOnboarding(true);
@@ -64,7 +45,7 @@ const Dashboard = () => {
       // 1. Organization exists
       // 2. Onboarding is not completed
       // 3. AND the user is the owner of this organization
-      if (currentOrganization && currentOrganization.onboarding_completed !== true) {
+      if (currentOrganization.onboarding_completed !== true) {
         // Check if current user is the owner
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -86,12 +67,12 @@ const Dashboard = () => {
     checkOnboarding();
   }, [orgLoading, currentOrganization, navigate, hasCheckedOnboarding, location.state]);
 
-  // Show skeleton while checking organization or retrying
-  if (orgLoading || isRetrying || (!currentOrganization && retryCount < maxRetries)) {
+  // Show skeleton while loading organization
+  if (orgLoading) {
     return <DashboardSkeleton />;
   }
 
-  // If no organization found after loading and all retries, show error state
+  // If no organization found after loading, show error state
   if (!currentOrganization) {
     return (
       <div className="flex flex-col min-h-screen bg-background">
@@ -102,22 +83,9 @@ const Dashboard = () => {
             <p className="text-muted-foreground mb-4">
               Aguarde enquanto carregamos os dados ou tente recarregar a página.
             </p>
-            <div className="flex flex-col gap-2">
-              <Button 
-                variant="outline"
-                onClick={async () => {
-                  setRetryCount(0);
-                  setIsRetrying(true);
-                  await refetchOrganizations();
-                  setIsRetrying(false);
-                }}
-              >
-                Tentar novamente
-              </Button>
-              <Button onClick={() => window.location.reload()}>
-                Recarregar página
-              </Button>
-            </div>
+            <Button onClick={() => window.location.reload()}>
+              Recarregar página
+            </Button>
           </div>
         </main>
       </div>

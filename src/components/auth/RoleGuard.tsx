@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, ShieldX } from 'lucide-react';
+import { Loader2, ShieldX, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
 
 // Organization-level roles (from organization_members table)
 export type OrgRole = 'owner' | 'admin' | 'member' | 'cashier' | 'kitchen' | 'waiter';
@@ -17,15 +18,10 @@ interface RoleGuardProps {
 
 export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: RoleGuardProps) {
   const { user, isLoading: authLoading } = useAuth();
-  const { currentOrganization, isMasterAdmin, isLoading: orgLoading, organizations, refetchOrganizations } = useOrganization();
+  const { currentOrganization, isMasterAdmin, isLoading: orgLoading, organizations } = useOrganization();
   
-  // Safety timeout to prevent infinite loading
+  // Safety timeout to prevent infinite loading (5 seconds)
   const [forceLoaded, setForceLoaded] = useState(false);
-  
-  // Auto-retry mechanism for newly invited members
-  const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 10;
-  const retryIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -33,44 +29,6 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
     }, 5000);
     return () => clearTimeout(timeout);
   }, []);
-
-  // Auto-retry fetching organizations when none found (for newly invited members)
-  useEffect(() => {
-    // Only retry if we're loaded, have a user, but no organizations found
-    if (!forceLoaded || authLoading || orgLoading) return;
-    if (!user) return;
-    if (organizations.length > 0) {
-      // Found organizations, clear retry
-      if (retryIntervalRef.current) {
-        clearInterval(retryIntervalRef.current);
-        retryIntervalRef.current = null;
-      }
-      return;
-    }
-    
-    // Start auto-retry
-    if (retryCount < maxRetries && !retryIntervalRef.current) {
-      retryIntervalRef.current = setInterval(async () => {
-        console.log(`[RoleGuard] Retry ${retryCount + 1}/${maxRetries} fetching organizations...`);
-        const orgs = await refetchOrganizations();
-        setRetryCount(prev => prev + 1);
-        
-        if (orgs.length > 0 || retryCount + 1 >= maxRetries) {
-          if (retryIntervalRef.current) {
-            clearInterval(retryIntervalRef.current);
-            retryIntervalRef.current = null;
-          }
-        }
-      }, 1500);
-    }
-    
-    return () => {
-      if (retryIntervalRef.current) {
-        clearInterval(retryIntervalRef.current);
-        retryIntervalRef.current = null;
-      }
-    };
-  }, [forceLoaded, authLoading, orgLoading, user, organizations.length, retryCount, refetchOrganizations]);
 
   const { data: memberRole, isLoading: roleLoading } = useQuery({
     queryKey: ['member-role', currentOrganization?.id, user?.id],
@@ -100,7 +58,10 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -110,32 +71,35 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
     return <>{children}</>;
   }
 
-  // If still loading organizations and retrying, show loading with retry info
+  // If no organization found after timeout, show clear error with actions
   if (!currentOrganization && organizations.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center p-8 bg-card rounded-lg shadow-lg max-w-md border border-border">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <h1 className="text-lg font-semibold text-foreground mb-2">Carregando sua organização...</h1>
-          <p className="text-sm text-muted-foreground mb-4">
-            {retryCount < maxRetries 
-              ? `Tentativa ${retryCount + 1} de ${maxRetries}...`
-              : 'Aguarde enquanto carregamos seus dados.'}
+          <ShieldX className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-lg font-semibold text-foreground mb-2">Organização não encontrada</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            Não foi possível carregar sua organização. Isso pode acontecer se o convite ainda não foi processado.
           </p>
-          {retryCount >= maxRetries && (
-            <button 
-              onClick={() => window.location.reload()}
-              className="text-sm text-primary hover:underline"
-            >
+          <div className="flex flex-col gap-3">
+            <Button onClick={() => window.location.reload()} className="w-full">
+              <RefreshCw className="h-4 w-4 mr-2" />
               Recarregar página
-            </button>
-          )}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.assign('/auth')}
+              className="w-full"
+            >
+              Ir para login
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // If there are organizations but none selected, auto-select or show loading
+  // If there are organizations but none selected, show loading briefly
   if (!currentOrganization && organizations.length > 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
