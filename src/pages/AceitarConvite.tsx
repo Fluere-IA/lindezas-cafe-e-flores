@@ -222,15 +222,28 @@ export default function AceitarConvite() {
         description: `Você agora faz parte de ${invite.organization_name}.`,
       });
 
-      // Redirect to welcome page for member setup
+      // Check if user already completed the tour
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tour_completed')
+        .eq('id', userId)
+        .single();
+
+      // Redirect based on tour completion status
       setTimeout(() => {
-        navigate('/boas-vindas', { 
-          replace: true,
-          state: { 
-            organizationName: invite.organization_name,
-            fromInvite: true,
-          } 
-        });
+        if (profile?.tour_completed) {
+          // Skip tour, go directly to main app
+          navigate('/dashboard', { replace: true });
+        } else {
+          // Show welcome page with tour
+          navigate('/boas-vindas', { 
+            replace: true,
+            state: { 
+              organizationName: invite.organization_name,
+              fromInvite: true,
+            } 
+          });
+        }
       }, 2000);
     } catch (err: any) {
       console.error('Error accepting invite:', err);
