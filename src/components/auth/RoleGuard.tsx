@@ -67,12 +67,31 @@ export function RoleGuard({ children, allowedRoles, fallback = 'redirect' }: Rol
     return <>{children}</>;
   }
 
-  // If no organization found and no organizations exist, user needs onboarding
+  // If still loading organizations after force timeout, show a helpful message
+  // Don't redirect to onboarding - members joining via invite should wait for data
   if (!currentOrganization && organizations.length === 0) {
-    return <Navigate to="/onboarding" replace />;
+    // Show a retry UI instead of redirecting to onboarding
+    // This handles the case where membership data hasn't propagated yet
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center p-8 bg-card rounded-lg shadow-lg max-w-md border border-border">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <h1 className="text-lg font-semibold text-foreground mb-2">Carregando sua organização...</h1>
+          <p className="text-sm text-muted-foreground mb-4">
+            Aguarde enquanto carregamos seus dados.
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="text-sm text-primary hover:underline"
+          >
+            Recarregar página
+          </button>
+        </div>
+      </div>
+    );
   }
 
-  // If there are organizations but none selected, show loading briefly
+  // If there are organizations but none selected, auto-select or show loading
   if (!currentOrganization && organizations.length > 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
