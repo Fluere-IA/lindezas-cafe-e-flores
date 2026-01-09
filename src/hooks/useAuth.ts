@@ -39,9 +39,26 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    // Timeout fallback to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Auth loading timeout - forcing isLoading to false');
+        setAuthState(prev => {
+          if (prev.isLoading) {
+            return { ...prev, isLoading: false };
+          }
+          return prev;
+        });
+      }
+    }, 10000); // 10 second timeout
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!isMounted) return;
+        
         setAuthState(prev => ({
           ...prev,
           session,
@@ -51,12 +68,15 @@ export function useAuth() {
         // Defer role fetching with setTimeout to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
+            if (!isMounted) return;
             fetchUserRole(session.user.id).then(role => {
-              setAuthState(prev => ({
-                ...prev,
-                role,
-                isLoading: false,
-              }));
+              if (isMounted) {
+                setAuthState(prev => ({
+                  ...prev,
+                  role,
+                  isLoading: false,
+                }));
+              }
             });
           }, 0);
         } else {
@@ -71,6 +91,8 @@ export function useAuth() {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
+      
       setAuthState(prev => ({
         ...prev,
         session,
@@ -79,11 +101,13 @@ export function useAuth() {
       
       if (session?.user) {
         fetchUserRole(session.user.id).then(role => {
-          setAuthState(prev => ({
-            ...prev,
-            role,
-            isLoading: false,
-          }));
+          if (isMounted) {
+            setAuthState(prev => ({
+              ...prev,
+              role,
+              isLoading: false,
+            }));
+          }
         });
       } else {
         setAuthState(prev => ({
@@ -91,9 +115,21 @@ export function useAuth() {
           isLoading: false,
         }));
       }
+    }).catch((error) => {
+      console.error('Error getting session:', error);
+      if (isMounted) {
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+        }));
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeout(loadingTimeout);
+      subscription.unsubscribe();
+    };
   }, [fetchUserRole]);
 
   const signIn = async (email: string, password: string) => {
