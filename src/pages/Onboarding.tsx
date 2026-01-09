@@ -58,6 +58,11 @@ export default function Onboarding() {
   const { toast } = useToast();
   const { currentOrganization, isLoading, refetchOrganizations } = useOrganization();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Track retry attempts for organization fetch
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const maxRetries = 5;
 
   // Check if this is edit mode (onboarding already completed)
   const isEditMode = currentOrganization?.onboarding_completed === true;
@@ -84,6 +89,20 @@ export default function Onboarding() {
     fileType: 'image' | 'pdf';
   } | null>(null);
 
+  // Auto-retry fetching organization if not found
+  React.useEffect(() => {
+    if (!isLoading && !currentOrganization && retryCount < maxRetries && !isRetrying) {
+      setIsRetrying(true);
+      const timer = setTimeout(async () => {
+        console.log(`Onboarding: Retrying organization fetch (${retryCount + 1}/${maxRetries})`);
+        await refetchOrganizations();
+        setRetryCount(prev => prev + 1);
+        setIsRetrying(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, currentOrganization, retryCount, isRetrying, refetchOrganizations]);
+
   // Pre-fill data from current organization when in edit mode
   React.useEffect(() => {
     if (currentOrganization && !hasInitialized) {
@@ -100,16 +119,21 @@ export default function Onboarding() {
   // 4 steps for new setup, 1 step for edit mode (just company data)
   const totalSteps = isEditMode ? 1 : 4;
 
-  // Show loading while fetching organization
-  if (isLoading) {
+  // Show loading while fetching organization or retrying
+  if (isLoading || isRetrying || (!currentOrganization && retryCount < maxRetries)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        {retryCount > 0 && (
+          <p className="text-muted-foreground mt-4 text-sm">
+            Carregando dados... ({retryCount}/{maxRetries})
+          </p>
+        )}
       </div>
     );
   }
 
-  // Show error if no organization
+  // Show error if no organization after all retries
   if (!currentOrganization) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
@@ -119,9 +143,22 @@ export default function Onboarding() {
             <p className="text-muted-foreground mb-4">
               Por favor, faça login novamente para continuar.
             </p>
-            <Button onClick={() => navigate('/auth')}>
-              Ir para login
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button 
+                variant="outline" 
+                onClick={async () => {
+                  setRetryCount(0);
+                  setIsRetrying(true);
+                  await refetchOrganizations();
+                  setIsRetrying(false);
+                }}
+              >
+                Tentar novamente
+              </Button>
+              <Button onClick={() => navigate('/auth')}>
+                Ir para login
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
