@@ -29,6 +29,25 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authLoadingTimedOut, setAuthLoadingTimedOut] = useState(false);
+
+  // Fallback timeout if authLoading stays true for too long
+  useEffect(() => {
+    if (!authLoading) {
+      setAuthLoadingTimedOut(false);
+      return;
+    }
+    
+    const timeout = setTimeout(() => {
+      if (authLoading) {
+        console.warn('OrganizationContext: authLoading timeout - proceeding without auth');
+        setAuthLoadingTimedOut(true);
+        setIsLoading(false);
+      }
+    }, 5000); // 5 second timeout
+    
+    return () => clearTimeout(timeout);
+  }, [authLoading]);
 
   const isMasterAdmin = role === 'admin';
 
@@ -118,12 +137,12 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
   }, [user, role]);
 
-  // Fetch organizations when user changes
+  // Fetch organizations when user changes (or when auth timeout triggers)
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading || authLoadingTimedOut) {
       fetchOrganizations();
     }
-  }, [user, authLoading, fetchOrganizations]);
+  }, [user, authLoading, authLoadingTimedOut, fetchOrganizations]);
 
   // Persist current organization to localStorage
   useEffect(() => {
@@ -157,12 +176,15 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     };
   }, [user, fetchOrganizations]);
 
+  // Calculate effective loading state with timeout fallback
+  const effectiveAuthLoading = authLoading && !authLoadingTimedOut;
+
   const value: OrganizationContextType = {
     organizations,
     currentOrganization,
     setCurrentOrganization,
     isMasterAdmin,
-    isLoading: isLoading || authLoading,
+    isLoading: isLoading || effectiveAuthLoading,
     refetchOrganizations: fetchOrganizations,
   };
 
