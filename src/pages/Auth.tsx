@@ -57,24 +57,45 @@ export default function Auth() {
     
     setIsSubmitting(true);
     
-    const { error } = await signIn(email, password);
-    
-    if (error) {
+    // Set a safety timeout to reset button if something goes wrong
+    const safetyTimeout = setTimeout(() => {
       setIsSubmitting(false);
-      const msg = error.message?.includes('Invalid login credentials')
-        ? 'Email ou senha incorretos.'
-        : 'Não foi possível fazer login. Tente novamente.';
+    }, 8000);
+    
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        clearTimeout(safetyTimeout);
+        setIsSubmitting(false);
+        const msg = error.message?.includes('Invalid login credentials')
+          ? 'Email ou senha incorretos.'
+          : 'Não foi possível fazer login. Tente novamente.';
+        toast({
+          title: 'Erro de autenticação',
+          description: msg,
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Clear safety timeout since login succeeded
+      clearTimeout(safetyTimeout);
+      
+      // Login successful - redirect immediately
+      // Use setTimeout to ensure state is updated before redirect
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 100);
+    } catch (err) {
+      clearTimeout(safetyTimeout);
+      setIsSubmitting(false);
       toast({
-        title: 'Erro de autenticação',
-        description: msg,
+        title: 'Erro',
+        description: 'Erro inesperado. Tente novamente.',
         variant: 'destructive',
       });
-      return;
     }
-    
-    // Login successful - force immediate redirect
-    // Use replace to prevent back button issues
-    window.location.replace('/dashboard');
   };
 
   // Don't show loading state - render form immediately
