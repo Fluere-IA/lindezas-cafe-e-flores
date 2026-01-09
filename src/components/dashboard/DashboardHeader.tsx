@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, BarChart3, ChefHat, Receipt, Menu, X, Settings, LogOut, Store, Shield, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,11 +17,11 @@ import { VipSupportButton } from '@/components/subscription/VipSupportButton';
 
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
-const navItems = [
-  { path: '/dashboard', label: 'Visão Geral', icon: BarChart3 },
-  { path: '/pedidos', label: 'Pedidos', icon: ShoppingCart },
-  { path: '/cozinha', label: 'Cozinha', icon: ChefHat },
-  { path: '/caixa', label: 'Caixa', icon: Receipt },
+const allNavItems = [
+  { path: '/dashboard', label: 'Visão Geral', icon: BarChart3, roles: ['owner', 'admin'] },
+  { path: '/pedidos', label: 'Pedidos', icon: ShoppingCart, roles: ['owner', 'admin', 'member'] },
+  { path: '/cozinha', label: 'Cozinha', icon: ChefHat, roles: ['owner', 'admin', 'kitchen'] },
+  { path: '/caixa', label: 'Caixa', icon: Receipt, roles: ['owner', 'admin', 'cashier'] },
 ];
 
 export function DashboardHeader() {
@@ -30,9 +30,25 @@ export function DashboardHeader() {
   const currentPath = location.pathname;
   const [open, setOpen] = useState(false);
   const { user, role, signOut } = useAuth();
-  const { currentOrganization } = useOrganization();
+  const { currentOrganization, userOrgRole } = useOrganization();
   const { isSuperAdmin } = useSuperAdmin();
   const { toast } = useToast();
+
+  // Filter nav items based on user's organization role
+  const navItems = useMemo(() => {
+    // Super admins and master admins see everything
+    if (isSuperAdmin) return allNavItems;
+    
+    // Filter based on organization role
+    if (!userOrgRole) return [];
+    
+    return allNavItems.filter(item => item.roles.includes(userOrgRole));
+  }, [userOrgRole, isSuperAdmin]);
+
+  // Check if user can access settings (owner/admin only)
+  const canAccessSettings = useMemo(() => {
+    return isSuperAdmin || userOrgRole === 'owner' || userOrgRole === 'admin';
+  }, [userOrgRole, isSuperAdmin]);
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -133,9 +149,9 @@ export function DashboardHeader() {
             className="hidden sm:flex text-white hover:bg-white/10 border-white/20"
           />
           
-          {role && (
+          {userOrgRole && !['owner', 'admin'].includes(userOrgRole) && (
             <span className="hidden sm:inline-block text-xs bg-white/20 px-2 py-1 rounded-full">
-              {role === 'admin' ? 'Admin Master' : role === 'cashier' ? 'Caixa' : 'Cozinha'}
+              {userOrgRole === 'cashier' ? 'Caixa' : userOrgRole === 'kitchen' ? 'Cozinha' : 'Garçom'}
             </span>
           )}
           
@@ -152,16 +168,18 @@ export function DashboardHeader() {
             </Link>
           )}
           
-          <Link
-            to="/configuracoes"
-            className={cn(
-              'p-2 rounded-lg transition-colors',
-              currentPath === '/configuracoes' ? 'bg-white/20' : 'hover:bg-white/10'
-            )}
-            title="Configurações"
-          >
-            <Settings className="h-5 w-5 text-white" />
-          </Link>
+          {canAccessSettings && (
+            <Link
+              to="/configuracoes"
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                currentPath === '/configuracoes' ? 'bg-white/20' : 'hover:bg-white/10'
+              )}
+              title="Configurações"
+            >
+              <Settings className="h-5 w-5 text-white" />
+            </Link>
+          )}
           
           <Link
             to="/perfil"
