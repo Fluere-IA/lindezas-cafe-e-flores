@@ -89,6 +89,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Get user email to delete related invites
+    const { data: targetUserData } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const userEmail = targetUserData?.user?.email;
+
     // Delete from organization_members
     const { error: deleteMemberError } = await supabaseAdmin
       .from("organization_members")
@@ -101,6 +105,22 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: "Failed to remove member from organization" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Delete related invites for this email in this organization
+    if (userEmail) {
+      const { error: deleteInvitesError } = await supabaseAdmin
+        .from("organization_invites")
+        .delete()
+        .eq("organization_id", organizationId)
+        .ilike("email", userEmail);
+
+      if (deleteInvitesError) {
+        console.error("Error deleting invites:", deleteInvitesError);
+        // Don't fail the request, just log
+      } else {
+        console.log(`Deleted invites for ${userEmail} in org ${organizationId}`);
+      }
     }
 
     // If requested, also delete the user from the database
