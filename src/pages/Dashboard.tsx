@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { TrendingUp, Trophy } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { CurrentStatusCard } from '@/components/dashboard/CurrentStatusCard';
@@ -28,7 +29,7 @@ const Dashboard = () => {
   const { isInTrial, trialDaysRemaining, subscribed } = useSubscription();
   const [hasCheckedOnboarding, setHasCheckedOnboarding] = useState(false);
 
-  // Redirect to onboarding if not completed (null or false means not completed)
+  // Redirect to onboarding ONLY for owners whose org hasn't completed onboarding
   useEffect(() => {
     if (orgLoading || hasCheckedOnboarding) return;
 
@@ -40,9 +41,26 @@ const Dashboard = () => {
         return;
       }
       
-      // For normal dashboard access, check if onboarding is needed
+      // Only redirect to onboarding if:
+      // 1. Organization exists
+      // 2. Onboarding is not completed
+      // 3. AND the user is the owner of this organization
       if (currentOrganization && currentOrganization.onboarding_completed !== true) {
-        navigate('/onboarding', { replace: true });
+        // Check if current user is the owner
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { data: membership } = await supabase
+          .from('organization_members')
+          .select('role')
+          .eq('organization_id', currentOrganization.id)
+          .eq('user_id', user.id)
+          .single();
+        
+        // Only redirect owners to onboarding - members should use the system as-is
+        if (membership?.role === 'owner') {
+          navigate('/onboarding', { replace: true });
+        }
       }
     };
 
