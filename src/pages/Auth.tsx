@@ -78,14 +78,14 @@ export default function Auth() {
         return;
       }
       
-      // Login successful - show toast and navigate
+      // Login successful - show toast and force redirect
       toast({
         title: 'Bem-vindo!',
         description: 'Login realizado com sucesso.',
       });
       
-      // Simple redirect - let the dashboard handle role-based routing
-      navigate('/dashboard');
+      // Force redirect using window.location to ensure navigation works
+      window.location.href = '/dashboard';
     } catch {
       toast({
         title: 'Erro',
