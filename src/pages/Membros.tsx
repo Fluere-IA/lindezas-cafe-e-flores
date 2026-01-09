@@ -32,7 +32,8 @@ import {
   KeyRound,
   Eye,
   EyeOff,
-  AlertCircle
+  AlertCircle,
+  Send
 } from 'lucide-react';
 
 interface Member {
@@ -87,6 +88,13 @@ export default function Membros() {
   const [editNewPassword, setEditNewPassword] = useState('');
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [isUpdatingMember, setIsUpdatingMember] = useState(false);
+  
+  // Resend credentials states
+  const [resendDialogOpen, setResendDialogOpen] = useState(false);
+  const [memberToResend, setMemberToResend] = useState<Member | null>(null);
+  const [resendPassword, setResendPassword] = useState('');
+  const [showResendPassword, setShowResendPassword] = useState(false);
+  const [isResendingCredentials, setIsResendingCredentials] = useState(false);
 
   // Add member form states
   const [newMemberEmail, setNewMemberEmail] = useState('');
@@ -361,6 +369,49 @@ export default function Membros() {
     }
   };
 
+  const openResendCredentialsDialog = (member: Member) => {
+    setMemberToResend(member);
+    setResendPassword('');
+    generatePassword(setResendPassword);
+    setResendDialogOpen(true);
+  };
+
+  const resendCredentials = async () => {
+    if (!memberToResend || !currentOrganization?.id || !resendPassword) return;
+
+    setIsResendingCredentials(true);
+
+    try {
+      const { error } = await supabase.functions.invoke('resend-credentials', {
+        body: {
+          userId: memberToResend.user_id,
+          organizationId: currentOrganization.id,
+          organizationName: currentOrganization.name,
+          newPassword: resendPassword,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Credenciais enviadas!',
+        description: `Email com as novas credenciais enviado para ${memberToResend.profile?.full_name || 'o membro'}.`,
+      });
+
+      setResendDialogOpen(false);
+      setMemberToResend(null);
+    } catch (error) {
+      console.error('Resend credentials error:', error);
+      toast({
+        title: 'Erro ao reenviar credenciais',
+        description: 'Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResendingCredentials(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader />
@@ -546,6 +597,15 @@ export default function Membros() {
 
                       {member.role !== 'owner' && member.user_id !== user?.id && (
                         <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openResendCredentialsDialog(member)}
+                            className="text-muted-foreground hover:text-blue-500"
+                            title="Reenviar credenciais por email"
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -744,6 +804,77 @@ export default function Membros() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     'Salvar'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Resend Credentials Dialog */}
+        <Dialog open={resendDialogOpen} onOpenChange={setResendDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reenviar Credenciais</DialogTitle>
+              <DialogDescription>
+                Defina uma nova senha e envie as credenciais por email para{' '}
+                <strong>{memberToResend?.profile?.full_name || 'este membro'}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="resendPassword">Nova Senha</Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id="resendPassword"
+                      type={showResendPassword ? 'text' : 'password'}
+                      placeholder="Nova senha"
+                      value={resendPassword}
+                      onChange={(e) => setResendPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowResendPassword(!showResendPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showResendPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => generatePassword(setResendPassword)}
+                  >
+                    Gerar
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  A senha será atualizada e enviada por email ao membro.
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setResendDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={resendCredentials}
+                  disabled={isResendingCredentials || !resendPassword}
+                >
+                  {isResendingCredentials ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Enviar
+                    </>
                   )}
                 </Button>
               </div>
