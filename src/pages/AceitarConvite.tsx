@@ -222,11 +222,12 @@ export default function AceitarConvite() {
         description: `Você agora faz parte de ${invite.organization_name}.`,
       });
 
-      // Redirect to profile page with password change recommendation
+      // Redirect to welcome page for member setup
       setTimeout(() => {
-        navigate('/perfil', { 
+        navigate('/boas-vindas', { 
+          replace: true,
           state: { 
-            showPasswordChangeAlert: true,
+            organizationName: invite.organization_name,
             fromInvite: true,
           } 
         });
